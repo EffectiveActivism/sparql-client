@@ -30,14 +30,13 @@ class TestingKernel extends Kernel
                 ],
                 'router' => [
                     'resource' => '~',
+                    'utf8' => true,
                 ],
             ]);
             $container->loadFromExtension('sparql_client', [
-                'sparql_client' => [
-                    'sparql_endpoint' => [
-                        'hostname' => 'test-sparql-endpoint',
-                        'port' => 9999,
-                    ],
+                'sparql_endpoint' => [
+                    'hostname' => 'test-sparql-endpoint',
+                    'port' => 9999,
                 ],
             ]);
         });
