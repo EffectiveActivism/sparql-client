@@ -1,0 +1,8 @@
+coverage
+composer.lock
+symfony.lock
+.idea
+.php_cs.cache
+var/
+vendor/
+

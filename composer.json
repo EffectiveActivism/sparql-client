@@ -1,0 +1,30 @@
+{
+  "name": "effectiveactivism/sparql-client",
+  "type": "symfony-bundle",
+  "license": "GPL-3.0-or-later",
+  "description": "Provides a SparQl client.",
+  "homepage": "https://gitlab.com/effective-activism/sparql-client",
+  "authors": [
+    {
+      "name": "Peter Rønsby",
+      "homepage": "https://effectiveactivism.com"
+    }
+  ],
+  "require": {
+    "php": "^8.0.2",
+    "psr/log": "^1.1",
+    "symfony/config": "^5.1.0",
+    "symfony/dependency-injection": "^5.1.0",
+    "symfony/http-client": "^5.1.0",
+    "symfony/serializer": "^5.1.0"
+  },
+  "require-dev": {
+    "symfony/framework-bundle": "^5.2"
+  },
+  "autoload": {
+    "psr-4": {
+      "EffectiveActivism\\SparQlClient\\": "src/",
+      "EffectiveActivism\\SparQlClient\\Tests\\": "tests/"
+    }
+  }
+}
