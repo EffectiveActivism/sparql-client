@@ -26,8 +26,7 @@
   },
   "autoload": {
     "psr-4": {
-      "EffectiveActivism\\SparQlClient\\": "src/",
-      "EffectiveActivism\\SparQlClient\\Tests\\": "tests/"
+      "EffectiveActivism\\SparQlClient\\": "src/"
     }
   },
   "config": {

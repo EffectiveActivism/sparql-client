@@ -2,9 +2,9 @@
 
 namespace EffectiveActivism\SparQlClient\Client;
 
-use EffectiveActivism\SparQlClient\Primitive\Statement\DeleteStatement;
-use EffectiveActivism\SparQlClient\Primitive\Statement\SelectStatement;
-use EffectiveActivism\SparQlClient\Primitive\Statement\UpdateStatement;
+use EffectiveActivism\SparQlClient\Syntax\Statement\DeleteStatement;
+use EffectiveActivism\SparQlClient\Syntax\Statement\SelectStatement;
+use EffectiveActivism\SparQlClient\Syntax\Statement\UpdateStatement;
 
 interface SparQlClientInterface
 {

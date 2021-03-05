@@ -1,10 +1,10 @@
-<?php
+<?php declare(strict_types=1);
 
-namespace EffectiveActivism\SparQlClient\Tests;
+namespace Client;
 
-use EffectiveActivism\SparQlClient\Primitive\Triple\Triple;
-use EffectiveActivism\SparQlClient\Primitive\Term\Iri;
-use EffectiveActivism\SparQlClient\Primitive\Term\Variable;
+use EffectiveActivism\SparQlClient\Syntax\Triple\Triple;
+use EffectiveActivism\SparQlClient\Syntax\Term\Iri;
+use EffectiveActivism\SparQlClient\Syntax\Term\Variable;
 use EffectiveActivism\SparQlClient\Client\SparQlClient;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -29,7 +29,11 @@ class SimpleRequestTest extends KernelTestCase
      */
     public function testSimpleRequest()
     {
-        $httpClient = new MockHttpClient([new MockResponse(self::BODY)]);
+        $receivedQuery = null;
+        $httpClient = new MockHttpClient(function ($method, $url, $options) use (&$receivedQuery) {
+            $receivedQuery = $options['body'];
+            return new MockResponse(self::BODY);
+        });
         $logger = $this->createMock(LoggerInterface::class);
         $sparQlClient = new SparQlClient($httpClient, $logger);
         $subject = new Variable('subject');
@@ -41,5 +45,6 @@ class SimpleRequestTest extends KernelTestCase
             ->condition(new Triple($subject, $predicate, $object));
         $triples = $sparQlClient->execute($statement);
         $this->assertIsArray($triples);
+        $this->assertEquals('query=+SELECT+%3Fsubject+%3Fobject+WHERE+%7B%3Fsubject+%3Cschema%3Aheadline%3E+%3Fobject+.+%7D', $receivedQuery);
     }
 }

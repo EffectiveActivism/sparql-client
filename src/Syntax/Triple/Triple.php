@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace EffectiveActivism\SparQlClient\Primitive\Triple;
+namespace EffectiveActivism\SparQlClient\Syntax\Triple;
 
-use EffectiveActivism\SparQlClient\Primitive\Term\TypeInterface;
+use EffectiveActivism\SparQlClient\Syntax\Term\TypeInterface;
 
 class Triple implements TripleInterface
 {
@@ -21,7 +21,7 @@ class Triple implements TripleInterface
 
     public function __toString(): string
     {
-        return sprintf('%s %s %s', $this->subject, $this->predicate, $this->object);
+        return sprintf('%s %s %s', $this->subject->serialize(), $this->predicate->serialize(), $this->object->serialize());
     }
 
     /**

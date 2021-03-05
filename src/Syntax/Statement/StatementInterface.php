@@ -1,8 +1,8 @@
 <?php
 
-namespace EffectiveActivism\SparQlClient\Primitive\Statement;
+namespace EffectiveActivism\SparQlClient\Syntax\Statement;
 
-use EffectiveActivism\SparQlClient\Primitive\Triple\TripleInterface;
+use EffectiveActivism\SparQlClient\Syntax\Triple\TripleInterface;
 
 interface StatementInterface
 {

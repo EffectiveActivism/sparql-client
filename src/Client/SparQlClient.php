@@ -2,12 +2,13 @@
 
 namespace EffectiveActivism\SparQlClient\Client;
 
-use EffectiveActivism\SparQlClient\Primitive\Statement\DeleteStatement;
-use EffectiveActivism\SparQlClient\Primitive\Statement\SelectStatement;
-use EffectiveActivism\SparQlClient\Primitive\Statement\StatementInterface;
-use EffectiveActivism\SparQlClient\Primitive\Statement\UpdateStatement;
+use EffectiveActivism\SparQlClient\Syntax\Statement\DeleteStatement;
+use EffectiveActivism\SparQlClient\Syntax\Statement\SelectStatement;
+use EffectiveActivism\SparQlClient\Syntax\Statement\StatementInterface;
+use EffectiveActivism\SparQlClient\Syntax\Statement\UpdateStatement;
 use EffectiveActivism\SparQlClient\Serializer\Encoder\TrigEncoder;
 use EffectiveActivism\SparQlClient\Serializer\Normalizer\SparQlResultDenormalizer;
+use EffectiveActivism\SparQlClient\Syntax\Term\Variable;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Serializer\Encoder\XmlEncoder;
 use Symfony\Component\Serializer\Serializer;
@@ -38,7 +39,9 @@ class SparQlClient implements SparQlClientInterface
         foreach ($statement->getExtraNamespaces() as $prefix => $url) {
             $namespaces .= sprintf('%s:%s ', $prefix, $url);
         }
-        $variables = implode(' ', $statement->getVariables());
+        $variables = implode(' ', array_map(function (Variable $variable) {
+            return $variable->serialize();
+        }, $statement->getVariables()));
         $conditions = sprintf('%s .', implode(' . ', $statement->getConditions()));
         $optionalConditions = '';
         foreach ($statement->getOptionalConditions() as $triple) {

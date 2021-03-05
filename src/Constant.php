@@ -1,0 +1,38 @@
+<?php declare(strict_types=1);
+
+namespace EffectiveActivism\SparQlClient;
+
+class Constant
+{
+    /**
+     * Regular expressions
+     *
+     * @see https://www.w3.org/TR/sparql11-query/.
+     */
+
+    /**
+     * @see https://www.w3.org/TR/sparql11-query/#rPN_CHARS_BASE.
+     */
+    const PN_CHARS_BASE = '[A-Z]|[a-z]|[\x{00C0}-\x{00D6}]|[\x{00D8}-\x{00F6}]|[\x{00F8}-\x{02FF}]|[\x{0370}-\x{037D}]|[\x{037F}-\x{1FFF}]|[\x{200C}-\x{200D}]|[\x{2070}-\x{218F}]|[\x{2C00}-\x{2FEF}]|[\x{3001}-\x{D7FF}]|[\x{F900}-\x{FDCF}]|[\x{FDF0}-\x{FFFD}]|[\x{10000}-\x{EFFFF}]';
+
+    /**
+     * @see https://www.w3.org/TR/sparql11-query/#rPN_CHARS_U.
+     */
+    const PN_CHARS_U = self::PN_CHARS_BASE . '|[_]';
+
+    /**
+     * @see https://www.w3.org/TR/sparql11-query/#rVARNAME.
+     */
+    const VARNAME = '^(' . self::PN_CHARS_U . '|[0-9])(' . self::PN_CHARS_U . '|[0-9]|\x{00B7}|[\x{0300}-\x{036F}]|[\x{203F}-\x{2040}])*$';
+
+    /**
+     * Triple quotes and triple citation marks are not allowed, as they are used to denote beginning and end of literal values.
+     * @see https://www.w3.org/TR/sparql11-query/#QSynLiterals.
+     */
+    const LITERAL = '^(?!.*("""|\'\'\')).*$';
+
+    /**
+     * @see https://tools.ietf.org/html/rfc3066#section-2.1.
+     */
+    const LANGUAGE_TAG = '^[a-z]{2,3}(?:-[a-z]{2,3}(?:-[a-z]{4})?)?$';
+}

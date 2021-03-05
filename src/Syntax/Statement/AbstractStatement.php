@@ -1,8 +1,9 @@
 <?php declare(strict_types=1);
 
-namespace EffectiveActivism\SparQlClient\Primitive\Statement;
+namespace EffectiveActivism\SparQlClient\Syntax\Statement;
 
-use EffectiveActivism\SparQlClient\Primitive\Triple\TripleInterface;
+use EffectiveActivism\SparQlClient\Syntax\Term\Variable;
+use EffectiveActivism\SparQlClient\Syntax\Triple\TripleInterface;
 use InvalidArgumentException;
 
 abstract class AbstractStatement implements StatementInterface
