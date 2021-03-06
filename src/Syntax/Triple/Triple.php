@@ -2,17 +2,17 @@
 
 namespace EffectiveActivism\SparQlClient\Syntax\Triple;
 
-use EffectiveActivism\SparQlClient\Syntax\Term\TypeInterface;
+use EffectiveActivism\SparQlClient\Syntax\Term\TermInterface;
 
 class Triple implements TripleInterface
 {
-    protected TypeInterface $subject;
+    protected TermInterface $subject;
 
-    protected TypeInterface $predicate;
+    protected TermInterface $predicate;
 
-    protected TypeInterface $object;
+    protected TermInterface $object;
 
-    public function __construct(TypeInterface $subject, TypeInterface $predicate, TypeInterface $object)
+    public function __construct(TermInterface $subject, TermInterface $predicate, TermInterface $object)
     {
         $this->subject = $subject;
         $this->predicate = $predicate;
@@ -28,17 +28,17 @@ class Triple implements TripleInterface
      * Getters.
      */
 
-    public function getObject(): TypeInterface
+    public function getObject(): TermInterface
     {
         return $this->object;
     }
 
-    public function getPredicate(): TypeInterface
+    public function getPredicate(): TermInterface
     {
         return $this->predicate;
     }
 
-    public function getSubject(): TypeInterface
+    public function getSubject(): TermInterface
     {
         return $this->subject;
     }

@@ -1,50 +1,46 @@
 <?php declare(strict_types=1);
 
-namespace Client;
+namespace EffectiveActivism\SparQlClient\Tests\Client;
 
 use EffectiveActivism\SparQlClient\Syntax\Triple\Triple;
-use EffectiveActivism\SparQlClient\Syntax\Term\Iri;
+use EffectiveActivism\SparQlClient\Syntax\Term\PrefixedIri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Variable;
 use EffectiveActivism\SparQlClient\Client\SparQlClient;
-use Psr\Log\LoggerInterface;
+use EffectiveActivism\SparQlClient\Tests\Environment\TestKernel;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class SimpleRequestTest extends KernelTestCase
 {
-    const BODY = '
-        <sparql>
-            <head>
-                <variable name="subject"/>
-                <variable name="object"/>
-            </head>
-            <results>
-            </results>
-        </sparql>
-    ';
+
+    const EXPECTED_QUERY = 'query= SELECT ?subject ?object WHERE {?subject schema:headline ?object . }';
 
     /**
      * @covers \EffectiveActivism\SparQlClient\Client\SparQlClient
      */
     public function testSimpleRequest()
     {
+        $kernel = new TestKernel('test', true);
         $receivedQuery = null;
         $httpClient = new MockHttpClient(function ($method, $url, $options) use (&$receivedQuery) {
             $receivedQuery = $options['body'];
-            return new MockResponse(self::BODY);
+            return new MockResponse(file_get_contents(__DIR__ . '/../fixtures/simple-request-test-result.xml'));
         });
-        $logger = $this->createMock(LoggerInterface::class);
-        $sparQlClient = new SparQlClient($httpClient, $logger);
+        $kernel->boot();
+        $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
+        $sparQlClient = $kernel->getContainer()->get(SparQlClient::class);
         $subject = new Variable('subject');
-        $predicate = new Iri('schema:headline');
+        $predicate = new PrefixedIri('schema', 'headline');
         $object = new Variable('object');
         $variables = [$subject, $object];
         $statement = $sparQlClient->select($variables);
         $statement
             ->condition(new Triple($subject, $predicate, $object));
         $triples = $sparQlClient->execute($statement);
+        dump($triples);
         $this->assertIsArray($triples);
-        $this->assertEquals('query=+SELECT+%3Fsubject+%3Fobject+WHERE+%7B%3Fsubject+%3Cschema%3Aheadline%3E+%3Fobject+.+%7D', $receivedQuery);
+        $this->assertEquals(self::EXPECTED_QUERY, urldecode($receivedQuery));
     }
 }

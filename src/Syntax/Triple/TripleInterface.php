@@ -2,7 +2,7 @@
 
 namespace EffectiveActivism\SparQlClient\Syntax\Triple;
 
-use EffectiveActivism\SparQlClient\Syntax\Term\TypeInterface;
+use EffectiveActivism\SparQlClient\Syntax\Term\TermInterface;
 
 interface TripleInterface
 {
@@ -10,9 +10,9 @@ interface TripleInterface
      * Getters.
      */
 
-    public function getObject(): TypeInterface;
+    public function getObject(): TermInterface;
 
-    public function getPredicate(): TypeInterface;
+    public function getPredicate(): TermInterface;
 
-    public function getSubject(): TypeInterface;
+    public function getSubject(): TermInterface;
 }

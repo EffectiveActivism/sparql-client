@@ -2,7 +2,7 @@
 
 namespace EffectiveActivism\SparQlClient\Syntax\Term;
 
-interface TypeInterface
+interface TermInterface
 {
     public function serialize(): string;
 }

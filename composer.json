@@ -29,6 +29,9 @@
       "EffectiveActivism\\SparQlClient\\": "src/"
     }
   },
+  "autoload-dev": {
+    "psr-4": { "EffectiveActivism\\SparQlClient\\Tests\\": "tests/" }
+  },
   "config": {
     "sort-packages": true
   }

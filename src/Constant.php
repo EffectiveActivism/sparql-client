@@ -21,6 +21,11 @@ class Constant
     const PN_CHARS_U = self::PN_CHARS_BASE . '|[_]';
 
     /**
+     * @see https://www.w3.org/TR/rdf-sparql-query/#rPN_CHARS.
+     */
+    const PN_CHARS = self::PN_CHARS_U . '|-|[0-9]|\x{00B7}|[\x{0300}-\x{036F}|[\x{203F}-\x{2040}]';
+
+    /**
      * @see https://www.w3.org/TR/sparql11-query/#rVARNAME.
      */
     const VARNAME = '^(' . self::PN_CHARS_U . '|[0-9])(' . self::PN_CHARS_U . '|[0-9]|\x{00B7}|[\x{0300}-\x{036F}]|[\x{203F}-\x{2040}])*$';
@@ -35,4 +40,19 @@ class Constant
      * @see https://tools.ietf.org/html/rfc3066#section-2.1.
      */
     const LANGUAGE_TAG = '^[a-z]{2,3}(?:-[a-z]{2,3}(?:-[a-z]{4})?)?$';
+
+    /**
+     * @see https://www.w3.org/TR/2004/REC-rdf-concepts-20040210/#dfn-URI-reference.
+     */
+    const CONTROL_CHARACTERS = '[\x{00}-\x{1F}]|[\x{7F}-\x{9F}]';
+
+    /**
+     * @see https://www.w3.org/TR/rdf-sparql-query/#rPN_PREFIX.
+     */
+    const PN_PREFIX = '^((' . self::PN_CHARS_BASE . ')((' . self::PN_CHARS . '|\.)*(' . self::PN_CHARS . '))?)$';
+
+    /**
+     * @see https://www.w3.org/TR/rdf-sparql-query/#rPN_LOCAL.
+     */
+    const PN_LOCAL = '^(' . self::PN_CHARS_U . '|:|[0-9])((' . self::PN_CHARS . '|\.)*(' . self::PN_CHARS . '))?$';
 }

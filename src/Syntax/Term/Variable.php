@@ -8,7 +8,7 @@ use InvalidArgumentException;
 /**
  * @see https://www.w3.org/TR/sparql11-query/#QSynVariables
  */
-class Variable implements TypeInterface
+class Variable implements TermInterface
 {
     protected string $value;
 

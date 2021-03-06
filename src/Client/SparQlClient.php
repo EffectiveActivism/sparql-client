@@ -24,7 +24,7 @@ class SparQlClient implements SparQlClientInterface
 
     protected SerializerInterface $serializer;
 
-    public function __construct(HttpClientInterface $httpClient, LoggerInterface $logger)
+    public function __construct(array $config, HttpClientInterface $httpClient, LoggerInterface $logger)
     {
         $this->httpClient = $httpClient;
         $this->logger = $logger;
