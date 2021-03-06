@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<sparql xmlns='http://www.w3.org/2005/sparql-results#'>
+    <head>
+        <variable name='subject'/>
+        <variable name='object'/>
+    </head>
+    <results>
+        <result>
+            <binding name='subject'>
+                <uri>urn:uuid:a23a3a88-7e86-11eb-b783-9f0a5d690c48</uri>
+            </binding>
+        </result>
+    </results>
+</sparql>

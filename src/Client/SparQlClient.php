@@ -18,14 +18,18 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class SparQlClient implements SparQlClientInterface
 {
+
     protected HttpClientInterface $httpClient;
 
     protected LoggerInterface $logger;
 
     protected SerializerInterface $serializer;
 
-    public function __construct(array $config, HttpClientInterface $httpClient, LoggerInterface $logger)
+    protected string $sparQlEndpoint;
+
+    public function __construct(string $sparQlEndpoint, HttpClientInterface $httpClient, LoggerInterface $logger)
     {
+        $this->sparQlEndpoint = $sparQlEndpoint;
         $this->httpClient = $httpClient;
         $this->logger = $logger;
         $normalizers = [new SparQlResultDenormalizer()];
@@ -57,8 +61,8 @@ class SparQlClient implements SparQlClientInterface
             SelectStatement::class => ['body' => ['query' => $query]],
         };
         try {
-            $response = $this->httpClient->request('POST', 'http://triplestore:9999/blazegraph/sparql', $parameters);
-            return $this->serializer->deserialize($response->getContent(), 'rdf', 'xml');
+            $response = $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters);
+            return $this->serializer->deserialize($response->getContent(), SparQlResultDenormalizer::TYPE, 'xml');
         } catch (HttpClientExceptionInterface $exception) {
             $this->logger->error($exception->getMessage());
         }

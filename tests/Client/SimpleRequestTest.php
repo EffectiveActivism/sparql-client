@@ -14,7 +14,6 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class SimpleRequestTest extends KernelTestCase
 {
-
     const EXPECTED_QUERY = 'query= SELECT ?subject ?object WHERE {?subject schema:headline ?object . }';
 
     /**
@@ -39,7 +38,6 @@ class SimpleRequestTest extends KernelTestCase
         $statement
             ->condition(new Triple($subject, $predicate, $object));
         $triples = $sparQlClient->execute($statement);
-        dump($triples);
         $this->assertIsArray($triples);
         $this->assertEquals(self::EXPECTED_QUERY, urldecode($receivedQuery));
     }

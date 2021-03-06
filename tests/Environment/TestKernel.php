@@ -32,10 +32,7 @@ class TestKernel extends Kernel
                 ],
             ]);
             $container->loadFromExtension('sparql_client', [
-                'sparql_endpoint' => [
-                    'hostname' => 'test-sparql-endpoint',
-                    'port' => 9999,
-                ],
+                'sparql_endpoint' => 'http://test-sparql-endpoint:9999/blazegraph/sparql',
             ]);
         });
     }

@@ -55,4 +55,19 @@ class Constant
      * @see https://www.w3.org/TR/rdf-sparql-query/#rPN_LOCAL.
      */
     const PN_LOCAL = '^(' . self::PN_CHARS_U . '|:|[0-9])((' . self::PN_CHARS . '|\.)*(' . self::PN_CHARS . '))?$';
+
+    /**
+     * @see https://www.w3.org/TR/2004/REC-rdf-concepts-20040210/#dfn-plain-literal.
+     */
+    const PLAIN_LITERAL = '^(?:(?:(?:""")(.*)(?:"""))|(?:(?:")(.*)(?:"))|(?:(?:\'\'\')(.*)(?:\'\'\'))|(?:(?:\')(.*)(?:\')))(@[a-z]{2,3}(?:-[a-z]{2,3}(?:-[a-z]{4})?)?)?$';
+
+    /**
+     * @see https://www.w3.org/TR/2004/REC-rdf-concepts-20040210/#dfn-typed-literal.
+     */
+    const TYPED_LITERAL = '^(?:(?:(?:""")(.*)(?:"""))|(?:(?:")(.*)(?:"))|(?:(?:\'\'\')(.*)(?:\'\'\'))|(?:(?:\')(.*)(?:\')))(?:\^\^(<.*>|.*:.*))?$';
+
+    /**
+     * @see https://tools.ietf.org/html/rfc8141.
+     */
+    const URN = '^urn:[a-z0-9][a-z0-9-]{0,31}:[a-z0-9()+,\-.:=@;$_!*\'%\/?#]+$';
 }

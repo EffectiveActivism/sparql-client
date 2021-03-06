@@ -5,7 +5,7 @@ namespace EffectiveActivism\SparQlClient\Syntax\Term;
 use EffectiveActivism\SparQlClient\Constant;
 use InvalidArgumentException;
 
-class PrefixedIri implements TermInterface
+class PrefixedIri extends AbstractIri implements TermInterface
 {
     /**
      * @see https://www.w3.org/TR/2004/REC-rdf-concepts-20040210/#dfn-URI-reference.

@@ -12,12 +12,7 @@ class Configuration implements ConfigurationInterface
         $treeBuilder = new TreeBuilder('sparql_client');
         $treeBuilder->getRootNode()
             ->children()
-                ->arrayNode('sparql_endpoint')
-                    ->children()
-                        ->scalarNode('hostname')->end()
-                        ->integerNode('port')->end()
-                    ->end()
-                ->end() // sparql_endpoint
+                ->scalarNode('sparql_endpoint')
             ->end()
         ;
         return $treeBuilder;

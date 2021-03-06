@@ -24,7 +24,7 @@ class PlainLiteral extends AbstractLiteral implements TermInterface
     public function serialize(): string
     {
         return match (gettype($this->value)) {
-            'string' => sprintf('"""%s"""', $this->value),
+            'string' => sprintf('"""%s"""%s', $this->value, empty($this->languageTag) ? '' : sprintf('@%s', $this->languageTag)),
             'integer' => sprintf('"%s"^^xsd:integer', $this->value),
             'double' => sprintf('"%s"^^xsd:decimal', $this->value),
             'boolean' => sprintf('"%s"^^xsd:boolean', $this->value ? 'true' : 'false'),
