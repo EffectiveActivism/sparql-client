@@ -10,3 +10,6 @@ services:
 
   Symfony\Contracts\HttpClient\HttpClientInterface:
     class: Symfony\Component\HttpClient\MockHttpClient
+
+  Symfony\Contracts\Cache\TagAwareCacheInterface:
+    class: Symfony\Component\Cache\Adapter\TagAwareAdapter

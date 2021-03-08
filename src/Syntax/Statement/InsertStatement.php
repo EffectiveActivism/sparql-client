@@ -2,6 +2,6 @@
 
 namespace EffectiveActivism\SparQlClient\Syntax\Statement;
 
-class UpdateStatement extends AbstractStatement
+class InsertStatement extends AbstractStatement
 {
 }

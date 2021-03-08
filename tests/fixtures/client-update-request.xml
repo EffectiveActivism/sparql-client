@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sparql xmlns="http://www.w3.org/2005/sparql-results#">
+	<head>
+		<variable name="subject"/>
+		<variable name="object"/>
+	</head>
+	<results>
+		<result>
+			<binding name="subject">
+				<uri>urn:uuid:fcf19bc4-7e81-11eb-a169-175604c7c7bc</uri>
+			</binding>
+			<binding name="object">
+				<literal>Lorem</literal>
+			</binding>
+		</result>
+		<result>
+			<binding name="subject">
+				<uri>urn:uuid:02aa87b0-7e82-11eb-9e68-bb0651b281cc</uri>
+			</binding>
+			<binding name="object">
+				<literal>Ipsum</literal>
+			</binding>
+		</result>
+	</results>
+</sparql>
