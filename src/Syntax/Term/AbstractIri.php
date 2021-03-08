@@ -2,7 +2,7 @@
 
 namespace EffectiveActivism\SparQlClient\Syntax\Term;
 
-abstract class AbstractIri implements TermInterface
+abstract class AbstractIri extends AbstractTerm implements TermInterface
 {
     abstract public function serialize(): string;
 }

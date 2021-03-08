@@ -15,30 +15,30 @@ class SparQlResultDenormalizer implements DenormalizerInterface
 {
     const TYPE = 'sparql-result';
 
+    public function supportsDenormalization($data, string $type, string $format = null): bool
+    {
+        return $type === self::TYPE;
+    }
+
     /**
      * @throws InvalidResultException
      */
     public function denormalize($data, string $type, string $format = null, array $context = []): array
     {
-        $set = [];
+        $sets = [];
         if (isset($data['results'])) {
             foreach ($data['results'] as $result) {
                 if (key($result) === 'binding') {
-                    $set = $this->getTerms($result[key($result)]);
+                    $sets[] = $this->getTerms($result[key($result)]);
                 }
                 elseif (isset($result[0]) && is_array($result[0]) && key($result[0]) === 'binding') {
                     foreach ($result as $binding) {
-                        $set = array_merge($set, $this->getTerms($binding['binding']));
+                        $sets[] = $this->getTerms($binding['binding']);
                     }
                 }
             }
         }
-        return $set;
-    }
-
-    public function supportsDenormalization($data, string $type, string $format = null): bool
-    {
-        return $type === self::TYPE;
+        return $sets;
     }
 
     /**
@@ -48,11 +48,15 @@ class SparQlResultDenormalizer implements DenormalizerInterface
     {
         $terms = [];
         if (isset($binding['@name'])) {
-            $terms[] = $this->getTerm($binding);
+            $term = $this->getTerm($binding);
+            $term->setVariableName($binding['@name']);
+            $terms[] = $term;
         }
         elseif (isset($binding[0]['@name'])) {
             foreach ($binding as $termData) {
-                $terms[] = $this->getTerm($termData);
+                $term = $this->getTerm($termData);
+                $term->setVariableName($termData['@name']);
+                $terms[] = $term;
             }
         }
         return $terms;

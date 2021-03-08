@@ -42,4 +42,26 @@ class Triple implements TripleInterface
     {
         return $this->subject;
     }
+
+    /**
+     * Setters.
+     */
+
+    public function setObject(TermInterface $term): TripleInterface
+    {
+        $this->object = $term;
+        return $this;
+    }
+
+    public function setPredicate(TermInterface $term): TripleInterface
+    {
+        $this->predicate = $term;
+        return $this;
+    }
+
+    public function setSubject(TermInterface $term): TripleInterface
+    {
+        $this->subject = $term;
+        return $this;
+    }
 }

@@ -60,4 +60,13 @@ class Constant
      * @see https://tools.ietf.org/html/rfc8141.
      */
     const URN = '^urn:[a-z0-9][a-z0-9-]{0,31}:[a-z0-9()+,\-.:=@;$_!*\'%\/?#]+$';
+
+    /**
+     * UUID namespaces
+     */
+
+    /**
+     * Namespace used for storing values in cache.
+     */
+    const NAMESPACE_CACHE = '65921776-7f6d-11eb-8f42-17ee83e595f7';
 }

@@ -5,7 +5,7 @@ namespace EffectiveActivism\SparQlClient\Syntax\Term;
 use EffectiveActivism\SparQlClient\Constant;
 use InvalidArgumentException;
 
-abstract class AbstractLiteral implements TermInterface
+abstract class AbstractLiteral extends AbstractTerm implements TermInterface
 {
     /**
      * @see https://www.w3.org/TR/sparql11-query/#QSynLiterals.

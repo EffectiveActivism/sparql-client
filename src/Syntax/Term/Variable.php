@@ -8,7 +8,7 @@ use InvalidArgumentException;
 /**
  * @see https://www.w3.org/TR/sparql11-query/#QSynVariables
  */
-class Variable implements TermInterface
+class Variable extends AbstractTerm implements TermInterface
 {
     protected string $value;
 
@@ -18,6 +18,7 @@ class Variable implements TermInterface
             throw new InvalidArgumentException(sprintf('Value "%s" is not a valid variable name', $value));
         }
         $this->value = $value;
+        $this->variableName = $value;
     }
 
     public function serialize(): string
