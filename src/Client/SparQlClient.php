@@ -4,6 +4,8 @@ namespace EffectiveActivism\SparQlClient\Client;
 
 use EffectiveActivism\SparQlClient\Exception\SparQlException;
 use EffectiveActivism\SparQlClient\Syntax\Statement\DeleteStatement;
+use EffectiveActivism\SparQlClient\Syntax\Statement\ReplaceStatement;
+use EffectiveActivism\SparQlClient\Syntax\Statement\ReplaceStatementInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\SelectStatement;
 use EffectiveActivism\SparQlClient\Syntax\Statement\StatementInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\InsertStatement;
@@ -55,22 +57,11 @@ class SparQlClient implements SparQlClientInterface
     public function execute(StatementInterface $statement, bool $toTriples = false): array
     {
         $result = [];
-        $namespaces = '';
-        foreach ($statement->getExtraNamespaces() as $prefix => $url) {
-            $namespaces .= sprintf('%s:%s ', $prefix, $url);
-        }
-        $variables = implode(' ', array_map(function (Variable $variable) {
-            return $variable->serialize();
-        }, $statement->getVariables()));
-        $conditions = sprintf('%s .', implode(' . ', $statement->getConditions()));
-        $optionalConditions = '';
-        foreach ($statement->getOptionalConditions() as $triple) {
-            $optionalConditions .= sprintf('OPTIONAL {%s} .', $triple);
-        }
+
         $query = match (get_class($statement)) {
             DeleteStatement::class => sprintf('%s DELETE %s WHERE {%s %s}', $namespaces, $variables, $conditions, $optionalConditions),
+            InsertStatement::class => sprintf('%s INSERT %s WHERE {%s %s}', $namespaces, $variables, $conditions, $optionalConditions),
             SelectStatement::class => sprintf('%s SELECT %s WHERE {%s %s}', $namespaces, $variables, $conditions, $optionalConditions),
-            InsertStatement::class => sprintf('%s UPDATE %s WHERE {%s %s}', $namespaces, $variables, $conditions, $optionalConditions),
         };
         $parameters = match (get_class($statement)) {
             DeleteStatement::class, InsertStatement::class => ['body' => ['update' => $query]],
@@ -163,14 +154,19 @@ class SparQlClient implements SparQlClientInterface
         return $result;
     }
 
-    public function delete(array $variables): DeleteStatement
+    public function delete(TripleInterface $triple): DeleteStatement
     {
-        return new DeleteStatement($variables);
+        return new DeleteStatement($triple);
     }
 
-    public function insert(array $variables): InsertStatement
+    public function insert(TripleInterface $triple): InsertStatement
     {
-        return new InsertStatement($variables);
+        return new InsertStatement($triple);
+    }
+
+    public function replace(TripleInterface $triple): ReplaceStatementInterface
+    {
+        return new ReplaceStatement($triple);
     }
 
     public function select(array $variables): SelectStatement

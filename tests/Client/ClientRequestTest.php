@@ -4,6 +4,7 @@ namespace EffectiveActivism\SparQlClient\Tests\Client;
 
 use EffectiveActivism\SparQlClient\Client\SparQlClientInterface;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri;
+use EffectiveActivism\SparQlClient\Syntax\Term\PlainLiteral;
 use EffectiveActivism\SparQlClient\Syntax\Triple\Triple;
 use EffectiveActivism\SparQlClient\Syntax\Term\PrefixedIri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Variable;
@@ -20,7 +21,9 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class ClientRequestTest extends KernelTestCase
 {
-    const EXPECTED_QUERY = 'query= SELECT ?subject ?object WHERE {?subject schema:headline ?object . }';
+    const SELECT_STATEMENT_EXPECTED_QUERY = 'query= SELECT ?subject ?object WHERE {?subject schema:headline ?object . }';
+
+    const INSERT_STATEMENT_EXPECTED_QUERY = 'query= SELECT ?subject ?object WHERE {?subject schema:headline ?object . }';
 
     /**
      * @covers \EffectiveActivism\SparQlClient\Client\SparQlClient
@@ -37,14 +40,14 @@ class ClientRequestTest extends KernelTestCase
         $kernel->boot();
         $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
         $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
+        /** @var SparQlClientInterface $sparQlClient */
         $sparQlClient = $kernel->getContainer()->get(SparQlClient::class);
         $subject = new Variable('subject');
         $predicate = new PrefixedIri('schema', 'headline');
         $object = new Variable('object');
-        $variables = [$subject, $object];
-        $statement = $sparQlClient->select($variables);
-        $statement
-            ->condition(new Triple($subject, $predicate, $object));
+        $statement = $sparQlClient
+            ->select([$subject, $object])
+            ->where([new Triple($subject, $predicate, $object)]);
         $resultSet = $sparQlClient->execute($statement);
         $this->assertCount(2, $resultSet);
         $firstSet = $resultSet[0];
@@ -52,7 +55,32 @@ class ClientRequestTest extends KernelTestCase
         $firstTerm = $firstSet[0];
         $this->assertInstanceOf(Iri::class, $firstTerm);
         $this->assertEquals('<urn:uuid:fcf19bc4-7e81-11eb-a169-175604c7c7bc>', $firstTerm->serialize());
-        $this->assertEquals(self::EXPECTED_QUERY, urldecode($receivedQuery));
+        $this->assertEquals(self::SELECT_STATEMENT_EXPECTED_QUERY, urldecode($receivedQuery));
+    }
+
+    /**
+     * @covers \EffectiveActivism\SparQlClient\Client\SparQlClient
+     */
+    public function testInsertStatementRequest()
+    {
+        $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
+        $receivedQuery = null;
+        $httpClient = new MockHttpClient(function ($method, $url, $options) use (&$receivedQuery) {
+            $receivedQuery = $options['body'];
+            return new MockResponse(null);
+        });
+        $kernel = new TestKernel('test', true);
+        $kernel->boot();
+        $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
+        $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
+        $subject = new Iri('urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece');
+        $predicate = new PrefixedIri('schema', 'headline');
+        $object = new PlainLiteral('Lorem Ipsum');
+        /** @var SparQlClientInterface $sparQlClient */
+        $sparQlClient = $kernel->getContainer()->get(SparQlClient::class);
+        $statement = $sparQlClient->insert(new Triple($subject, $predicate, $object));
+        $sparQlClient->execute($statement);
+        $this->assertEquals(self::INSERT_STATEMENT_EXPECTED_QUERY, urldecode($receivedQuery));
     }
 
     /**
@@ -76,7 +104,7 @@ class ClientRequestTest extends KernelTestCase
         $variables = [$subject, $object];
         $statement = $sparQlClient->select($variables);
         $statement
-            ->condition(new Triple($subject, $predicate, $object));
+            ->where([new Triple($subject, $predicate, $object)]);
         $resultTripleSet = $sparQlClient->execute($statement, true);
         $this->assertCount(1, $resultTripleSet);
         $triple = $resultTripleSet[0];
@@ -91,8 +119,7 @@ class ClientRequestTest extends KernelTestCase
     {
         $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
         $selectResponseContent = file_get_contents(__DIR__ . '/../fixtures/client-select-request.xml');
-        $updateResponseContent = file_get_contents(__DIR__ . '/../fixtures/client-select-request.xml');
-        $httpClient = new MockHttpClient([new MockResponse([$selectResponseContent]), new MockResponse([$updateResponseContent])]);
+        $httpClient = new MockHttpClient([new MockResponse($selectResponseContent), new MockResponse(null)]);
         $kernel = new TestKernel('test', true);
         $kernel->boot();
         $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
@@ -105,10 +132,11 @@ class ClientRequestTest extends KernelTestCase
         $variables = [$subject, $object];
         $statement = $sparQlClient->select($variables);
         $statement
-            ->condition(new Triple($subject, $predicate, $object));
+            ->where([new Triple($subject, $predicate, $object)]);
         $sparQlClient->execute($statement);
         $this->assertEquals($selectResponseContent, $cacheAdapter->get('0225880b-eda6-5718-9854-8daee9017b14', function (ItemInterface $item) {
             return 'UNCACHED';
         }));
+        $statement = $sparQlClient->delete(new Triple($subject, $predicate, $object));
     }
 }

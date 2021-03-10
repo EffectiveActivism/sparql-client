@@ -2,6 +2,20 @@
 
 namespace EffectiveActivism\SparQlClient\Syntax\Statement;
 
-class SelectStatement extends AbstractStatement
+use EffectiveActivism\SparQlClient\Syntax\Term\Variable;
+use InvalidArgumentException;
+
+class SelectStatement extends AbstractConditionalStatement implements SelectStatementInterface
 {
+    protected array $variables;
+
+    public function __construct(array $variables)
+    {
+        foreach ($variables as $variable) {
+            if (get_class($variable) !== Variable::class) {
+                throw new InvalidArgumentException(sprintf('Invalid variable class: %s', get_class($variable)));
+            }
+        }
+        $this->variables = $variables;
+    }
 }

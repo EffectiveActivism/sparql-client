@@ -2,6 +2,14 @@
 
 namespace EffectiveActivism\SparQlClient\Syntax\Statement;
 
-class InsertStatement extends AbstractStatement
+use EffectiveActivism\SparQlClient\Syntax\Triple\TripleInterface;
+
+class InsertStatement extends AbstractStatement implements InsertStatementInterface
 {
+    protected TripleInterface $tripleToInsert;
+
+    public function __construct(TripleInterface $triple)
+    {
+        $this->tripleToInsert = $triple;
+    }
 }

@@ -2,18 +2,22 @@
 
 namespace EffectiveActivism\SparQlClient\Client;
 
-use EffectiveActivism\SparQlClient\Syntax\Statement\DeleteStatement;
-use EffectiveActivism\SparQlClient\Syntax\Statement\SelectStatement;
+use EffectiveActivism\SparQlClient\Syntax\Statement\DeleteStatementInterface;
+use EffectiveActivism\SparQlClient\Syntax\Statement\InsertStatementInterface;
+use EffectiveActivism\SparQlClient\Syntax\Statement\ReplaceStatementInterface;
+use EffectiveActivism\SparQlClient\Syntax\Statement\SelectStatementInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\StatementInterface;
-use EffectiveActivism\SparQlClient\Syntax\Statement\InsertStatement;
+use EffectiveActivism\SparQlClient\Syntax\Triple\TripleInterface;
 
 interface SparQlClientInterface
 {
     public function execute(StatementInterface $statement, bool $toTriples = false): array;
 
-    public function delete(array $variables): DeleteStatement;
+    public function delete(TripleInterface $triple): DeleteStatementInterface;
 
-    public function insert(array $variables): InsertStatement;
+    public function insert(TripleInterface $triple): InsertStatementInterface;
 
-    public function select(array $variables): SelectStatement;
+    public function replace(TripleInterface $triple): ReplaceStatementInterface;
+
+    public function select(array $variables): SelectStatementInterface;
 }

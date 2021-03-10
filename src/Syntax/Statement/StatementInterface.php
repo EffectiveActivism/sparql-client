@@ -2,15 +2,9 @@
 
 namespace EffectiveActivism\SparQlClient\Syntax\Statement;
 
-use EffectiveActivism\SparQlClient\Syntax\Triple\TripleInterface;
-
 interface StatementInterface
 {
-    public function condition(TripleInterface $triple): StatementInterface;
-
     public function extraNamespaces(array $extraNamespaces): StatementInterface;
-
-    public function optionalCondition(TripleInterface $triple): StatementInterface;
 
     /**
      * Getters.
@@ -21,6 +15,8 @@ interface StatementInterface
     public function getExtraNamespaces(): array;
 
     public function getOptionalConditions(): array;
+
+    public function getQuery(): string;
 
     public function getVariables(): array;
 }
