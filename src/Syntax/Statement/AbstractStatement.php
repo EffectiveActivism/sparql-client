@@ -9,12 +9,6 @@ abstract class AbstractStatement implements StatementInterface
 {
     protected array $extraNamespaces = [];
 
-    protected array $conditions = [];
-
-    protected array $optionalConditions = [];
-
-    protected array $variables = [];
-
     public function extraNamespaces(array $extraNamespaces): StatementInterface
     {
         // Validate extra namespaces.
@@ -30,29 +24,22 @@ abstract class AbstractStatement implements StatementInterface
         return $this;
     }
 
+    public function toQuery(): string
+    {
+        $query = '';
+        // TODO: Include config namespaces.
+        foreach ($this->extraNamespaces as $prefix => $url) {
+            $query .= sprintf('%s:%s ', $prefix, $url);
+        }
+        return $query;
+    }
+
     /**
      * Getters.
      */
 
-    public function getConditions(): array
-    {
-        return $this->conditions;
-    }
-
     public function getExtraNamespaces(): array
     {
         return $this->extraNamespaces;
-    }
-
-    public function getOptionalConditions(): array
-    {
-        return $this->optionalConditions;
-    }
-
-    abstract public function getQuery(): string;
-
-    public function getVariables(): array
-    {
-        return $this->variables;
     }
 }

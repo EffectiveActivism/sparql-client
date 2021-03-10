@@ -2,7 +2,6 @@
 
 namespace EffectiveActivism\SparQlClient\Syntax\Statement;
 
-use EffectiveActivism\SparQlClient\Syntax\Term\Variable;
 use EffectiveActivism\SparQlClient\Syntax\Triple\TripleInterface;
 
 class DeleteStatement extends AbstractConditionalStatement implements DeleteStatementInterface
@@ -14,17 +13,22 @@ class DeleteStatement extends AbstractConditionalStatement implements DeleteStat
         $this->tripleToDelete = $triple;
     }
 
-    public function getQuery(): string
+    public function toQuery(): string
     {
-        $namespaces = '';
-        foreach ($this->extraNamespaces as $prefix => $url) {
-            $namespaces .= sprintf('%s:%s ', $prefix, $url);
+        $query = parent::toQuery();
+        $conditions = '';
+        foreach ($this->conditions as $triple) {
+            $conditions .= sprintf('%s .', $triple);
         }
-        $conditions = sprintf('%s .', implode(' . ', $this->conditions));
         $optionalConditions = '';
         foreach ($this->optionalConditions as $triple) {
             $optionalConditions .= sprintf('OPTIONAL {%s} .', $triple);
         }
-        return sprintf('%s DELETE %s WHERE {%s %s}', $namespaces, (string) $this->tripleToDelete, $conditions, $optionalConditions),
+        if (!empty($conditions) || !empty($optionalConditions)) {
+            return sprintf('%s DELETE { %s } WHERE { %s %s}', $query, (string) $this->tripleToDelete, $conditions, $optionalConditions);
+        }
+        else {
+            return sprintf('%s DELETE { %s }', $query, (string) $this->tripleToDelete);
+        }
     }
 }

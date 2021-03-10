@@ -21,9 +21,19 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class ClientRequestTest extends KernelTestCase
 {
-    const SELECT_STATEMENT_EXPECTED_QUERY = 'query= SELECT ?subject ?object WHERE {?subject schema:headline ?object . }';
+    const SELECT_STATEMENT_EXPECTED_QUERY = 'query= SELECT { ?subject ?object } WHERE { ?subject schema:headline ?object . }';
 
-    const INSERT_STATEMENT_EXPECTED_QUERY = 'query= SELECT ?subject ?object WHERE {?subject schema:headline ?object . }';
+    const SELECT_STATEMENT_WITHOUT_CONDITION_EXPECTED_QUERY = 'query= SELECT { ?subject ?object }';
+
+    const INSERT_STATEMENT_EXPECTED_QUERY = 'update= INSERT DATA { <urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece> schema:headline """Lorem Ipsum""" }';
+
+    const DELETE_STATEMENT_EXPECTED_QUERY = 'update= DELETE { ?subject schema:headline ?object } WHERE { ?subject rdf:type schema:Article . }';
+
+    const DELETE_STATEMENT_WITHOUT_CONDITION_EXPECTED_QUERY = 'update= DELETE { ?subject schema:headline ?object }';
+
+    const REPLACE_STATEMENT_EXPECTED_QUERY = 'update= DELETE { ?subject schema:headline ?object } INSERT { ?subject schema:headline """Lorem Ipsum""" } WHERE { ?subject rdf:type schema:Article . }';
+
+    const REPLACE_STATEMENT_WITHOUT_CONDITION_EXPECTED_QUERY = 'update= DELETE { ?subject schema:headline ?object } INSERT { ?subject schema:headline """Lorem Ipsum""" }';
 
     /**
      * @covers \EffectiveActivism\SparQlClient\Client\SparQlClient
@@ -56,6 +66,10 @@ class ClientRequestTest extends KernelTestCase
         $this->assertInstanceOf(Iri::class, $firstTerm);
         $this->assertEquals('<urn:uuid:fcf19bc4-7e81-11eb-a169-175604c7c7bc>', $firstTerm->serialize());
         $this->assertEquals(self::SELECT_STATEMENT_EXPECTED_QUERY, urldecode($receivedQuery));
+        $statement = $sparQlClient
+            ->select([$subject, $object]);
+        $sparQlClient->execute($statement);
+        $this->assertEquals(self::SELECT_STATEMENT_WITHOUT_CONDITION_EXPECTED_QUERY, urldecode($receivedQuery));
     }
 
     /**
@@ -81,6 +95,64 @@ class ClientRequestTest extends KernelTestCase
         $statement = $sparQlClient->insert(new Triple($subject, $predicate, $object));
         $sparQlClient->execute($statement);
         $this->assertEquals(self::INSERT_STATEMENT_EXPECTED_QUERY, urldecode($receivedQuery));
+    }
+
+    /**
+     * @covers \EffectiveActivism\SparQlClient\Client\SparQlClient
+     */
+    public function testDeleteStatementRequest()
+    {
+        $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
+        $receivedQuery = null;
+        $httpClient = new MockHttpClient(function ($method, $url, $options) use (&$receivedQuery) {
+            $receivedQuery = $options['body'];
+            return new MockResponse(null);
+        });
+        $kernel = new TestKernel('test', true);
+        $kernel->boot();
+        $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
+        $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
+        /** @var SparQlClientInterface $sparQlClient */
+        $sparQlClient = $kernel->getContainer()->get(SparQlClient::class);
+        $statement = $sparQlClient
+            ->delete(new Triple(new Variable('subject'), new PrefixedIri('schema', 'headline'), new Variable('object')))
+            ->where([new Triple(new Variable('subject'), new PrefixedIri('rdf', 'type'), new PrefixedIri('schema', 'Article'))]);
+        $sparQlClient->execute($statement);
+        $this->assertEquals(self::DELETE_STATEMENT_EXPECTED_QUERY, urldecode($receivedQuery));
+        $statement = $sparQlClient
+            ->delete(new Triple(new Variable('subject'), new PrefixedIri('schema', 'headline'), new Variable('object')));
+        $sparQlClient->execute($statement);
+        $this->assertEquals(self::DELETE_STATEMENT_WITHOUT_CONDITION_EXPECTED_QUERY, urldecode($receivedQuery));
+    }
+
+    /**
+     * @covers \EffectiveActivism\SparQlClient\Client\SparQlClient
+     */
+    public function testReplaceStatementRequest()
+    {
+        $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
+        $receivedQuery = null;
+        $httpClient = new MockHttpClient(function ($method, $url, $options) use (&$receivedQuery) {
+            $receivedQuery = $options['body'];
+            return new MockResponse(null);
+        });
+        $kernel = new TestKernel('test', true);
+        $kernel->boot();
+        $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
+        $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
+        /** @var SparQlClientInterface $sparQlClient */
+        $sparQlClient = $kernel->getContainer()->get(SparQlClient::class);
+        $statement = $sparQlClient
+            ->replace(new Triple(new Variable('subject'), new PrefixedIri('schema', 'headline'), new Variable('object')))
+            ->with(new Triple(new Variable('subject'), new PrefixedIri('schema', 'headline'), new PlainLiteral('Lorem Ipsum')))
+            ->where([new Triple(new Variable('subject'), new PrefixedIri('rdf', 'type'), new PrefixedIri('schema', 'Article'))]);
+        $sparQlClient->execute($statement);
+        $this->assertEquals(self::REPLACE_STATEMENT_EXPECTED_QUERY, urldecode($receivedQuery));
+        $statement = $sparQlClient
+            ->replace(new Triple(new Variable('subject'), new PrefixedIri('schema', 'headline'), new Variable('object')))
+            ->with(new Triple(new Variable('subject'), new PrefixedIri('schema', 'headline'), new PlainLiteral('Lorem Ipsum')));
+        $sparQlClient->execute($statement);
+        $this->assertEquals(self::REPLACE_STATEMENT_WITHOUT_CONDITION_EXPECTED_QUERY, urldecode($receivedQuery));
     }
 
     /**
@@ -134,7 +206,7 @@ class ClientRequestTest extends KernelTestCase
         $statement
             ->where([new Triple($subject, $predicate, $object)]);
         $sparQlClient->execute($statement);
-        $this->assertEquals($selectResponseContent, $cacheAdapter->get('0225880b-eda6-5718-9854-8daee9017b14', function (ItemInterface $item) {
+        $this->assertEquals($selectResponseContent, $cacheAdapter->get('7fdb983c-364c-558f-8d00-711406e82d57', function (ItemInterface $item) {
             return 'UNCACHED';
         }));
         $statement = $sparQlClient->delete(new Triple($subject, $predicate, $object));

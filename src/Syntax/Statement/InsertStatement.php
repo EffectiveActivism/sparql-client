@@ -12,4 +12,10 @@ class InsertStatement extends AbstractStatement implements InsertStatementInterf
     {
         $this->tripleToInsert = $triple;
     }
+
+    public function toQuery(): string
+    {
+        $query = parent::toQuery();
+        return sprintf('%s INSERT DATA { %s }', $query, (string) $this->tripleToInsert);
+    }
 }

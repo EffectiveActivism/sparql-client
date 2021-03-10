@@ -6,17 +6,11 @@ interface StatementInterface
 {
     public function extraNamespaces(array $extraNamespaces): StatementInterface;
 
+    public function toQuery(): string;
+
     /**
      * Getters.
      */
 
-    public function getConditions(): array;
-
     public function getExtraNamespaces(): array;
-
-    public function getOptionalConditions(): array;
-
-    public function getQuery(): string;
-
-    public function getVariables(): array;
 }

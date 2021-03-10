@@ -4,9 +4,12 @@ namespace EffectiveActivism\SparQlClient\Client;
 
 use EffectiveActivism\SparQlClient\Exception\SparQlException;
 use EffectiveActivism\SparQlClient\Syntax\Statement\DeleteStatement;
+use EffectiveActivism\SparQlClient\Syntax\Statement\DeleteStatementInterface;
+use EffectiveActivism\SparQlClient\Syntax\Statement\InsertStatementInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\ReplaceStatement;
 use EffectiveActivism\SparQlClient\Syntax\Statement\ReplaceStatementInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\SelectStatement;
+use EffectiveActivism\SparQlClient\Syntax\Statement\SelectStatementInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\StatementInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\InsertStatement;
 use EffectiveActivism\SparQlClient\Serializer\Encoder\TrigEncoder;
@@ -23,7 +26,11 @@ use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Contracts\Cache\TagAwareCacheInterface;
+use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface as HttpClientExceptionInterface;
+use Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface;
+use Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface;
+use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class SparQlClient implements SparQlClientInterface
@@ -56,102 +63,124 @@ class SparQlClient implements SparQlClientInterface
      */
     public function execute(StatementInterface $statement, bool $toTriples = false): array
     {
-        $result = [];
+        return match (get_class($statement)) {
+            SelectStatement::class => $this->handleSelectStatement($statement, $toTriples),
+            DeleteStatement::class, ReplaceStatement::class => $this->handleDeleteAndReplaceStatement($statement),
+            InsertStatement::class => $this->handleInsertStatement($statement),
+        };
+    }
 
-        $query = match (get_class($statement)) {
-            DeleteStatement::class => sprintf('%s DELETE %s WHERE {%s %s}', $namespaces, $variables, $conditions, $optionalConditions),
-            InsertStatement::class => sprintf('%s INSERT %s WHERE {%s %s}', $namespaces, $variables, $conditions, $optionalConditions),
-            SelectStatement::class => sprintf('%s SELECT %s WHERE {%s %s}', $namespaces, $variables, $conditions, $optionalConditions),
-        };
-        $parameters = match (get_class($statement)) {
-            DeleteStatement::class, InsertStatement::class => ['body' => ['update' => $query]],
-            SelectStatement::class => ['body' => ['query' => $query]],
-        };
+    /**
+     * @throws SparQlException
+     */
+    protected function handleSelectStatement(SelectStatementInterface $statement, bool $toTriples): array
+    {
+        $query = $statement->toQuery();
+        $parameters = ['body' => ['query' => $query]];
+        $cacheHit = true;
         $responseContent = null;
-        $cachedContent = null;
-        // Get cached select statement responses or, if response is not cached, query the triplestore.
-        if (get_class($statement) === SelectStatement::class) {
-            $cacheHit = true;
-            try {
-                $responseContent = $this->cacheAdapter->get($this->getKey($query), function (ItemInterface $item) use ($parameters, &$cacheHit) {
-                    $responseContent = null;
-                    try {
-                        $responseContent = $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent();
-                        $cacheHit = false;
-                    } catch (HttpClientExceptionInterface $exception) {
-                        throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
-                    }
-                    return $responseContent;
-                });
-            } catch (InvalidArgumentException $exception) {
-                $this->logger->info($exception->getMessage());
-            }
-            // Update cache for successful select statement requests, if needed.
-            if (!$cacheHit) {
-                $tags = [];
-                /** @var TripleInterface $triple */
-                foreach (array_merge($statement->getConditions(), $statement->getOptionalConditions()) as $triple) {
-                    /** @var TermInterface $term */
-                    foreach ([$triple->getSubject(), $triple->getObject()] as $term) {
-                        if ($term instanceof AbstractIri) {
-                            $tags[] = $this->getKey($term->serialize());
-                        }
-                    }
-                }
-                $queryKey = $this->getKey($query);
+        try {
+            $responseContent = $this->cacheAdapter->get($this->getKey($query), function (ItemInterface $item) use ($parameters, &$cacheHit) {
+                $responseContent = null;
                 try {
-                    $this->cacheAdapter->getItem($queryKey)->set($responseContent);
-                    $this->cacheAdapter->getItem($queryKey)->tag($tags);
-                } catch (CacheException $exception) {
-                    $this->logger->info($exception->getMessage());
+                    $responseContent = $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent();
+                    $cacheHit = false;
+                } catch (HttpClientExceptionInterface $exception) {
+                    throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
                 }
-            }
-            // Return response as either a set of terms or a set of triples.
-            $result = $sets = $this->serializer->deserialize($responseContent, SparQlResultDenormalizer::TYPE, 'xml');
-            if ($toTriples === true) {
-                $triples = array_merge($statement->getConditions(), $statement->getOptionalConditions());
-                foreach ($sets as $set) {
-                    /** @var TripleInterface $triple */
-                    foreach ($triples as $triple) {
-                        /** @var TermInterface $term */
-                        foreach ($set as $term) {
-                            if (get_class($triple->getSubject()) === Variable::class && $triple->getSubject()->getVariableName() === $term->getVariableName()) {
-                                $triple->setSubject($term);
-                            }
-                            if (get_class($triple->getPredicate()) === Variable::class && $triple->getPredicate()->getVariableName() === $term->getVariableName()) {
-                                $triple->setPredicate($term);
-                            }
-                            if (get_class($triple->getObject()) === Variable::class && $triple->getObject()->getVariableName() === $term->getVariableName()) {
-                                $triple->setObject($term);
-                            }
-                        }
+                return $responseContent;
+            });
+        } catch (InvalidArgumentException $exception) {
+            $this->logger->info($exception->getMessage());
+        }
+        // Update cache for successful select statement requests, if uncached.
+        if (!$cacheHit) {
+            $tags = [];
+            /** @var TripleInterface $triple */
+            foreach (array_merge($statement->getConditions(), $statement->getOptionalConditions()) as $triple) {
+                /** @var TermInterface $term */
+                foreach ([$triple->getSubject(), $triple->getObject()] as $term) {
+                    if ($term instanceof AbstractIri) {
+                        $tags[] = $this->getKey($term->serialize());
                     }
                 }
-                $result = $triples;
+            }
+            $queryKey = $this->getKey($query);
+            try {
+                $this->cacheAdapter->getItem($queryKey)->set($responseContent);
+                $this->cacheAdapter->getItem($queryKey)->tag($tags);
+            } catch (CacheException $exception) {
+                $this->logger->info($exception->getMessage());
             }
         }
-        elseif (in_array(get_class($statement), [DeleteStatement::class, InsertStatement::class])) {
-            try {
-                $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent(false);
-                // Invalidate cache for delete and update statements.
-                $tags = [];
+        // Return response as either a set of terms or a set of triples.
+        $result = $sets = $this->serializer->deserialize($responseContent, SparQlResultDenormalizer::TYPE, 'xml');
+        if ($toTriples === true) {
+            $triples = array_merge($statement->getConditions(), $statement->getOptionalConditions());
+            foreach ($sets as $set) {
                 /** @var TripleInterface $triple */
-                foreach (array_merge($statement->getConditions(), $statement->getOptionalConditions()) as $triple) {
+                foreach ($triples as $triple) {
                     /** @var TermInterface $term */
-                    foreach ([$triple->getSubject(), $triple->getObject()] as $term) {
-                        if ($term instanceof AbstractIri) {
-                            $tags[] = $this->getKey($term->serialize());
+                    foreach ($set as $term) {
+                        if (get_class($triple->getSubject()) === Variable::class && $triple->getSubject()->getVariableName() === $term->getVariableName()) {
+                            $triple->setSubject($term);
+                        }
+                        if (get_class($triple->getPredicate()) === Variable::class && $triple->getPredicate()->getVariableName() === $term->getVariableName()) {
+                            $triple->setPredicate($term);
+                        }
+                        if (get_class($triple->getObject()) === Variable::class && $triple->getObject()->getVariableName() === $term->getVariableName()) {
+                            $triple->setObject($term);
                         }
                     }
                 }
-                $this->cacheAdapter->invalidateTags($tags);
-            } catch (HttpClientExceptionInterface $exception) {
-                throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
-            } catch (InvalidArgumentException $exception) {
-                $this->logger->info($exception->getMessage());
             }
+            $result = $triples;
         }
         return $result;
+    }
+
+    /**
+     * @throws SparQlException
+     */
+    protected function handleDeleteAndReplaceStatement(DeleteStatementInterface|ReplaceStatementInterface $statement): array
+    {
+        $query = $statement->toQuery();
+        $parameters = ['body' => ['update' => $query]];
+        try {
+            $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent(false);
+            // Invalidate cache for delete and update statements.
+            $tags = [];
+            /** @var TripleInterface $triple */
+            foreach (array_merge($statement->getConditions(), $statement->getOptionalConditions()) as $triple) {
+                /** @var TermInterface $term */
+                foreach ([$triple->getSubject(), $triple->getObject()] as $term) {
+                    if ($term instanceof AbstractIri) {
+                        $tags[] = $this->getKey($term->serialize());
+                    }
+                }
+            }
+            $this->cacheAdapter->invalidateTags($tags);
+        } catch (HttpClientExceptionInterface $exception) {
+            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
+        } catch (InvalidArgumentException $exception) {
+            $this->logger->info($exception->getMessage());
+        }
+        return [];
+    }
+
+    /**
+     * @throws SparQlException
+     */
+    protected function handleInsertStatement(InsertStatementInterface $statement): array
+    {
+        $query = $statement->toQuery();
+        $parameters = ['body' => ['update' => $query]];
+        try {
+            $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent(false);
+        } catch (HttpClientExceptionInterface $exception) {
+            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
+        }
+        return [];
     }
 
     public function delete(TripleInterface $triple): DeleteStatement

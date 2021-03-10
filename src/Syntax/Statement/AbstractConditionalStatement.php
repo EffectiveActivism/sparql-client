@@ -7,6 +7,12 @@ use InvalidArgumentException;
 
 abstract class AbstractConditionalStatement extends AbstractStatement implements ConditionalStatementInterface
 {
+    protected array $conditions = [];
+
+    protected array $optionalConditions = [];
+
+    protected array $variables = [];
+
     public function where(array $triples, bool $optional = false): ConditionalStatementInterface
     {
         foreach ($triples as $triple) {
@@ -21,5 +27,24 @@ abstract class AbstractConditionalStatement extends AbstractStatement implements
             $this->conditions = $triples;
         }
         return $this;
+    }
+
+    /**
+     * Getters.
+     */
+
+    public function getConditions(): array
+    {
+        return $this->conditions;
+    }
+
+    public function getOptionalConditions(): array
+    {
+        return $this->optionalConditions;
+    }
+
+    public function getVariables(): array
+    {
+        return $this->variables;
     }
 }
