@@ -2,6 +2,7 @@
 
 namespace EffectiveActivism\SparQlClient\Client;
 
+use EffectiveActivism\SparQlClient\Constant;
 use EffectiveActivism\SparQlClient\Exception\SparQlException;
 use EffectiveActivism\SparQlClient\Syntax\Statement\DeleteStatement;
 use EffectiveActivism\SparQlClient\Syntax\Statement\DeleteStatementInterface;
@@ -26,11 +27,7 @@ use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Contracts\Cache\TagAwareCacheInterface;
-use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface as HttpClientExceptionInterface;
-use Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface;
-use Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface;
-use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class SparQlClient implements SparQlClientInterface
@@ -39,22 +36,27 @@ class SparQlClient implements SparQlClientInterface
 
     protected TagAwareCacheInterface $cacheAdapter;
 
+    protected array $extraNamespaces = [];
+
     protected HttpClientInterface $httpClient;
 
     protected LoggerInterface $logger;
+
+    protected array $namespaces = [];
 
     protected SerializerInterface $serializer;
 
     protected string $sparQlEndpoint;
 
-    public function __construct(string $sparQlEndpoint, TagAwareCacheInterface $cacheAdapter, HttpClientInterface $httpClient, LoggerInterface $logger)
+    public function __construct(array $configuration, TagAwareCacheInterface $cacheAdapter, HttpClientInterface $httpClient, LoggerInterface $logger)
     {
-        $this->sparQlEndpoint = $sparQlEndpoint;
+        $this->sparQlEndpoint = $configuration['sparql_endpoint'];
         $this->cacheAdapter = $cacheAdapter;
         $this->httpClient = $httpClient;
         $this->logger = $logger;
+        $this->namespaces = $configuration['namespaces'];
         $normalizers = [new SparQlResultDenormalizer()];
-        $encoders = [new TrigEncoder(), new XmlEncoder()];
+        $encoders = [new XmlEncoder()];
         $this->serializer = new Serializer($normalizers, $encoders);
     }
 
@@ -64,9 +66,10 @@ class SparQlClient implements SparQlClientInterface
     public function execute(StatementInterface $statement, bool $toTriples = false): array
     {
         return match (get_class($statement)) {
-            SelectStatement::class => $this->handleSelectStatement($statement, $toTriples),
-            DeleteStatement::class, ReplaceStatement::class => $this->handleDeleteAndReplaceStatement($statement),
+            DeleteStatement::class => $this->handleDeleteStatement($statement),
             InsertStatement::class => $this->handleInsertStatement($statement),
+            ReplaceStatement::class => $this->handleReplaceStatement($statement),
+            SelectStatement::class => $this->handleSelectStatement($statement, $toTriples)
         };
     }
 
@@ -107,8 +110,10 @@ class SparQlClient implements SparQlClientInterface
             }
             $queryKey = $this->getKey($query);
             try {
-                $this->cacheAdapter->getItem($queryKey)->set($responseContent);
-                $this->cacheAdapter->getItem($queryKey)->tag($tags);
+                $cacheItem = $this->cacheAdapter->getItem($queryKey);
+                $cacheItem->set($responseContent);
+                $cacheItem->tag($tags);
+                $this->cacheAdapter->save($cacheItem);
             } catch (CacheException $exception) {
                 $this->logger->info($exception->getMessage());
             }
@@ -142,7 +147,7 @@ class SparQlClient implements SparQlClientInterface
     /**
      * @throws SparQlException
      */
-    protected function handleDeleteAndReplaceStatement(DeleteStatementInterface|ReplaceStatementInterface $statement): array
+    protected function handleDeleteStatement(DeleteStatementInterface $statement): array
     {
         $query = $statement->toQuery();
         $parameters = ['body' => ['update' => $query]];
@@ -151,7 +156,36 @@ class SparQlClient implements SparQlClientInterface
             // Invalidate cache for delete and update statements.
             $tags = [];
             /** @var TripleInterface $triple */
-            foreach (array_merge($statement->getConditions(), $statement->getOptionalConditions()) as $triple) {
+            foreach (array_merge([$statement->getTripleToDelete()], $statement->getConditions(), $statement->getOptionalConditions()) as $triple) {
+                /** @var TermInterface $term */
+                foreach ([$triple->getSubject(), $triple->getObject()] as $term) {
+                    if ($term instanceof AbstractIri) {
+                        $tags[] = $this->getKey($term->serialize());
+                    }
+                }
+            }
+            $this->cacheAdapter->invalidateTags($tags);
+        } catch (HttpClientExceptionInterface $exception) {
+            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
+        } catch (InvalidArgumentException $exception) {
+            $this->logger->info($exception->getMessage());
+        }
+        return [];
+    }
+
+    /**
+     * @throws SparQlException
+     */
+    protected function handleReplaceStatement(ReplaceStatementInterface $statement): array
+    {
+        $query = $statement->toQuery();
+        $parameters = ['body' => ['update' => $query]];
+        try {
+            $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent(false);
+            // Invalidate cache for delete and update statements.
+            $tags = [];
+            /** @var TripleInterface $triple */
+            foreach (array_merge([$statement->getOriginal(), $statement->getReplacement()], $statement->getConditions(), $statement->getOptionalConditions()) as $triple) {
                 /** @var TermInterface $term */
                 foreach ([$triple->getSubject(), $triple->getObject()] as $term) {
                     if ($term instanceof AbstractIri) {
@@ -185,21 +219,40 @@ class SparQlClient implements SparQlClientInterface
 
     public function delete(TripleInterface $triple): DeleteStatement
     {
-        return new DeleteStatement($triple);
+        return new DeleteStatement($triple, $this->getNamespaces());
     }
 
     public function insert(TripleInterface $triple): InsertStatement
     {
-        return new InsertStatement($triple);
+        return new InsertStatement($triple, $this->getNamespaces());
     }
 
     public function replace(TripleInterface $triple): ReplaceStatementInterface
     {
-        return new ReplaceStatement($triple);
+        return new ReplaceStatement($triple, $this->getNamespaces());
     }
 
     public function select(array $variables): SelectStatement
     {
-        return new SelectStatement($variables);
+        return new SelectStatement($variables, $this->getNamespaces());
+    }
+
+    /**
+     * Getters.
+     */
+
+    public function getNamespaces(): array
+    {
+        return array_merge(Constant::W3C_NAMESPACES, $this->namespaces, $this->extraNamespaces);
+    }
+
+    /**
+     * Setters.
+     */
+
+    public function setExtraNamespaces(array $extraNamespaces): SparQlClientInterface
+    {
+        $this->extraNamespaces = $extraNamespaces;
+        return $this;
     }
 }

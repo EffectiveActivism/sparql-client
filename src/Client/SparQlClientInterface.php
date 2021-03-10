@@ -20,4 +20,16 @@ interface SparQlClientInterface
     public function replace(TripleInterface $triple): ReplaceStatementInterface;
 
     public function select(array $variables): SelectStatementInterface;
+
+    /**
+     * Getters.
+     */
+
+    public function getNamespaces(): array;
+
+    /**
+     * Setters.
+     */
+
+    public function setExtraNamespaces(array $extraNamespaces): SparQlClientInterface;
 }

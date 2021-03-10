@@ -10,8 +10,9 @@ class SelectStatement extends AbstractConditionalStatement implements SelectStat
     /** @var Variable[] */
     protected array $variables;
 
-    public function __construct(array $variables)
+    public function __construct(array $variables, array $extraNamespaces = [])
     {
+        parent::__construct($extraNamespaces);
         foreach ($variables as $variable) {
             if (get_class($variable) !== Variable::class) {
                 throw new InvalidArgumentException(sprintf('Invalid variable class: %s', get_class($variable)));

@@ -6,7 +6,15 @@ use EffectiveActivism\SparQlClient\Syntax\Triple\TripleInterface;
 
 interface ReplaceStatementInterface extends ConditionalStatementInterface
 {
-    public function __construct(TripleInterface $triple);
+    public function __construct(TripleInterface $triple, array $extraNamespaces = []);
 
     public function with(TripleInterface $triple): ReplaceStatementInterface;
+
+    /**
+     * Getters.
+     */
+
+    public function getOriginal(): TripleInterface;
+
+    public function getReplacement(): TripleInterface;
 }

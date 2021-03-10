@@ -2,14 +2,22 @@
 
 namespace EffectiveActivism\SparQlClient\Syntax\Statement;
 
+use EffectiveActivism\SparQlClient\Syntax\Term\PrefixedIri;
 use EffectiveActivism\SparQlClient\Syntax\Triple\TripleInterface;
+use InvalidArgumentException;
 
 class DeleteStatement extends AbstractConditionalStatement implements DeleteStatementInterface
 {
     protected TripleInterface $tripleToDelete;
 
-    public function __construct(TripleInterface $triple)
+    public function __construct(TripleInterface $triple, array $extraNamespaces = [])
     {
+        parent::__construct($extraNamespaces);
+        foreach ($triple->toArray() as $term) {
+            if (get_class($term) === PrefixedIri::class && !in_array($term->getPrefix(), array_keys($this->namespaces))) {
+                throw new InvalidArgumentException(sprintf('Prefix "%s" is not defined', $term->getPrefix()));
+            }
+        }
         $this->tripleToDelete = $triple;
     }
 
@@ -30,5 +38,14 @@ class DeleteStatement extends AbstractConditionalStatement implements DeleteStat
         else {
             return sprintf('%s DELETE { %s }', $query, (string) $this->tripleToDelete);
         }
+    }
+
+    /**
+     * Getters.
+     */
+
+    public function getTripleToDelete(): TripleInterface
+    {
+        return $this->tripleToDelete;
     }
 }

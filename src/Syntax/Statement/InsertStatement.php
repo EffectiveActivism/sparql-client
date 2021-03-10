@@ -2,14 +2,22 @@
 
 namespace EffectiveActivism\SparQlClient\Syntax\Statement;
 
+use EffectiveActivism\SparQlClient\Syntax\Term\PrefixedIri;
 use EffectiveActivism\SparQlClient\Syntax\Triple\TripleInterface;
+use InvalidArgumentException;
 
 class InsertStatement extends AbstractStatement implements InsertStatementInterface
 {
     protected TripleInterface $tripleToInsert;
 
-    public function __construct(TripleInterface $triple)
+    public function __construct(TripleInterface $triple, array $extraNamespaces = [])
     {
+        parent::__construct($extraNamespaces);
+        foreach ($triple->toArray() as $term) {
+            if (get_class($term) === PrefixedIri::class && !in_array($term->getPrefix(), array_keys($this->namespaces))) {
+                throw new InvalidArgumentException(sprintf('Prefix "%s" is not defined', $term->getPrefix()));
+            }
+        }
         $this->tripleToInsert = $triple;
     }
 

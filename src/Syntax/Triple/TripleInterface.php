@@ -6,6 +6,8 @@ use EffectiveActivism\SparQlClient\Syntax\Term\TermInterface;
 
 interface TripleInterface
 {
+    public function toArray(): array;
+
     /**
      * Getters.
      */

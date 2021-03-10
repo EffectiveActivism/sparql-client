@@ -2,7 +2,9 @@
 
 namespace EffectiveActivism\SparQlClient\Syntax\Statement;
 
+use EffectiveActivism\SparQlClient\Syntax\Term\PrefixedIri;
 use EffectiveActivism\SparQlClient\Syntax\Triple\TripleInterface;
+use InvalidArgumentException;
 
 class ReplaceStatement extends AbstractConditionalStatement implements ReplaceStatementInterface
 {
@@ -10,13 +12,24 @@ class ReplaceStatement extends AbstractConditionalStatement implements ReplaceSt
 
     protected TripleInterface $replacement;
 
-    public function __construct(TripleInterface $triple)
+    public function __construct(TripleInterface $triple, array $extraNamespaces = [])
     {
+        parent::__construct($extraNamespaces);
+        foreach ($triple->toArray() as $term) {
+            if (get_class($term) === PrefixedIri::class && !in_array($term->getPrefix(), array_keys($this->namespaces))) {
+                throw new InvalidArgumentException(sprintf('Prefix "%s" is not defined', $term->getPrefix()));
+            }
+        }
         $this->original = $triple;
     }
 
     public function with(TripleInterface $triple): ReplaceStatementInterface
     {
+        foreach ($triple->toArray() as $term) {
+            if (get_class($term) === PrefixedIri::class && !in_array($term->getPrefix(), array_keys($this->namespaces))) {
+                throw new InvalidArgumentException(sprintf('Prefix "%s" is not defined', $term->getPrefix()));
+            }
+        }
         $this->replacement = $triple;
         return $this;
     }
@@ -38,5 +51,15 @@ class ReplaceStatement extends AbstractConditionalStatement implements ReplaceSt
         else {
             return sprintf('%s DELETE { %s } INSERT { %s }', $query, (string) $this->original, (string) $this->replacement);
         }
+    }
+
+    public function getOriginal(): TripleInterface
+    {
+        return $this->original;
+    }
+
+    public function getReplacement(): TripleInterface
+    {
+        return $this->replacement;
     }
 }

@@ -6,5 +6,5 @@ use EffectiveActivism\SparQlClient\Syntax\Triple\TripleInterface;
 
 interface InsertStatementInterface extends StatementInterface
 {
-    public function __construct(TripleInterface $triple);
+    public function __construct(TripleInterface $triple, array $extraNamespaces = []);
 }

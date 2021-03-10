@@ -13,6 +13,4 @@ interface ConditionalStatementInterface extends StatementInterface
     public function getConditions(): array;
 
     public function getOptionalConditions(): array;
-
-    public function getVariables(): array;
 }

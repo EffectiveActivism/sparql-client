@@ -63,10 +63,27 @@ class Constant
 
     /**
      * UUID namespaces
+     *
+     * @see https://en.wikipedia.org/wiki/Universally_unique_identifier#Versions_3_and_5_(namespace_name-based).
      */
 
     /**
      * Namespace used for storing values in cache.
      */
     const NAMESPACE_CACHE = '65921776-7f6d-11eb-8f42-17ee83e595f7';
+
+    /**
+     * Namespaces
+     */
+
+    /**
+     * Default W3C namespaces.
+     */
+    const W3C_NAMESPACES = [
+        'rdf' => 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
+        'rdfs' => 'http://www.w3.org/2000/01/rdf-schema#',
+        'owl' => 'http://www.w3.org/2002/07/owl#',
+        'skos' => 'http://www.w3.org/2004/02/skos/core#',
+        'xsd' => 'http://www.w3.org/2001/XMLSchema#',
+    ];
 }

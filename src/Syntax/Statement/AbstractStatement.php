@@ -7,39 +7,29 @@ use InvalidArgumentException;
 
 abstract class AbstractStatement implements StatementInterface
 {
-    protected array $extraNamespaces = [];
+    protected array $namespaces = [];
 
-    public function extraNamespaces(array $extraNamespaces): StatementInterface
+    public function __construct(array $namespaces)
     {
         // Validate extra namespaces.
-        foreach ($extraNamespaces as $prefix => $url) {
-            if (preg_match(sprintf('/%s/', Constant::PN_LOCAL), $prefix)) {
+        foreach ($namespaces as $prefix => $url) {
+            if (!is_string($prefix) || !preg_match(sprintf('/%s/u', Constant::PN_LOCAL), $prefix)) {
                 throw new InvalidArgumentException(sprintf('Value "%s" is not a valid prefix', $prefix));
             }
             if (!filter_var($url, FILTER_VALIDATE_URL)) {
                 throw new InvalidArgumentException(sprintf('Value "%s" is not a valid URL', $url));
             }
         }
-        $this->extraNamespaces = $extraNamespaces;
-        return $this;
+        $this->namespaces = $namespaces;
     }
 
     public function toQuery(): string
     {
         $query = '';
         // TODO: Include config namespaces.
-        foreach ($this->extraNamespaces as $prefix => $url) {
-            $query .= sprintf('%s:%s ', $prefix, $url);
+        foreach ($this->namespaces as $prefix => $url) {
+            $query .= sprintf('PREFIX %s:%s; ', $prefix, $url);
         }
         return $query;
-    }
-
-    /**
-     * Getters.
-     */
-
-    public function getExtraNamespaces(): array
-    {
-        return $this->extraNamespaces;
     }
 }

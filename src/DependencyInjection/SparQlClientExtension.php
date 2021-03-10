@@ -21,7 +21,7 @@ class SparQlClientExtension extends Extension
         $configuration = new Configuration();
         $config = $this->processConfiguration($configuration, $configs);
         $definition = $container->getDefinition(SparQlClient::class);
-        $definition->addArgument($config['sparql_endpoint']);
+        $definition->addArgument($config);
     }
 
     public function getAlias()

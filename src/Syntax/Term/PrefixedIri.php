@@ -31,4 +31,9 @@ class PrefixedIri extends AbstractIri implements TermInterface
     {
         return sprintf('%s:%s', $this->prefix, $this->localPart);
     }
+
+    public function getPrefix(): string
+    {
+        return $this->prefix;
+    }
 }

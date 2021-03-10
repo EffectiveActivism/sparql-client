@@ -24,6 +24,11 @@ class Triple implements TripleInterface
         return sprintf('%s %s %s', $this->subject->serialize(), $this->predicate->serialize(), $this->object->serialize());
     }
 
+    public function toArray(): array
+    {
+        return [$this->subject, $this->predicate, $this->object];
+    }
+
     /**
      * Getters.
      */
