@@ -22,24 +22,27 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class ClientRequestTest extends KernelTestCase
 {
-    const SELECT_STATEMENT_EXPECTED_QUERY = 'query=PREFIX rdf:http://www.w3.org/1999/02/22-rdf-syntax-ns#; PREFIX rdfs:http://www.w3.org/2000/01/rdf-schema#; PREFIX owl:http://www.w3.org/2002/07/owl#; PREFIX skos:http://www.w3.org/2004/02/skos/core#; PREFIX xsd:http://www.w3.org/2001/XMLSchema#; PREFIX schema:http://schema.org/;  SELECT { ?subject ?object } WHERE { ?subject schema:headline ?object . }';
+    const NAMESPACES = 'PREFIX rdf:http://www.w3.org/1999/02/22-rdf-syntax-ns#; PREFIX rdfs:http://www.w3.org/2000/01/rdf-schema#; PREFIX owl:http://www.w3.org/2002/07/owl#; PREFIX skos:http://www.w3.org/2004/02/skos/core#; PREFIX xsd:http://www.w3.org/2001/XMLSchema#; PREFIX schema:http://schema.org/; ';
 
-    const SELECT_STATEMENT_WITHOUT_CONDITION_EXPECTED_QUERY = 'query=PREFIX rdf:http://www.w3.org/1999/02/22-rdf-syntax-ns#; PREFIX rdfs:http://www.w3.org/2000/01/rdf-schema#; PREFIX owl:http://www.w3.org/2002/07/owl#; PREFIX skos:http://www.w3.org/2004/02/skos/core#; PREFIX xsd:http://www.w3.org/2001/XMLSchema#; PREFIX schema:http://schema.org/;  SELECT { ?subject ?object }';
+    const SELECT_STATEMENT_EXPECTED_QUERY = 'query=' . self::NAMESPACES . ' SELECT ?subject ?object  WHERE { ?subject schema:headline ?object . }';
 
-    const INSERT_STATEMENT_EXPECTED_QUERY = 'update=PREFIX rdf:http://www.w3.org/1999/02/22-rdf-syntax-ns#; PREFIX rdfs:http://www.w3.org/2000/01/rdf-schema#; PREFIX owl:http://www.w3.org/2002/07/owl#; PREFIX skos:http://www.w3.org/2004/02/skos/core#; PREFIX xsd:http://www.w3.org/2001/XMLSchema#; PREFIX schema:http://schema.org/;  INSERT DATA { <urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece> schema:headline """Lorem Ipsum""" }';
+    const INSERT_STATEMENT_EXPECTED_QUERY = 'update=' . self::NAMESPACES . ' INSERT { <urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece> schema:headline """Lorem Ipsum""" } WHERE { <urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece> schema:headline ?object . }';
 
-    const DELETE_STATEMENT_EXPECTED_QUERY = 'update=PREFIX rdf:http://www.w3.org/1999/02/22-rdf-syntax-ns#; PREFIX rdfs:http://www.w3.org/2000/01/rdf-schema#; PREFIX owl:http://www.w3.org/2002/07/owl#; PREFIX skos:http://www.w3.org/2004/02/skos/core#; PREFIX xsd:http://www.w3.org/2001/XMLSchema#; PREFIX schema:http://schema.org/;  DELETE { ?subject schema:headline ?object } WHERE { ?subject rdf:type schema:Article . }';
+    const INSERT_STATEMENT_WITHOUT_CONDITION_EXPECTED_QUERY = 'update=' . self::NAMESPACES . ' INSERT DATA { <urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece> schema:headline """Lorem Ipsum""" }';
 
-    const DELETE_STATEMENT_WITHOUT_CONDITION_EXPECTED_QUERY = 'update=PREFIX rdf:http://www.w3.org/1999/02/22-rdf-syntax-ns#; PREFIX rdfs:http://www.w3.org/2000/01/rdf-schema#; PREFIX owl:http://www.w3.org/2002/07/owl#; PREFIX skos:http://www.w3.org/2004/02/skos/core#; PREFIX xsd:http://www.w3.org/2001/XMLSchema#; PREFIX schema:http://schema.org/;  DELETE { ?subject schema:headline ?object }';
+    const DELETE_STATEMENT_EXPECTED_QUERY = 'update=' . self::NAMESPACES . ' DELETE { ?subject schema:headline ?object } WHERE { ?subject rdf:type schema:Article . }';
 
-    const REPLACE_STATEMENT_EXPECTED_QUERY = 'update=PREFIX rdf:http://www.w3.org/1999/02/22-rdf-syntax-ns#; PREFIX rdfs:http://www.w3.org/2000/01/rdf-schema#; PREFIX owl:http://www.w3.org/2002/07/owl#; PREFIX skos:http://www.w3.org/2004/02/skos/core#; PREFIX xsd:http://www.w3.org/2001/XMLSchema#; PREFIX schema:http://schema.org/;  DELETE { ?subject schema:headline ?object } INSERT { ?subject schema:headline """Lorem Ipsum""" } WHERE { ?subject rdf:type schema:Article . }';
+    const DELETE_STATEMENT_WITHOUT_CONDITION_EXPECTED_QUERY = 'update=' . self::NAMESPACES . ' DELETE DATA { <urn:uuid:e998469e-831e-11eb-95f2-a32290c912e6> schema:headline """Lorem"""@la }';
 
-    const REPLACE_STATEMENT_WITHOUT_CONDITION_EXPECTED_QUERY = 'update=PREFIX rdf:http://www.w3.org/1999/02/22-rdf-syntax-ns#; PREFIX rdfs:http://www.w3.org/2000/01/rdf-schema#; PREFIX owl:http://www.w3.org/2002/07/owl#; PREFIX skos:http://www.w3.org/2004/02/skos/core#; PREFIX xsd:http://www.w3.org/2001/XMLSchema#; PREFIX schema:http://schema.org/;  DELETE { ?subject schema:headline ?object } INSERT { ?subject schema:headline """Lorem Ipsum""" }';
+    const REPLACE_STATEMENT_EXPECTED_QUERY = 'update=' . self::NAMESPACES . ' DELETE { ?subject schema:headline ?object } INSERT { ?subject schema:headline """Lorem Ipsum""" } WHERE { ?subject rdf:type schema:Article . }';
 
-    const HASHED_QUERY_UUID = '4006f4e9-f819-5a06-b744-1baea961fa5c';
+    const REPLACE_STATEMENT_WITHOUT_CONDITION_EXPECTED_QUERY = 'update=' . self::NAMESPACES . ' DELETE { <urn:uuid:e998469e-831e-11eb-95f2-a32290c912e6> schema:headline """Lorem"""@la } INSERT { <urn:uuid:e998469e-831e-11eb-95f2-a32290c912e6> schema:headline """Ipsum"""@la }';
+
+    const HASHED_QUERY_UUID = '128dd35e-1f00-570d-8b02-5b59ff8b9294';
 
     /**
      * @covers \EffectiveActivism\SparQlClient\Client\SparQlClient
+     * @covers \EffectiveActivism\SparQlClient\Syntax\Statement\SelectStatement
      */
     public function testSelectStatementRequest()
     {
@@ -70,14 +73,11 @@ class ClientRequestTest extends KernelTestCase
         $this->assertInstanceOf(Iri::class, $firstTerm);
         $this->assertEquals('<urn:uuid:fcf19bc4-7e81-11eb-a169-175604c7c7bc>', $firstTerm->serialize());
         $this->assertEquals(self::SELECT_STATEMENT_EXPECTED_QUERY, urldecode($receivedQuery));
-        $statement = $sparQlClient
-            ->select([$subject, $object]);
-        $sparQlClient->execute($statement);
-        $this->assertEquals(self::SELECT_STATEMENT_WITHOUT_CONDITION_EXPECTED_QUERY, urldecode($receivedQuery));
     }
 
     /**
      * @covers \EffectiveActivism\SparQlClient\Client\SparQlClient
+     * @covers \EffectiveActivism\SparQlClient\Syntax\Statement\InsertStatement
      */
     public function testInsertStatementRequest()
     {
@@ -94,13 +94,23 @@ class ClientRequestTest extends KernelTestCase
         /** @var SparQlClientInterface $sparQlClient */
         $sparQlClient = $kernel->getContainer()->get(SparQlClient::class);
         $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
-        $statement = $sparQlClient->insert(new Triple(new Iri('urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece'), new PrefixedIri('schema', 'headline'), new PlainLiteral('Lorem Ipsum')));
+        $subject = new Iri('urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece');
+        $predicate = new PrefixedIri('schema', 'headline');
+        $object = new PlainLiteral('Lorem Ipsum');
+        $statement = $sparQlClient
+            ->insert(new Triple($subject, $predicate, $object))
+            ->where([new Triple($subject, $predicate, new Variable('object'))]);
         $sparQlClient->execute($statement);
         $this->assertEquals(self::INSERT_STATEMENT_EXPECTED_QUERY, urldecode($receivedQuery));
+        $statement = $sparQlClient
+            ->insert(new Triple($subject, $predicate, $object));
+        $sparQlClient->execute($statement);
+        $this->assertEquals(self::INSERT_STATEMENT_WITHOUT_CONDITION_EXPECTED_QUERY, urldecode($receivedQuery));
     }
 
     /**
      * @covers \EffectiveActivism\SparQlClient\Client\SparQlClient
+     * @covers \EffectiveActivism\SparQlClient\Syntax\Statement\DeleteStatement
      */
     public function testDeleteStatementRequest()
     {
@@ -123,13 +133,14 @@ class ClientRequestTest extends KernelTestCase
         $sparQlClient->execute($statement);
         $this->assertEquals(self::DELETE_STATEMENT_EXPECTED_QUERY, urldecode($receivedQuery));
         $statement = $sparQlClient
-            ->delete(new Triple(new Variable('subject'), new PrefixedIri('schema', 'headline'), new Variable('object')));
+            ->delete(new Triple(new Iri('urn:uuid:e998469e-831e-11eb-95f2-a32290c912e6'), new PrefixedIri('schema', 'headline'), new PlainLiteral('Lorem', 'la')));
         $sparQlClient->execute($statement);
         $this->assertEquals(self::DELETE_STATEMENT_WITHOUT_CONDITION_EXPECTED_QUERY, urldecode($receivedQuery));
     }
 
     /**
      * @covers \EffectiveActivism\SparQlClient\Client\SparQlClient
+     * @covers \EffectiveActivism\SparQlClient\Syntax\Statement\ReplaceStatement
      */
     public function testReplaceStatementRequest()
     {
@@ -153,8 +164,8 @@ class ClientRequestTest extends KernelTestCase
         $sparQlClient->execute($statement);
         $this->assertEquals(self::REPLACE_STATEMENT_EXPECTED_QUERY, urldecode($receivedQuery));
         $statement = $sparQlClient
-            ->replace(new Triple(new Variable('subject'), new PrefixedIri('schema', 'headline'), new Variable('object')))
-            ->with(new Triple(new Variable('subject'), new PrefixedIri('schema', 'headline'), new PlainLiteral('Lorem Ipsum')));
+            ->replace(new Triple(new Iri('urn:uuid:e998469e-831e-11eb-95f2-a32290c912e6'), new PrefixedIri('schema', 'headline'), new PlainLiteral('Lorem', 'la')))
+            ->with(new Triple(new Iri('urn:uuid:e998469e-831e-11eb-95f2-a32290c912e6'), new PrefixedIri('schema', 'headline'), new PlainLiteral('Ipsum', 'la')));
         $sparQlClient->execute($statement);
         $this->assertEquals(self::REPLACE_STATEMENT_WITHOUT_CONDITION_EXPECTED_QUERY, urldecode($receivedQuery));
     }
@@ -233,8 +244,10 @@ class ClientRequestTest extends KernelTestCase
         $predicate = new PrefixedIri('schema', 'headline');
         $object = new PrefixedIri('schema', 'Article');
         $triple = new Triple($subject, $predicate, $object);
+        // Cache select query.
         $sparQlClient->execute($sparQlClient->select([$subject])->where([$triple]));
-        $sparQlClient->execute($sparQlClient->delete($triple));
+        // Invalidate select query by IRI cache tags.
+        $sparQlClient->execute($sparQlClient->delete($triple)->where([$triple]));
         $this->assertEquals('UNCACHED', $cacheAdapter->get(self::HASHED_QUERY_UUID, function (ItemInterface $item) {
             return 'UNCACHED';
         }));
@@ -257,7 +270,7 @@ class ClientRequestTest extends KernelTestCase
         $object = new PrefixedIri('schema', 'Article');
         $triple = new Triple($subject, $predicate, $object);
         $sparQlClient->execute($sparQlClient->select([$subject])->where([$triple]));
-        $sparQlClient->execute($sparQlClient->replace($triple)->with($triple));
+        $sparQlClient->execute($sparQlClient->replace($triple)->with($triple)->where([$triple]));
         $this->assertEquals('UNCACHED', $cacheAdapter->get(self::HASHED_QUERY_UUID, function (ItemInterface $item) {
             return 'UNCACHED';
         }));

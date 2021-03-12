@@ -3,6 +3,7 @@
 namespace EffectiveActivism\SparQlClient\Syntax\Statement;
 
 use EffectiveActivism\SparQlClient\Syntax\Term\PrefixedIri;
+use EffectiveActivism\SparQlClient\Syntax\Term\Variable;
 use EffectiveActivism\SparQlClient\Syntax\Triple\TripleInterface;
 use InvalidArgumentException;
 
@@ -36,20 +37,39 @@ class ReplaceStatement extends AbstractConditionalStatement implements ReplaceSt
 
     public function toQuery(): string
     {
-        $query = parent::toQuery();
-        $conditions = '';
+        $preQuery = parent::toQuery();
+        $conditionsString = '';
         foreach ($this->conditions as $triple) {
-            $conditions .= sprintf('%s .', $triple);
+            $conditionsString .= sprintf('%s .', $triple);
         }
-        $optionalConditions = '';
+        $optionalConditionsString = '';
         foreach ($this->optionalConditions as $triple) {
-            $optionalConditions .= sprintf('OPTIONAL {%s} .', $triple);
+            $optionalConditionsString .= sprintf('OPTIONAL {%s} .', $triple);
         }
-        if (!empty($conditions) || !empty($optionalConditions)) {
-            return sprintf('%s DELETE { %s } INSERT { %s } WHERE { %s %s}', $query, (string) $this->original, (string) $this->replacement, $conditions, $optionalConditions);
+        // At least one variable (if any) must be referenced in a 'where' clause.
+        $unclausedVariables = true;
+        $hasVariables = false;
+        foreach (array_merge($this->original->toArray(), $this->replacement->toArray()) as $term) {
+            if (get_class($term) === Variable::class) {
+                $hasVariables = true;
+                /** @var TripleInterface $triple */
+                foreach (array_merge($this->conditions, $this->optionalConditions) as $triple) {
+                    foreach ($triple->toArray() as $clausedTerm) {
+                        if (get_class($clausedTerm) === Variable::class && $clausedTerm->getVariableName() === $term->getVariableName()) {
+                            $unclausedVariables = false;
+                        }
+                    }
+                }
+            }
+        }
+        if ($hasVariables && $unclausedVariables) {
+            throw new InvalidArgumentException('At least one variable must be referenced in a \'where\' clause.');
+        }
+        if (!empty($conditionsString) || !empty($optionalConditionsString)) {
+            return sprintf('%s DELETE { %s } INSERT { %s } WHERE { %s %s}', $preQuery, (string) $this->original, (string) $this->replacement, $conditionsString, $optionalConditionsString);
         }
         else {
-            return sprintf('%s DELETE { %s } INSERT { %s }', $query, (string) $this->original, (string) $this->replacement);
+            return sprintf('%s DELETE { %s } INSERT { %s }', $preQuery, (string) $this->original, (string) $this->replacement);
         }
     }
 

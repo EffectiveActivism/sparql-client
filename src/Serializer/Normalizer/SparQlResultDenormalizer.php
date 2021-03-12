@@ -73,8 +73,8 @@ class SparQlResultDenormalizer implements DenormalizerInterface
                 $languageTag = $termData['literal']['@xml:lang'];
                 $value = isset($termData['literal']['#']) ? $termData['literal']['#'] : '';
                 return new PlainLiteral($value, $languageTag);
-            } elseif (is_array($termData['literal']) && isset($termData['literal']['datatype'])) {
-                $dataType = $termData['literal']['datatype'];
+            } elseif (is_array($termData['literal']) && isset($termData['literal']['@datatype'])) {
+                $dataType = $termData['literal']['@datatype'];
                 $value = isset($termData['literal']['#']) ? $termData['literal']['#'] : '';
                 if (filter_var($dataType, FILTER_VALIDATE_URL) || preg_match(sprintf('/%s/', Constant::URN), $dataType)) {
                     return new TypedLiteral($value, new Iri($dataType));
@@ -92,10 +92,6 @@ class SparQlResultDenormalizer implements DenormalizerInterface
             // Determine uri type.
             if (filter_var($termData['uri'], FILTER_VALIDATE_URL) || preg_match(sprintf('/%s/', Constant::URN), $termData['uri'])) {
                 return new Iri($termData['uri']);
-            }
-            elseif (count(explode(':', $termData['uri'])) === 2) {
-                list($prefix, $localPart) = explode(':', $termData['uri']);
-                return new PrefixedIri($prefix, $localPart);
             }
             else {
                 throw new InvalidResultException(sprintf('Result "%s" is not a valid uri', $termData['uri']));

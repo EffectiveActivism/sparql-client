@@ -14,10 +14,9 @@ class PrefixedIri extends AbstractIri implements TermInterface
 
     protected string|null $localPart;
 
-    public function __construct(string $prefix = null, string $localPart = null)
+    public function __construct(string $prefix, string $localPart)
     {
-        // TODO: Check that prefix is defined.
-        if (!preg_match(sprintf('/%s/u', Constant::PN_PREFIX), $prefix)) {
+        if ($prefix !== '' && !preg_match(sprintf('/%s/u', Constant::PN_PREFIX), $prefix)) {
             throw new InvalidArgumentException(sprintf('Value "%s" is not a valid prefix', $prefix));
         }
         if (!preg_match(sprintf('/%s/u', Constant::PN_LOCAL), $localPart)) {

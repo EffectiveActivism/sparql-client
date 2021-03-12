@@ -27,8 +27,12 @@ class PlainLiteralTest extends KernelTestCase
     public function testInvalidLiterals()
     {
         foreach (self::INVALID_LITERALS as $invalidLiteral) {
-            $this->expectException(InvalidArgumentException::class);
-            new PlainLiteral($invalidLiteral);
+            try {
+                new PlainLiteral($invalidLiteral);
+                $this->assertFalse(true);
+            } catch (InvalidArgumentException $exception) {
+                $this->assertInstanceOf(InvalidArgumentException::class, $exception);
+            }
         }
     }
 

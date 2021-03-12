@@ -6,6 +6,7 @@ use EffectiveActivism\SparQlClient\Serializer\Normalizer\SparQlResultDenormalize
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri;
 use EffectiveActivism\SparQlClient\Syntax\Term\PlainLiteral;
 use EffectiveActivism\SparQlClient\Syntax\Term\TermInterface;
+use EffectiveActivism\SparQlClient\Syntax\Term\TypedLiteral;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Serializer\Encoder\XmlEncoder;
 use Symfony\Component\Serializer\Serializer;
@@ -52,6 +53,26 @@ class NormalizerTest extends KernelTestCase
         $term = array_pop($set);
         $this->assertInstanceOf(PlainLiteral::class, $term);
         $this->assertEquals('"""lorem"""@la', $term->serialize());
+    }
+
+    /**
+     * @covers \EffectiveActivism\SparQlClient\Serializer\Normalizer\SparQlResultDenormalizer
+     */
+    public function testTypedLiteral()
+    {
+        $data = file_get_contents(__DIR__ . '/../fixtures/normalizer-typed-literal.xml');
+        $denormalizedData = $this->serializer->deserialize($data, SparQlResultDenormalizer::TYPE, 'xml');
+        $this->assertCount(1, $denormalizedData);
+        $set = array_shift($denormalizedData);
+        $this->assertCount(2, $set);
+        /** @var TermInterface $term */
+        $term = array_pop($set);
+        $this->assertInstanceOf(TypedLiteral::class, $term);
+        $this->assertEquals('"false"^^xsd:boolean', $term->serialize());
+        /** @var TermInterface $term */
+        $term = array_pop($set);
+        $this->assertInstanceOf(TypedLiteral::class, $term);
+        $this->assertEquals('"2"^^<http://www.w3.org/2001/XMLSchema#integer>', $term->serialize());
     }
 
     /**
