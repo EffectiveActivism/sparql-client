@@ -23,12 +23,35 @@ class PlainLiteral extends AbstractLiteral implements TermInterface
 
     public function serialize(): string
     {
+        $wrapper = $this->serializeLiteralWrapper();
         return match (gettype($this->value)) {
-            'string' => sprintf('"""%s"""%s', $this->value, empty($this->languageTag) ? '' : sprintf('@%s', $this->languageTag)),
+            'string' => sprintf('%s%s%s%s', $wrapper, $this->value, $wrapper, empty($this->languageTag) ? '' : sprintf('@%s', $this->languageTag)),
             'integer' => sprintf('"%s"^^xsd:integer', $this->value),
             'double' => sprintf('"%s"^^xsd:decimal', $this->value),
             'boolean' => sprintf('"%s"^^xsd:boolean', $this->value ? 'true' : 'false'),
             default => null,
         };
+    }
+
+    /**
+     * @throws InvalidArgumentException
+     */
+    protected function serializeLiteralWrapper(): string
+    {
+        if (!str_contains($this->value, '"')) {
+            return '"';
+        }
+        elseif (!str_contains($this->value, '\'')) {
+            return '\'';
+        }
+        elseif (!str_contains($this->value, '"""')) {
+            return '"""';
+        }
+        elseif (!str_contains($this->value, '\'\'\'')) {
+            return '\'\'\'';
+        }
+        else {
+            throw new InvalidArgumentException(sprintf('Literal value "%s" cannot be parsed', $this->value));
+        }
     }
 }

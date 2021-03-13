@@ -61,4 +61,16 @@ class PlainLiteralTest extends KernelTestCase
         $this->expectException(InvalidArgumentException::class);
         new PlainLiteral('lorem', 'latin');
     }
+
+    public function testLiteralWrappers()
+    {
+        $literal = new PlainLiteral('"lorem"');
+        $this->assertEquals('"lorem"', $literal->serialize());
+        $literal = new PlainLiteral('\'"lorem"\'');
+        $this->assertEquals('"""\'"lorem"\'"""', $literal->serialize());
+        $literal = new PlainLiteral('\'"""lorem"""\'');
+        $this->assertEquals('\'\'\'\'"lorem"\'\'\'\'', $literal->serialize());
+        $literal = new PlainLiteral('\'"lorem"\'');
+        $this->assertEquals('"""\'"lorem"\'"""', $literal->serialize());
+    }
 }

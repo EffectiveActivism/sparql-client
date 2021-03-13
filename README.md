@@ -223,9 +223,9 @@ $subject = new PrefixedIri('‿schema', 'headline');
 Namespaces are validated, both when defined in configuration
 (via sparql_client.yml) or added dynamically in code.
 
-Basic validation of statements is also supported. For example, the below
-statement will throw an InvalidArgumentException because the 'where' clause
-does not contain any of the requested variables.
+Rudimentary validation of statements is also supported. For example, the
+below statement will throw an InvalidArgumentException because the
+'where' clause does not contain any of the requested variables.
 
 ```php
 <?php
@@ -251,16 +251,11 @@ class MyController extends AbstractController
         $statement = $sparQlClient
             ->select([$variable])
             ->where([new Triple($subject, $predicate, $object)]);
+        // Throws an InvalidArgumentException.
         $sparQlClient->execute($statement);
     }
 }
 ```
-
-## Quirks
-
-- Literals may not contain three quotation marks `"""` or three citation
-  marks `'''`. This is in violation with
-  https://www.w3.org/TR/sparql11-query/#QSynLiterals.
 
 ## Planned features
 
@@ -270,7 +265,6 @@ class MyController extends AbstractController
 - Support for SERVICE.
 - Support for empty prefixes.
 - Validation of typed literals using their datatype.
-- Remove any quirks.
 - Improve error reporting from triplestores.
 - Possibly return more meaningful data from INSERT and DELETE statement executions.
 - Expand statement validation.
