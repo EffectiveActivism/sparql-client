@@ -5,7 +5,7 @@ services:
     autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
     public: true # Allows testing services.
 
-  EffectiveActivism\SparQlClient\Client\SparQlClient:
+  EffectiveActivism\SparQlClient\Client\SparQlClientInterface:
     class: EffectiveActivism\SparQlClient\Client\SparQlClient
 
   Symfony\Contracts\HttpClient\HttpClientInterface:

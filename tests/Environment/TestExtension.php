@@ -2,7 +2,7 @@
 
 namespace EffectiveActivism\SparQlClient\Tests\Environment;
 
-use EffectiveActivism\SparQlClient\Client\SparQlClient;
+use EffectiveActivism\SparQlClient\Client\SparQlClientInterface;
 use EffectiveActivism\SparQlClient\DependencyInjection\Configuration;
 use Exception;
 use Symfony\Component\Config\FileLocator;
@@ -21,7 +21,7 @@ class TestExtension extends Extension
         $loader->load('services.yml');
         $configuration = new Configuration();
         $config = $this->processConfiguration($configuration, $configs);
-        $definition = $container->getDefinition(SparQlClient::class);
+        $definition = $container->getDefinition(SparQlClientInterface::class);
         $definition->addArgument($config);
     }
 

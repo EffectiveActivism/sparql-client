@@ -32,26 +32,4 @@ class PlainLiteral extends AbstractLiteral implements TermInterface
             default => null,
         };
     }
-
-    /**
-     * @throws InvalidArgumentException
-     */
-    protected function serializeLiteralWrapper(): string
-    {
-        if (!str_contains($this->value, '"')) {
-            return '"';
-        }
-        elseif (!str_contains($this->value, '\'')) {
-            return '\'';
-        }
-        elseif (!str_contains($this->value, '"""')) {
-            return '"""';
-        }
-        elseif (!str_contains($this->value, '\'\'\'')) {
-            return '\'\'\'';
-        }
-        else {
-            throw new InvalidArgumentException(sprintf('Literal value "%s" cannot be parsed', $this->value));
-        }
-    }
 }

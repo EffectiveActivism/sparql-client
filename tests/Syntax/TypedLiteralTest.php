@@ -8,6 +8,12 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 class TypedLiteralTest extends KernelTestCase
 {
+    public function testStringTypedLiteral()
+    {
+        $typedLiteral = new TypedLiteral('lorem');
+        $this->assertEquals('"lorem"', $typedLiteral->serialize());
+    }
+
     public function testIntegerTypedLiteral()
     {
         $typedLiteral = new TypedLiteral(2);
@@ -26,6 +32,8 @@ class TypedLiteralTest extends KernelTestCase
 
     public function testBooleanTypedLiteral()
     {
+        $typedLiteral = new TypedLiteral(true);
+        $this->assertEquals('"true"^^xsd:boolean', $typedLiteral->serialize());
         $typedLiteral = new TypedLiteral(true, new PrefixedIri('xsd', 'boolean'));
         $this->assertEquals('"true"^^xsd:boolean', $typedLiteral->serialize());
         $typedLiteral = new TypedLiteral('false', new PrefixedIri('xsd', 'boolean'));

@@ -69,7 +69,8 @@ class ReplaceStatement extends AbstractConditionalStatement implements ReplaceSt
             return sprintf('%s DELETE { %s } INSERT { %s } WHERE { %s %s}', $preQuery, (string) $this->original, (string) $this->replacement, $conditionsString, $optionalConditionsString);
         }
         else {
-            return sprintf('%s DELETE { %s } INSERT { %s }', $preQuery, (string) $this->original, (string) $this->replacement);
+            // Replace statements must have a 'where' clause.
+            throw new InvalidArgumentException('Replace (DELETE+INSERT) statement is missing a \'where\' clause');
         }
     }
 

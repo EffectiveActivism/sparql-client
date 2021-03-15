@@ -8,13 +8,8 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 class PlainLiteralTest extends KernelTestCase
 {
-    const INVALID_LITERALS = [
-        '"""lorem"""',
-        '\'\'\'lorem\'\'\'',
-    ];
-
     const VALID_LITERALS = [
-        '"""lorem"""' => 'lorem',
+        '"lorem"' => 'lorem',
         '"4"^^xsd:integer' => 4,
         '"-4"^^xsd:integer' => -4,
         '"0"^^xsd:integer' => 0,
@@ -23,18 +18,6 @@ class PlainLiteralTest extends KernelTestCase
         '"true"^^xsd:boolean' => true,
         '"false"^^xsd:boolean' => false,
     ];
-
-    public function testInvalidLiterals()
-    {
-        foreach (self::INVALID_LITERALS as $invalidLiteral) {
-            try {
-                new PlainLiteral($invalidLiteral);
-                $this->assertFalse(true);
-            } catch (InvalidArgumentException $exception) {
-                $this->assertInstanceOf(InvalidArgumentException::class, $exception);
-            }
-        }
-    }
 
     public function testValidLiterals()
     {
@@ -65,12 +48,19 @@ class PlainLiteralTest extends KernelTestCase
     public function testLiteralWrappers()
     {
         $literal = new PlainLiteral('"lorem"');
-        $this->assertEquals('"lorem"', $literal->serialize());
+        $this->assertEquals('\'"lorem"\'', $literal->serialize());
         $literal = new PlainLiteral('\'"lorem"\'');
         $this->assertEquals('"""\'"lorem"\'"""', $literal->serialize());
         $literal = new PlainLiteral('\'"""lorem"""\'');
-        $this->assertEquals('\'\'\'\'"lorem"\'\'\'\'', $literal->serialize());
+        $this->assertEquals('\'\'\'\'"""lorem"""\'\'\'\'', $literal->serialize());
         $literal = new PlainLiteral('\'"lorem"\'');
         $this->assertEquals('"""\'"lorem"\'"""', $literal->serialize());
+    }
+
+    public function testLiteralInvalidWrappers()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $literal = new PlainLiteral('"""\'\'\'lorem');
+        $literal->serialize();
     }
 }

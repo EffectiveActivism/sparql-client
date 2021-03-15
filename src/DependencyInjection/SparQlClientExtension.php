@@ -2,7 +2,7 @@
 
 namespace EffectiveActivism\SparQlClient\DependencyInjection;
 
-use EffectiveActivism\SparQlClient\Client\SparQlClient;
+use EffectiveActivism\SparQlClient\Client\SparQlClientInterface;
 use Exception;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -20,7 +20,7 @@ class SparQlClientExtension extends Extension
         $loader->load('services.yml');
         $configuration = new Configuration();
         $config = $this->processConfiguration($configuration, $configs);
-        $definition = $container->getDefinition(SparQlClient::class);
+        $definition = $container->getDefinition(SparQlClientInterface::class);
         $definition->addArgument($config);
     }
 

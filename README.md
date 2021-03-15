@@ -1,12 +1,12 @@
 # SparQl client
 
-A basic OOP SparQl client for Symfony with support for SELECT, DELETE,
+An OOP SparQl client for Symfony with support for SELECT, DELETE,
 INSERT and DELETE+INSERT operations. Includes term, namespace and (basic)
 statement validation.
 
 ## Installation
 
-To install, simply run
+To install, run
 ```bash
 composer require effectiveactivism/sparql-client
 ```

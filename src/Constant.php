@@ -31,10 +31,9 @@ class Constant
     const VARNAME = '^(' . self::PN_CHARS_U . '|[0-9])(' . self::PN_CHARS_U . '|[0-9]|\x{00B7}|[\x{0300}-\x{036F}]|[\x{203F}-\x{2040}])*$';
 
     /**
-     * Triple quotes and triple citation marks are not allowed, as they are used to denote beginning and end of literal values.
      * @see https://www.w3.org/TR/sparql11-query/#QSynLiterals.
      */
-    const LITERAL = '^(?!.*("""|\'\'\')).*$';
+    const LITERAL = '^.*$';
 
     /**
      * @see https://tools.ietf.org/html/rfc3066#section-2.1.

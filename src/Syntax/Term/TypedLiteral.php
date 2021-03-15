@@ -24,7 +24,7 @@ class TypedLiteral extends AbstractLiteral implements TermInterface
     {
         if (empty($this->dataType)) {
             return match (gettype($this->value)) {
-                'string' => sprintf('"""%s"""', $this->value),
+                'string' => sprintf('%s%s%s', $this->serializeLiteralWrapper(), $this->value, $this->serializeLiteralWrapper()),
                 'integer' => sprintf('"%s"^^xsd:integer', $this->value),
                 'double' => sprintf('"%s"^^xsd:decimal', $this->value),
                 'boolean' => sprintf('"%s"^^xsd:boolean', $this->value ? 'true' : 'false'),

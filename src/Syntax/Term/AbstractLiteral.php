@@ -24,4 +24,29 @@ abstract class AbstractLiteral extends AbstractTerm implements TermInterface
     }
 
     abstract public function serialize(): string;
+
+    /**
+     * @throws InvalidArgumentException
+     */
+    protected function serializeLiteralWrapper(): string
+    {
+        if (!is_string($this->value)) {
+            return '"';
+        }
+        elseif (!str_contains($this->value, '"')) {
+            return '"';
+        }
+        elseif (!str_contains($this->value, '\'')) {
+            return '\'';
+        }
+        elseif (!str_contains($this->value, '"""')) {
+            return '"""';
+        }
+        elseif (!str_contains($this->value, '\'\'\'')) {
+            return '\'\'\'';
+        }
+        else {
+            throw new InvalidArgumentException(sprintf('Literal value "%s" cannot be parsed', $this->value));
+        }
+    }
 }

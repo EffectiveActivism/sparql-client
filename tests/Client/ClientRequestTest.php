@@ -11,6 +11,7 @@ use EffectiveActivism\SparQlClient\Syntax\Term\Variable;
 use EffectiveActivism\SparQlClient\Client\SparQlClient;
 use EffectiveActivism\SparQlClient\Syntax\Triple\TripleInterface;
 use EffectiveActivism\SparQlClient\Tests\Environment\TestKernel;
+use InvalidArgumentException;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\Cache\Adapter\TagAwareAdapter;
@@ -22,23 +23,21 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class ClientRequestTest extends KernelTestCase
 {
-    const NAMESPACES = 'PREFIX rdf:http://www.w3.org/1999/02/22-rdf-syntax-ns#; PREFIX rdfs:http://www.w3.org/2000/01/rdf-schema#; PREFIX owl:http://www.w3.org/2002/07/owl#; PREFIX skos:http://www.w3.org/2004/02/skos/core#; PREFIX xsd:http://www.w3.org/2001/XMLSchema#; PREFIX schema:http://schema.org/; ';
+    const NAMESPACES = 'PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>; PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>; PREFIX owl: <http://www.w3.org/2002/07/owl#>; PREFIX skos: <http://www.w3.org/2004/02/skos/core#>; PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>; PREFIX schema: <http://schema.org/>; ';
 
     const SELECT_STATEMENT_EXPECTED_QUERY = 'query=' . self::NAMESPACES . ' SELECT ?subject ?object  WHERE { ?subject schema:headline ?object . }';
 
-    const INSERT_STATEMENT_EXPECTED_QUERY = 'update=' . self::NAMESPACES . ' INSERT { <urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece> schema:headline """Lorem Ipsum""" } WHERE { <urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece> schema:headline ?object . }';
+    const INSERT_STATEMENT_EXPECTED_QUERY = 'update=' . self::NAMESPACES . ' INSERT { <urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece> schema:headline "Lorem Ipsum" } WHERE { <urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece> schema:headline ?object . }';
 
-    const INSERT_STATEMENT_WITHOUT_CONDITION_EXPECTED_QUERY = 'update=' . self::NAMESPACES . ' INSERT DATA { <urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece> schema:headline """Lorem Ipsum""" }';
+    const INSERT_STATEMENT_WITHOUT_CONDITION_EXPECTED_QUERY = 'update=' . self::NAMESPACES . ' INSERT DATA { <urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece> schema:headline "Lorem Ipsum" }';
 
     const DELETE_STATEMENT_EXPECTED_QUERY = 'update=' . self::NAMESPACES . ' DELETE { ?subject schema:headline ?object } WHERE { ?subject rdf:type schema:Article . }';
 
-    const DELETE_STATEMENT_WITHOUT_CONDITION_EXPECTED_QUERY = 'update=' . self::NAMESPACES . ' DELETE DATA { <urn:uuid:e998469e-831e-11eb-95f2-a32290c912e6> schema:headline """Lorem"""@la }';
+    const DELETE_STATEMENT_WITHOUT_CONDITION_EXPECTED_QUERY = 'update=' . self::NAMESPACES . ' DELETE DATA { <urn:uuid:e998469e-831e-11eb-95f2-a32290c912e6> schema:headline "Lorem"@la }';
 
-    const REPLACE_STATEMENT_EXPECTED_QUERY = 'update=' . self::NAMESPACES . ' DELETE { ?subject schema:headline ?object } INSERT { ?subject schema:headline """Lorem Ipsum""" } WHERE { ?subject rdf:type schema:Article . }';
+    const REPLACE_STATEMENT_EXPECTED_QUERY = 'update=' . self::NAMESPACES . ' DELETE { ?subject schema:headline ?object } INSERT { ?subject schema:headline "Lorem Ipsum" } WHERE { ?subject rdf:type schema:Article . }';
 
-    const REPLACE_STATEMENT_WITHOUT_CONDITION_EXPECTED_QUERY = 'update=' . self::NAMESPACES . ' DELETE { <urn:uuid:e998469e-831e-11eb-95f2-a32290c912e6> schema:headline """Lorem"""@la } INSERT { <urn:uuid:e998469e-831e-11eb-95f2-a32290c912e6> schema:headline """Ipsum"""@la }';
-
-    const HASHED_QUERY_UUID = '128dd35e-1f00-570d-8b02-5b59ff8b9294';
+    const HASHED_QUERY_UUID = 'c1bccd5e-4f4c-5aec-91ea-6bb85587c97f';
 
     /**
      * @covers \EffectiveActivism\SparQlClient\Client\SparQlClient
@@ -57,7 +56,7 @@ class ClientRequestTest extends KernelTestCase
         $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
         $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
         /** @var SparQlClientInterface $sparQlClient */
-        $sparQlClient = $kernel->getContainer()->get(SparQlClient::class);
+        $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
         $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
         $subject = new Variable('subject');
         $predicate = new PrefixedIri('schema', 'headline');
@@ -92,7 +91,7 @@ class ClientRequestTest extends KernelTestCase
         $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
         $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
         /** @var SparQlClientInterface $sparQlClient */
-        $sparQlClient = $kernel->getContainer()->get(SparQlClient::class);
+        $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
         $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
         $subject = new Iri('urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece');
         $predicate = new PrefixedIri('schema', 'headline');
@@ -125,7 +124,7 @@ class ClientRequestTest extends KernelTestCase
         $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
         $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
         /** @var SparQlClientInterface $sparQlClient */
-        $sparQlClient = $kernel->getContainer()->get(SparQlClient::class);
+        $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
         $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
         $statement = $sparQlClient
             ->delete(new Triple(new Variable('subject'), new PrefixedIri('schema', 'headline'), new Variable('object')))
@@ -155,7 +154,7 @@ class ClientRequestTest extends KernelTestCase
         $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
         $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
         /** @var SparQlClientInterface $sparQlClient */
-        $sparQlClient = $kernel->getContainer()->get(SparQlClient::class);
+        $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
         $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
         $statement = $sparQlClient
             ->replace(new Triple(new Variable('subject'), new PrefixedIri('schema', 'headline'), new Variable('object')))
@@ -166,8 +165,8 @@ class ClientRequestTest extends KernelTestCase
         $statement = $sparQlClient
             ->replace(new Triple(new Iri('urn:uuid:e998469e-831e-11eb-95f2-a32290c912e6'), new PrefixedIri('schema', 'headline'), new PlainLiteral('Lorem', 'la')))
             ->with(new Triple(new Iri('urn:uuid:e998469e-831e-11eb-95f2-a32290c912e6'), new PrefixedIri('schema', 'headline'), new PlainLiteral('Ipsum', 'la')));
+        $this->expectException(InvalidArgumentException::class);
         $sparQlClient->execute($statement);
-        $this->assertEquals(self::REPLACE_STATEMENT_WITHOUT_CONDITION_EXPECTED_QUERY, urldecode($receivedQuery));
     }
 
     /**
@@ -184,7 +183,7 @@ class ClientRequestTest extends KernelTestCase
         $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
         $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
         /** @var SparQlClientInterface $sparQlClient */
-        $sparQlClient = $kernel->getContainer()->get(SparQlClient::class);
+        $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
         $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
         $subject = new Variable('subject');
         $predicate = new Variable('predicate');
@@ -202,7 +201,7 @@ class ClientRequestTest extends KernelTestCase
         $this->assertEquals('subject', $triple->getSubject()->getVariableName());
         $this->assertEquals('<http://schema.org/headline>', $triple->getPredicate()->serialize());
         $this->assertEquals('predicate', $triple->getPredicate()->getVariableName());
-        $this->assertEquals('"""Lorem"""', $triple->getObject()->serialize());
+        $this->assertEquals('"Lorem"', $triple->getObject()->serialize());
         $this->assertEquals('object', $triple->getObject()->getVariableName());
     }
 
@@ -216,7 +215,7 @@ class ClientRequestTest extends KernelTestCase
         $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
         $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
         /** @var SparQlClientInterface $sparQlClient */
-        $sparQlClient = $kernel->getContainer()->get(SparQlClient::class);
+        $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
         $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
         $subject = new Variable('subject');
         $predicate = new PrefixedIri('schema', 'headline');
@@ -238,7 +237,7 @@ class ClientRequestTest extends KernelTestCase
         $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
         $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
         /** @var SparQlClientInterface $sparQlClient */
-        $sparQlClient = $kernel->getContainer()->get(SparQlClient::class);
+        $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
         $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
         $subject = new Variable('subject');
         $predicate = new PrefixedIri('schema', 'headline');
@@ -263,7 +262,7 @@ class ClientRequestTest extends KernelTestCase
         $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
         $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
         /** @var SparQlClientInterface $sparQlClient */
-        $sparQlClient = $kernel->getContainer()->get(SparQlClient::class);
+        $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
         $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
         $subject = new Variable('subject');
         $predicate = new PrefixedIri('schema', 'headline');
