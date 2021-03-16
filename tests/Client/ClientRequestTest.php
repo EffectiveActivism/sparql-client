@@ -8,7 +8,6 @@ use EffectiveActivism\SparQlClient\Syntax\Term\PlainLiteral;
 use EffectiveActivism\SparQlClient\Syntax\Triple\Triple;
 use EffectiveActivism\SparQlClient\Syntax\Term\PrefixedIri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Variable;
-use EffectiveActivism\SparQlClient\Client\SparQlClient;
 use EffectiveActivism\SparQlClient\Syntax\Triple\TripleInterface;
 use EffectiveActivism\SparQlClient\Tests\Environment\TestKernel;
 use InvalidArgumentException;
