@@ -11,3 +11,4 @@ apt-get install git wget -yqq
 
 # Install xdebug to enable code coverage
 pecl install xdebug
+echo "xdebug.mode=coverage" > /usr/local/etc/php/conf.d/xdebug.ini
