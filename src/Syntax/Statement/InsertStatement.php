@@ -2,8 +2,8 @@
 
 namespace EffectiveActivism\SparQlClient\Syntax\Statement;
 
-use EffectiveActivism\SparQlClient\Syntax\Term\PrefixedIri;
-use EffectiveActivism\SparQlClient\Syntax\Term\Variable;
+use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
+use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
 use EffectiveActivism\SparQlClient\Syntax\Triple\TripleInterface;
 use InvalidArgumentException;
 

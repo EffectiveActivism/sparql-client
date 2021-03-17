@@ -1,8 +1,9 @@
 <?php declare(strict_types=1);
 
-namespace EffectiveActivism\SparQlClient\Syntax\Term;
+namespace EffectiveActivism\SparQlClient\Syntax\Term\Iri;
 
 use EffectiveActivism\SparQlClient\Constant;
+use EffectiveActivism\SparQlClient\Syntax\Term\TermInterface;
 use InvalidArgumentException;
 
 class Iri extends AbstractIri implements TermInterface

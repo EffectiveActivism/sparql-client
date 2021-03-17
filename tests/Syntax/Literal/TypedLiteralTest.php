@@ -1,9 +1,9 @@
 <?php
 
-namespace EffectiveActivism\SparQlClient\Tests\Syntax;
+namespace EffectiveActivism\SparQlClient\Tests\Syntax\Literal;
 
-use EffectiveActivism\SparQlClient\Syntax\Term\PrefixedIri;
-use EffectiveActivism\SparQlClient\Syntax\Term\TypedLiteral;
+use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
+use EffectiveActivism\SparQlClient\Syntax\Term\Literal\TypedLiteral;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 class TypedLiteralTest extends KernelTestCase
