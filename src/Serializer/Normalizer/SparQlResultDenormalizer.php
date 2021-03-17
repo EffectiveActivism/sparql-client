@@ -4,11 +4,11 @@ namespace EffectiveActivism\SparQlClient\Serializer\Normalizer;
 
 use EffectiveActivism\SparQlClient\Constant;
 use EffectiveActivism\SparQlClient\Exception\InvalidResultException;
-use EffectiveActivism\SparQlClient\Syntax\Term\Iri;
-use EffectiveActivism\SparQlClient\Syntax\Term\PlainLiteral;
-use EffectiveActivism\SparQlClient\Syntax\Term\PrefixedIri;
+use EffectiveActivism\SparQlClient\Syntax\Term\Iri\Iri;
+use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
+use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
+use EffectiveActivism\SparQlClient\Syntax\Term\Literal\TypedLiteral;
 use EffectiveActivism\SparQlClient\Syntax\Term\TermInterface;
-use EffectiveActivism\SparQlClient\Syntax\Term\TypedLiteral;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 
 class SparQlResultDenormalizer implements DenormalizerInterface

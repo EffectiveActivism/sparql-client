@@ -3,11 +3,11 @@
 namespace EffectiveActivism\SparQlClient\Tests\Client;
 
 use EffectiveActivism\SparQlClient\Client\SparQlClientInterface;
-use EffectiveActivism\SparQlClient\Syntax\Term\Iri;
-use EffectiveActivism\SparQlClient\Syntax\Term\PlainLiteral;
+use EffectiveActivism\SparQlClient\Syntax\Term\Iri\Iri;
+use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
 use EffectiveActivism\SparQlClient\Syntax\Triple\Triple;
-use EffectiveActivism\SparQlClient\Syntax\Term\PrefixedIri;
-use EffectiveActivism\SparQlClient\Syntax\Term\Variable;
+use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
+use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
 use EffectiveActivism\SparQlClient\Syntax\Triple\TripleInterface;
 use EffectiveActivism\SparQlClient\Tests\Environment\TestKernel;
 use InvalidArgumentException;

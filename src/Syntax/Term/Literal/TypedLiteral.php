@@ -1,7 +1,9 @@
 <?php declare(strict_types=1);
 
-namespace EffectiveActivism\SparQlClient\Syntax\Term;
+namespace EffectiveActivism\SparQlClient\Syntax\Term\Literal;
 
+use EffectiveActivism\SparQlClient\Syntax\Term\Iri\AbstractIri;
+use EffectiveActivism\SparQlClient\Syntax\Term\TermInterface;
 use InvalidArgumentException;
 
 class TypedLiteral extends AbstractLiteral implements TermInterface

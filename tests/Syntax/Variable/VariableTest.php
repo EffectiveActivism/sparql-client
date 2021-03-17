@@ -1,8 +1,8 @@
 <?php
 
-namespace EffectiveActivism\SparQlClient\Tests\Syntax;
+namespace EffectiveActivism\SparQlClient\Tests\Syntax\Variable;
 
-use EffectiveActivism\SparQlClient\Syntax\Term\Variable;
+use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
 use InvalidArgumentException;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Throwable;
