@@ -36,10 +36,10 @@ Retrieve any subjects that have a `schema:headline` of `"Lorem"@la`.
 namespace App\Controller;
 
 use EffectiveActivism\SparQlClient\Client\SparQlClientInterface;
-use EffectiveActivism\SparQlClient\Syntax\Term\PlainLiteral;
-use EffectiveActivism\SparQlClient\Syntax\Term\PrefixedIri;
+use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
+use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
 use EffectiveActivism\SparQlClient\Syntax\Term\TermInterface;
-use EffectiveActivism\SparQlClient\Syntax\Term\Variable;
+use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
 use EffectiveActivism\SparQlClient\Syntax\Triple\Triple;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
@@ -84,9 +84,9 @@ Insert the following triple:
 namespace App\Controller;
 
 use EffectiveActivism\SparQlClient\Client\SparQlClientInterface;
-use EffectiveActivism\SparQlClient\Syntax\Term\Iri;
-use EffectiveActivism\SparQlClient\Syntax\Term\PlainLiteral;
-use EffectiveActivism\SparQlClient\Syntax\Term\PrefixedIri;
+use EffectiveActivism\SparQlClient\Syntax\Term\Iri\Iri;
+use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
+use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
 use EffectiveActivism\SparQlClient\Syntax\Triple\Triple;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
@@ -123,9 +123,9 @@ if the subject has type `schema:Article`.
 namespace App\Controller;
 
 use EffectiveActivism\SparQlClient\Client\SparQlClientInterface;
-use EffectiveActivism\SparQlClient\Syntax\Term\PlainLiteral;
-use EffectiveActivism\SparQlClient\Syntax\Term\PrefixedIri;
-use EffectiveActivism\SparQlClient\Syntax\Term\Variable;
+use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
+use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
+use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
 use EffectiveActivism\SparQlClient\Syntax\Triple\Triple;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
@@ -169,9 +169,9 @@ with a `schema:headline` of `"ipsum"@la`.
 namespace App\Controller;
 
 use EffectiveActivism\SparQlClient\Client\SparQlClientInterface;
-use EffectiveActivism\SparQlClient\Syntax\Term\PlainLiteral;
-use EffectiveActivism\SparQlClient\Syntax\Term\PrefixedIri;
-use EffectiveActivism\SparQlClient\Syntax\Term\Variable;
+use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
+use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
+use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
 use EffectiveActivism\SparQlClient\Syntax\Triple\Triple;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
@@ -206,6 +206,44 @@ class MyController extends AbstractController
 }
 ```
 
+### Property paths and sets
+
+To use path operators such as inverse path (`^`), use the
+`EffectiveActivism\SparQlClient\Syntax\Term\Path` classes.
+
+#### Inverse path example
+
+```php
+<?php
+
+use \EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
+use \EffectiveActivism\SparQlClient\Syntax\Term\Path\InversePath; 
+
+$predicate = new PrefixedIri('schema', 'headline');
+// Inverse predicate
+$inversePredicate = new InversePath($predicate);
+// The below will output "^schema:headline"
+dump($inversePredicate->serialize());
+```
+
+#### Sequence path example
+
+```php
+<?php
+
+use \EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
+use \EffectiveActivism\SparQlClient\Syntax\Term\Path\InversePath;
+use \EffectiveActivism\SparQlClient\Syntax\Term\Path\SequencePath; 
+
+$predicate = new PrefixedIri('schema', 'headline');
+// Inverse predicate
+$inversePredicate = new InversePath($predicate);
+// Sequence of predicate and inverse predicate.
+$sequencePath = new SequencePath($predicate, $inversePredicate);
+// The below will output "schema:headline / ^schema:headline"
+dump($sequencePath->serialize());
+```
+
 ## Validation
 
 This bundle supports validation of terms. For example, the below assignment
@@ -215,7 +253,7 @@ characters.
 ```php
 <?php
 
-use \EffectiveActivism\SparQlClient\Syntax\Term\PrefixedIri;
+use \EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
 
 $subject = new PrefixedIri('‿schema', 'headline');
 ```
@@ -233,10 +271,10 @@ below statement will throw an InvalidArgumentException because the
 namespace App\Controller;
 
 use EffectiveActivism\SparQlClient\Client\SparQlClientInterface;
-use EffectiveActivism\SparQlClient\Syntax\Term\Iri;
-use EffectiveActivism\SparQlClient\Syntax\Term\PlainLiteral;
-use EffectiveActivism\SparQlClient\Syntax\Term\PrefixedIri;
-use EffectiveActivism\SparQlClient\Syntax\Term\Variable;
+use EffectiveActivism\SparQlClient\Syntax\Term\Iri\Iri;
+use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
+use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
+use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
 use EffectiveActivism\SparQlClient\Syntax\Triple\Triple;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
