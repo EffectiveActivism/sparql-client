@@ -1,9 +1,9 @@
 <?php
 
-namespace EffectiveActivism\SparQlClient\Tests\Syntax;
+namespace EffectiveActivism\SparQlClient\Tests\Syntax\Triple;
 
-use EffectiveActivism\SparQlClient\Syntax\Term\Iri;
-use EffectiveActivism\SparQlClient\Syntax\Term\PlainLiteral;
+use EffectiveActivism\SparQlClient\Syntax\Term\Iri\Iri;
+use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
 use EffectiveActivism\SparQlClient\Syntax\Triple\Triple;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 

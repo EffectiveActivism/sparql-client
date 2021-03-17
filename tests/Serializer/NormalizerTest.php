@@ -3,10 +3,10 @@
 namespace EffectiveActivism\SparQlClient\Tests\Serializer;
 
 use EffectiveActivism\SparQlClient\Serializer\Normalizer\SparQlResultDenormalizer;
-use EffectiveActivism\SparQlClient\Syntax\Term\Iri;
-use EffectiveActivism\SparQlClient\Syntax\Term\PlainLiteral;
+use EffectiveActivism\SparQlClient\Syntax\Term\Iri\Iri;
+use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
+use EffectiveActivism\SparQlClient\Syntax\Term\Literal\TypedLiteral;
 use EffectiveActivism\SparQlClient\Syntax\Term\TermInterface;
-use EffectiveActivism\SparQlClient\Syntax\Term\TypedLiteral;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Serializer\Encoder\XmlEncoder;
 use Symfony\Component\Serializer\Serializer;

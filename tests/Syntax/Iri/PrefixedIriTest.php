@@ -1,8 +1,8 @@
 <?php
 
-namespace EffectiveActivism\SparQlClient\Tests\Syntax;
+namespace EffectiveActivism\SparQlClient\Tests\Syntax\Iri;
 
-use EffectiveActivism\SparQlClient\Syntax\Term\PrefixedIri;
+use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
 use InvalidArgumentException;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Throwable;
