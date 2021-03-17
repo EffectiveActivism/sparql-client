@@ -244,6 +244,24 @@ $sequencePath = new SequencePath($predicate, $inversePredicate);
 dump($sequencePath->serialize());
 ```
 
+#### Negated set example
+
+```php
+<?php
+
+use \EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
+use \EffectiveActivism\SparQlClient\Syntax\Term\Path\InversePath;
+use \EffectiveActivism\SparQlClient\Syntax\Term\Set\NegatedPropertySet; 
+
+$predicate = new PrefixedIri('schema', 'headline');
+// Inverse predicate
+$inversePredicate = new InversePath($predicate);
+// Negated set of predicate and inverse predicate.
+$negatedSet = new NegatedPropertySet([$predicate, $inversePredicate]);
+// The below will output "!(schema:headline | (^schema:headline))"
+dump($negatedSet->serialize());
+```
+
 ## Validation
 
 This bundle supports validation of terms. For example, the below assignment
