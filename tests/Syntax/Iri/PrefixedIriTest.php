@@ -50,4 +50,11 @@ class PrefixedIriTest extends KernelTestCase
             $this->assertInstanceOf(PrefixedIri::class, new PrefixedIri($prefix, $localPart));
         }
     }
+
+    public function testGetPrefixAndLocalPart()
+    {
+        $prefix = new PrefixedIri('lorem', 'ipsum');
+        $this->assertEquals('lorem', $prefix->getPrefix());
+        $this->assertEquals('ipsum', $prefix->getLocalPart());
+    }
 }
