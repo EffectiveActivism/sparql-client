@@ -20,17 +20,6 @@ class TestKernel extends Kernel
     public function registerContainerConfiguration(LoaderInterface $loader)
     {
         $loader->load(function (ContainerBuilder $container) {
-            $container->loadFromExtension('framework', [
-                'secret' => 'test',
-                'session' => [
-                    'enabled' => true,
-                    'storage_id' => 'session.storage.mock_file',
-                ],
-                'router' => [
-                    'resource' => '~',
-                    'utf8' => true,
-                ],
-            ]);
             $container->loadFromExtension('sparql_client', [
                 'sparql_endpoint' => 'http://test-sparql-endpoint:9999/blazegraph/sparql',
                 'namespaces' => [
