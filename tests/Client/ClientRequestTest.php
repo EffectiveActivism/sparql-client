@@ -67,7 +67,7 @@ class ClientRequestTest extends KernelTestCase
         $this->assertCount(2, $resultSet);
         $firstSet = $resultSet[0];
         $this->assertCount(3, $firstSet);
-        $firstTerm = $firstSet[0];
+        $firstTerm = $firstSet['subject'];
         $this->assertInstanceOf(Iri::class, $firstTerm);
         $this->assertEquals('<urn:uuid:fcf19bc4-7e81-11eb-a169-175604c7c7bc>', $firstTerm->serialize());
         $this->assertEquals(self::SELECT_STATEMENT_EXPECTED_QUERY, urldecode($receivedQuery));
