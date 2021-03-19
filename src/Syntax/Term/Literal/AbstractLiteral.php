@@ -27,6 +27,11 @@ abstract class AbstractLiteral extends AbstractTerm implements TermInterface
 
     abstract public function serialize(): string;
 
+    public function getRawValue(): string
+    {
+        return $this->value;
+    }
+
     /**
      * @throws InvalidArgumentException
      */

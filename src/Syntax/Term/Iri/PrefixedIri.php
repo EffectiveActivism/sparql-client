@@ -45,4 +45,9 @@ class PrefixedIri extends AbstractIri implements TermInterface
     {
         return $this->prefix;
     }
+
+    public function getRawValue(): string
+    {
+        return sprintf('%s:%s', $this->prefix, $this->localPart);
+    }
 }
