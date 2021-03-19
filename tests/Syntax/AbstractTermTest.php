@@ -16,6 +16,10 @@ class AbstractTermTest extends KernelTestCase
             {
                 return '';
             }
+            public function getRawValue(): string
+            {
+                return '';
+            }
         };
         $abstractTermClass->setVariableName(self::VARIABLE_NAME);
         $this->assertEquals(self::VARIABLE_NAME, $abstractTermClass->getVariableName());
