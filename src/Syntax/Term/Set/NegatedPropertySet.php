@@ -36,6 +36,14 @@ class NegatedPropertySet extends AbstractTerm implements TermInterface
      * Getters.
      */
 
+    public function getRawValue(): string
+    {
+        if (!empty($this->terms)) {
+            return $this->terms[0]->getRawValue();
+        }
+        return '';
+    }
+
     public function getTerms(): array
     {
         return $this->terms;

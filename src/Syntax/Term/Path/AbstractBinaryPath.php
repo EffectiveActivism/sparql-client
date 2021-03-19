@@ -36,6 +36,11 @@ abstract class AbstractBinaryPath extends AbstractPath implements TermInterface
         return $this->term1->getVariableName();
     }
 
+    public function getRawValue(): string
+    {
+        return $this->term1->getRawValue();
+    }
+
     /**
      * Setters.
      */
