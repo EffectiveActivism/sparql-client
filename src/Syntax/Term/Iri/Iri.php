@@ -25,4 +25,9 @@ class Iri extends AbstractIri implements TermInterface
     {
         return sprintf('<%s>', $this->value);
     }
+
+    public function getRawValue(): string
+    {
+        return $this->value;
+    }
 }

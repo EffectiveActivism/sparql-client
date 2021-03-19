@@ -18,6 +18,11 @@ abstract class AbstractUnaryPath extends AbstractPath implements TermInterface
      * Getters.
      */
 
+    public function getRawValue(): string
+    {
+        return $this->term->getRawValue();
+    }
+
     public function getTerm(): AbstractIri|AbstractPath
     {
         return $this->term;
