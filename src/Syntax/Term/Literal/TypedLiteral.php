@@ -11,26 +11,23 @@ class TypedLiteral extends AbstractLiteral implements TermInterface
     /**
      * @see https://www.w3.org/TR/2004/REC-rdf-concepts-20040210/#dfn-datatype-URI.
      */
-    protected AbstractIri|null $dataType;
+    protected AbstractIri|null $dataType = null;
 
     public function __construct(bool|float|int|string $value, AbstractIri $dataType = null)
     {
         parent::__construct($value);
-        if ($dataType !== null && false) {
-            throw new InvalidArgumentException(sprintf('Datatype "%s" is not valid', $dataType->serialize()));
-        }
         $this->dataType = $dataType;
     }
 
     public function serialize(): string
     {
-        if (empty($this->dataType)) {
+        if ($this->dataType === null) {
             return match (gettype($this->value)) {
-                'string' => sprintf('%s%s%s', $this->serializeLiteralWrapper(), $this->value, $this->serializeLiteralWrapper()),
-                'integer' => sprintf('"%s"^^xsd:integer', $this->value),
-                'double' => sprintf('"%s"^^xsd:decimal', $this->value),
                 'boolean' => sprintf('"%s"^^xsd:boolean', $this->value ? 'true' : 'false'),
-                default => null,
+                'double' => sprintf('"%s"^^xsd:decimal', $this->value),
+                'integer' => sprintf('"%s"^^xsd:integer', $this->value),
+                'string' => sprintf('%s%s%s', $this->serializeLiteralWrapper(), $this->value, $this->serializeLiteralWrapper()),
+                default => throw new InvalidArgumentException(sprintf('Typed literal "%s" has unknown type "%s"', $this->getRawValue(), gettype($this->value))),
             };
         }
         elseif (in_array($this->dataType->serialize(), ['xsd:boolean', 'http://www.w3.org/2001/XMLSchema#boolean'])) {
@@ -49,5 +46,75 @@ class TypedLiteral extends AbstractLiteral implements TermInterface
         else {
             return sprintf('"%s"^^%s', $this->value, $this->dataType->serialize());
         }
+    }
+
+    /**
+     * Getters.
+     */
+
+    public function getType(): string
+    {
+        if ($this->dataType === null) {
+            return match (gettype($this->value)) {
+                'boolean' => 'xsd:boolean',
+                'double' => 'xsd:decimal',
+                'integer' => 'xsd:integer',
+                'string' => 'xsd:string',
+                default => throw new InvalidArgumentException(sprintf('Typed literal "%s" has unknown type "%s"', $this->getRawValue(), gettype($this->value))),
+            };
+        }
+        elseif (in_array($this->dataType->getRawValue(), [
+            'xsd:boolean',
+            'http://www.w3.org/2001/XMLSchema#boolean'
+        ])) {
+            return 'xsd:boolean';
+        }
+        elseif (in_array($this->dataType->getRawValue(), [
+            'xsd:dateTime',
+            'http://www.w3.org/2001/XMLSchema#dateTime'
+        ])) {
+            return 'xsd:dateTime';
+        }
+        elseif (in_array($this->dataType->getRawValue(), [
+            'xsd:decimal',
+            'http://www.w3.org/2001/XMLSchema#decimal'
+        ])) {
+            return 'xsd:decimal';
+        }
+        elseif (in_array($this->dataType->getRawValue(), [
+            'http://www.w3.org/2001/XMLSchema#:nonPositiveInteger',
+            'http://www.w3.org/2001/XMLSchema#:negativeInteger',
+            'http://www.w3.org/2001/XMLSchema#:long',
+            'http://www.w3.org/2001/XMLSchema#:int',
+            'http://www.w3.org/2001/XMLSchema#:short',
+            'http://www.w3.org/2001/XMLSchema#:byte',
+            'http://www.w3.org/2001/XMLSchema#:nonNegativeInteger',
+            'http://www.w3.org/2001/XMLSchema#:unsignedLong',
+            'http://www.w3.org/2001/XMLSchema#:unsignedInt',
+            'http://www.w3.org/2001/XMLSchema#:unsignedShort',
+            'http://www.w3.org/2001/XMLSchema#:unsignedByte',
+            'http://www.w3.org/2001/XMLSchema#:positiveInteger',
+            'xsd:nonPositiveInteger',
+            'xsd:negativeInteger',
+            'xsd:long',
+            'xsd:int',
+            'xsd:short',
+            'xsd:byte',
+            'xsd:nonNegativeInteger',
+            'xsd:unsignedLong',
+            'xsd:unsignedInt',
+            'xsd:unsignedShort',
+            'xsd:unsignedByte',
+            'xsd:positiveInteger',
+        ])) {
+            return 'xsd:integer';
+        }
+        elseif (in_array($this->dataType->getRawValue(), [
+            'http://www.w3.org/2001/XMLSchema#:string',
+            'xsd:string',
+        ])) {
+            return 'xsd:string';
+        }
+        throw new InvalidArgumentException(sprintf('Typed literal "%s" has unknown type "%s"', $this->getRawValue(), gettype($this->value)));
     }
 }

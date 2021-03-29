@@ -313,11 +313,82 @@ class MyController extends AbstractController
 }
 ```
 
+## Constraints
+
+To apply a constraint, such as a filter, use the
+`EffectiveActivism\SparQlClient\Syntax\Constraint` classes.
+
+To use an operator with the `Filter()` class, use the
+`EffectiveActivism\SparQlClient\Syntax\Constraint\Operator` classes.
+
+### Filter examples
+
+The example below showcase how to select all subjects that has a
+`schema:headline` value of `lorem` except any subjects with a
+`schema:identifier` value of `13a5b1da-9060-11eb-a695-2bfde2d1d6bd`.
+
+```php
+<?php
+
+namespace App\Controller;
+
+use EffectiveActivism\SparQlClient\Client\SparQlClientInterface;
+use EffectiveActivism\SparQlClient\Syntax\Constraint\FilterNotExists;
+use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
+use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
+use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
+use EffectiveActivism\SparQlClient\Syntax\Triple\Triple;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+
+class MyController extends AbstractController
+{
+    public function view(SparQlClientInterface $sparQlClient)
+    {
+        $variable = new Variable('foo');
+        $predicate = new PrefixedIri('schema', 'headline');
+        $object = new PlainLiteral('Lorem');
+        $filterPredicate = new PrefixedIri('schema', 'identifier');
+        $filterObject = new PlainLiteral('13a5b1da-9060-11eb-a695-2bfde2d1d6bd');
+        $statement = $sparQlClient
+            ->select([$variable])
+            ->where([
+                new Triple($variable, $predicate, $object),
+                new FilterNotExists([
+                    new Triple($variable, $filterPredicate, $filterObject)
+                ]),
+            ]);
+        $result = $sparQlClient->execute($statement);
+    }
+}
+```
+
+This example showcases how to use filter operators. Type enforcement
+ensures some argument validation.
+
+```php
+<?php
+
+use EffectiveActivism\SparQlClient\Syntax\Constraint\Filter;
+use EffectiveActivism\SparQlClient\Syntax\Constraint\Operator\Binary\Equal;
+use EffectiveActivism\SparQlClient\Syntax\Constraint\Operator\Binary\NotEqual;
+use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
+
+$object1 = new PlainLiteral('Lorem');
+$object2 = new PlainLiteral('Ipsum');
+$object3 = new PlainLiteral(12);
+
+// Returns a filter of the form FILTER('Lorem' = 'Ipsum')
+new Filter(new Equal($object1, $object2));
+
+// Throws an InvalidArgumentException because the argument data types do not match.
+new Filter(new NotEqual($object1, $object3));
+```
+
 ## Planned features
 
 - Support for graphs, including named graphs and management operations.
 - Support for ASK, CONSTRUCT and DESCRIBE statements.
-- Support for FILTER.
+- Support for UNION.
 - Support for SERVICE.
 - Support for empty prefixes.
 - Validation of typed literals using their datatype.

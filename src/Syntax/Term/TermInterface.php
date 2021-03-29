@@ -4,6 +4,8 @@ namespace EffectiveActivism\SparQlClient\Syntax\Term;
 
 interface TermInterface
 {
+    public function serialize(): string;
+
     /**
      * Getters.
      */
@@ -12,12 +14,9 @@ interface TermInterface
 
     public function getVariableName(): string;
 
-
     /**
      * Setters.
      */
-
-    public function serialize(): string;
 
     public function setVariableName(string $variableName): TermInterface;
 }

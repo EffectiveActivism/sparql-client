@@ -2,6 +2,7 @@
 
 namespace EffectiveActivism\SparQlClient\Syntax\Statement;
 
+use EffectiveActivism\SparQlClient\Syntax\Constraint\ConstraintInterface;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
 use EffectiveActivism\SparQlClient\Syntax\Triple\TripleInterface;
 use InvalidArgumentException;
@@ -14,23 +15,23 @@ abstract class AbstractConditionalStatement extends AbstractStatement implements
 
     protected array $variables = [];
 
-    public function where(array $triples, bool $optional = false): ConditionalStatementInterface
+    public function where(array $triplesOrConstraints, bool $optional = false): ConditionalStatementInterface
     {
-        foreach ($triples as $triple) {
-            if (!($triple instanceof TripleInterface)) {
-                throw new InvalidArgumentException(sprintf('Invalid condition class: %s', get_class($triple)));
+        foreach ($triplesOrConstraints as $tripleorConstraint) {
+            if (!($tripleorConstraint instanceof TripleInterface) && !($tripleorConstraint instanceof ConstraintInterface)) {
+                throw new InvalidArgumentException(sprintf('Invalid condition class: %s', get_class($tripleorConstraint)));
             }
-            foreach ($triple->toArray() as $term) {
+            foreach ($tripleorConstraint->toArray() as $term) {
                 if (get_class($term) === PrefixedIri::class && !in_array($term->getPrefix(), array_keys($this->namespaces))) {
                     throw new InvalidArgumentException(sprintf('Prefix "%s" is not defined', $term->getPrefix()));
                 }
             }
         }
         if ($optional) {
-            $this->optionalConditions = $triples;
+            $this->optionalConditions = $triplesOrConstraints;
         }
         else {
-            $this->conditions = $triples;
+            $this->conditions = $triplesOrConstraints;
         }
         return $this;
     }

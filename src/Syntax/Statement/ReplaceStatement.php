@@ -2,7 +2,9 @@
 
 namespace EffectiveActivism\SparQlClient\Syntax\Statement;
 
+use EffectiveActivism\SparQlClient\Syntax\Constraint\ConstraintInterface;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
+use EffectiveActivism\SparQlClient\Syntax\Term\TermInterface;
 use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
 use EffectiveActivism\SparQlClient\Syntax\Triple\TripleInterface;
 use InvalidArgumentException;
@@ -39,12 +41,12 @@ class ReplaceStatement extends AbstractConditionalStatement implements ReplaceSt
     {
         $preQuery = parent::toQuery();
         $conditionsString = '';
-        foreach ($this->conditions as $triple) {
-            $conditionsString .= sprintf('%s .', $triple);
+        foreach ($this->conditions as $condition) {
+            $conditionsString .= sprintf('%s .', $condition);
         }
         $optionalConditionsString = '';
-        foreach ($this->optionalConditions as $triple) {
-            $optionalConditionsString .= sprintf('OPTIONAL {%s} .', $triple);
+        foreach ($this->optionalConditions as $condition) {
+            $optionalConditionsString .= sprintf('OPTIONAL {%s} .', $condition);
         }
         // At least one variable (if any) must be referenced in a 'where' clause.
         $unclausedVariables = true;
@@ -52,11 +54,13 @@ class ReplaceStatement extends AbstractConditionalStatement implements ReplaceSt
         foreach (array_merge($this->original->toArray(), $this->replacement->toArray()) as $term) {
             if (get_class($term) === Variable::class) {
                 $hasVariables = true;
-                /** @var TripleInterface $triple */
-                foreach (array_merge($this->conditions, $this->optionalConditions) as $triple) {
-                    foreach ($triple->toArray() as $clausedTerm) {
-                        if (get_class($clausedTerm) === Variable::class && $clausedTerm->getVariableName() === $term->getVariableName()) {
-                            $unclausedVariables = false;
+                /** @var TripleInterface|ConstraintInterface $condition */
+                foreach (array_merge($this->conditions, $this->optionalConditions) as $condition) {
+                    if ($condition instanceof TripleInterface) {
+                        foreach ($condition->toArray() as $clausedTerm) {
+                            if (get_class($clausedTerm) === Variable::class && $clausedTerm->getVariableName() === $term->getVariableName()) {
+                                $unclausedVariables = false;
+                            }
                         }
                     }
                 }
@@ -66,7 +70,7 @@ class ReplaceStatement extends AbstractConditionalStatement implements ReplaceSt
             throw new InvalidArgumentException('At least one variable must be referenced in a \'where\' clause.');
         }
         if (!empty($conditionsString) || !empty($optionalConditionsString)) {
-            return sprintf('%s DELETE { %s } INSERT { %s } WHERE { %s %s}', $preQuery, (string) $this->original, (string) $this->replacement, $conditionsString, $optionalConditionsString);
+            return sprintf('%sDELETE { %s } INSERT { %s } WHERE { %s %s}', $preQuery, (string) $this->original, (string) $this->replacement, $conditionsString, $optionalConditionsString);
         }
         else {
             // Replace statements must have a 'where' clause.
