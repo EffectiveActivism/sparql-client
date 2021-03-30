@@ -21,6 +21,6 @@ class GreaterThanOrEqual extends AbstractBinaryOperator implements BinaryOperato
 
     public function serialize(): string
     {
-        return sprintf('%s >= %s', $this->leftExpression, $this->rightExpression);
+        return sprintf('%s >= %s', $this->leftExpression->serialize(), $this->rightExpression->serialize());
     }
 }

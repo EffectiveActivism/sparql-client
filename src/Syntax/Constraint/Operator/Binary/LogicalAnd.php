@@ -18,6 +18,6 @@ class LogicalAnd extends AbstractBinaryOperator implements BinaryOperatorInterfa
 
     public function serialize(): string
     {
-        return sprintf('%s AND %s', $this->leftExpression, $this->rightExpression);
+        return sprintf('%s AND %s', $this->leftExpression->serialize(), $this->rightExpression->serialize());
     }
 }

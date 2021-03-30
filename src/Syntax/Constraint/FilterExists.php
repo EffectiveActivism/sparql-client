@@ -12,8 +12,9 @@ class FilterExists implements ConstraintInterface
 
     public function __construct(array $patterns) {
         foreach ($patterns as $pattern) {
-            if (!($pattern instanceof ConstraintInterface) && !($pattern instanceof TripleInterface)) {
-                throw new InvalidArgumentException(sprintf('Invalid constraint class: %s', get_class($pattern)));
+            if (!is_object($pattern) || (!($pattern instanceof ConstraintInterface) && !($pattern instanceof TripleInterface))) {
+                $class = is_object($pattern) ? get_class($pattern) : gettype($pattern);
+                throw new InvalidArgumentException(sprintf('Invalid constraint class: %s', $class));
             }
         }
         $this->patterns = $patterns;
@@ -35,12 +36,6 @@ class FilterExists implements ConstraintInterface
             foreach ($pattern->toArray() as $item) {
                 if ($item instanceof TermInterface) {
                     $terms[] = $item;
-                }
-                elseif (
-                    $item instanceof TripleInterface ||
-                    $item instanceof ConstraintInterface
-                ) {
-                    $terms = array_merge($terms, $item->toArray());
                 }
             }
         }

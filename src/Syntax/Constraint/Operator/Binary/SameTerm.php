@@ -17,6 +17,6 @@ class SameTerm extends AbstractBinaryOperator implements BinaryOperatorInterface
 
     public function serialize(): string
     {
-        return sprintf('sameTERM(%s,%s)', $this->leftExpression, $this->rightExpression);
+        return sprintf('sameTERM(%s,%s)', $this->leftExpression->serialize(), $this->rightExpression->serialize());
     }
 }

@@ -17,6 +17,6 @@ class LangMatches extends AbstractBinaryOperator implements BinaryOperatorInterf
 
     public function serialize(): string
     {
-        return sprintf('langMATCHES(%s,%s)', $this->leftExpression, $this->rightExpression);
+        return sprintf('langMATCHES(%s,%s)', $this->leftExpression->serialize(), $this->rightExpression->serialize());
     }
 }

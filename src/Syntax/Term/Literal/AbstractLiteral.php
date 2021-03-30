@@ -58,7 +58,7 @@ abstract class AbstractLiteral extends AbstractTerm implements TermInterface
 
     public function getRawValue(): string
     {
-        return $this->value;
+        return (string) $this->value;
     }
 
     abstract public function getType(): string;

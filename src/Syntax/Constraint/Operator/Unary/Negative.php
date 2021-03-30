@@ -5,7 +5,7 @@ namespace EffectiveActivism\SparQlClient\Syntax\Constraint\Operator\Unary;
 use EffectiveActivism\SparQlClient\Syntax\Term\Literal\AbstractLiteral;
 use InvalidArgumentException;
 
-class Minus extends AbstractUnaryOperator implements UnaryOperatorInterface
+class Negative extends AbstractUnaryOperator implements UnaryOperatorInterface
 {
     /**
      * @see https://www.w3.org/TR/rdf-sparql-query/#operandDataTypes.
