@@ -81,8 +81,9 @@ class SparQlClient implements SparQlClientInterface
         $parameters = ['body' => ['query' => $query]];
         $cacheHit = true;
         $responseContent = null;
+        $queryKey = $this->getKey($query);
         try {
-            $responseContent = $this->cacheAdapter->get($this->getKey($query), function (ItemInterface $item) use ($parameters, &$cacheHit) {
+            $responseContent = $this->cacheAdapter->get($queryKey, function (ItemInterface $item) use ($parameters, &$cacheHit) {
                 $responseContent = null;
                 try {
                     $responseContent = $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent();
@@ -107,7 +108,6 @@ class SparQlClient implements SparQlClientInterface
                     }
                 }
             }
-            $queryKey = $this->getKey($query);
             try {
                 $cacheItem = $this->cacheAdapter->getItem($queryKey);
                 $cacheItem->set($responseContent);
