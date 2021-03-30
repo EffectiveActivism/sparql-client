@@ -2,6 +2,7 @@
 
 namespace EffectiveActivism\SparQlClient\Syntax\Statement;
 
+use EffectiveActivism\SparQlClient\Syntax\Constraint\ConstraintInterface;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
 use EffectiveActivism\SparQlClient\Syntax\Triple\TripleInterface;
@@ -32,12 +33,12 @@ class DeleteStatement extends AbstractConditionalStatement implements DeleteStat
     {
         $preQuery = parent::toQuery();
         $conditionsString = '';
-        foreach ($this->conditions as $triple) {
-            $conditionsString .= sprintf('%s .', $triple);
+        foreach ($this->conditions as $condition) {
+            $conditionsString .= sprintf('%s .', $condition);
         }
         $optionalConditionsString = '';
-        foreach ($this->optionalConditions as $triple) {
-            $optionalConditionsString .= sprintf('OPTIONAL {%s} .', $triple);
+        foreach ($this->optionalConditions as $condition) {
+            $optionalConditionsString .= sprintf('OPTIONAL {%s} .', $condition);
         }
         if (!empty($conditionsString) || !empty($optionalConditionsString)) {
             // At least one variable (if any) must be referenced in a 'where' clause.
@@ -46,11 +47,13 @@ class DeleteStatement extends AbstractConditionalStatement implements DeleteStat
             foreach ($this->tripleToDelete->toArray() as $term) {
                 if (get_class($term) === Variable::class) {
                     $hasVariables = true;
-                    /** @var TripleInterface $triple */
-                    foreach (array_merge($this->conditions, $this->optionalConditions) as $triple) {
-                        foreach ($triple->toArray() as $clausedTerm) {
-                            if (get_class($clausedTerm) === Variable::class && $clausedTerm->getVariableName() === $term->getVariableName()) {
-                                $unclausedVariables = false;
+                    /** @var TripleInterface|ConstraintInterface $triple */
+                    foreach (array_merge($this->conditions, $this->optionalConditions) as $condition) {
+                        if ($condition instanceof TripleInterface) {
+                            foreach ($condition->toArray() as $clausedTerm) {
+                                if (get_class($clausedTerm) === Variable::class && $clausedTerm->getVariableName() === $term->getVariableName()) {
+                                    $unclausedVariables = false;
+                                }
                             }
                         }
                     }
@@ -59,7 +62,7 @@ class DeleteStatement extends AbstractConditionalStatement implements DeleteStat
             if ($hasVariables && $unclausedVariables) {
                 throw new InvalidArgumentException('At least one variable must be referenced in a \'where\' clause.');
             }
-            return sprintf('%s DELETE { %s } WHERE { %s %s}', $preQuery, (string) $this->tripleToDelete, $conditionsString, $optionalConditionsString);
+            return sprintf('%sDELETE { %s } WHERE { %s %s}', $preQuery, (string) $this->tripleToDelete, $conditionsString, $optionalConditionsString);
         }
         else {
             // Variables are not allowed when not using 'where' clauses.
@@ -68,7 +71,7 @@ class DeleteStatement extends AbstractConditionalStatement implements DeleteStat
                     throw new InvalidArgumentException(sprintf('Variable "%s" cannot be deleted without being referenced in a \'where\' clause', $term->getVariableName()));
                 }
             }
-            return sprintf('%s DELETE DATA { %s }', $preQuery, (string) $this->tripleToDelete);
+            return sprintf('%sDELETE DATA { %s }', $preQuery, (string) $this->tripleToDelete);
         }
     }
 

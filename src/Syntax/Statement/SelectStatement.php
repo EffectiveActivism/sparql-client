@@ -2,6 +2,7 @@
 
 namespace EffectiveActivism\SparQlClient\Syntax\Statement;
 
+use EffectiveActivism\SparQlClient\Syntax\Constraint\ConstraintInterface;
 use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
 use EffectiveActivism\SparQlClient\Syntax\Triple\TripleInterface;
 use InvalidArgumentException;
@@ -36,22 +37,24 @@ class SelectStatement extends AbstractConditionalStatement implements SelectStat
             $variables .= sprintf('%s ', $variable->serialize());
         }
         $conditionsString = '';
-        foreach ($this->conditions as $triple) {
-            $conditionsString .= sprintf('%s .', $triple);
+        foreach ($this->conditions as $condition) {
+            $conditionsString .= sprintf(' %s .', $condition);
         }
         $optionalConditionsString = '';
-        foreach ($this->optionalConditions as $triple) {
-            $optionalConditionsString .= sprintf('OPTIONAL {%s} .', $triple);
+        foreach ($this->optionalConditions as $condition) {
+            $optionalConditionsString .= sprintf('OPTIONAL {%s} .', $condition);
         }
         if (!empty($conditionsString) || !empty($optionalConditionsString)) {
             // At least one variable (if any) must be referenced in a 'where' clause.
             $unclausedVariables = true;
             foreach ($this->variables as $term) {
-                /** @var TripleInterface $triple */
-                foreach (array_merge($this->conditions, $this->optionalConditions) as $triple) {
-                    foreach ($triple->toArray() as $clausedTerm) {
-                        if (get_class($clausedTerm) === Variable::class && $clausedTerm->getVariableName() === $term->getVariableName()) {
-                            $unclausedVariables = false;
+                /** @var TripleInterface|ConstraintInterface $triple */
+                foreach (array_merge($this->conditions, $this->optionalConditions) as $condition) {
+                    if ($condition instanceof TripleInterface) {
+                        foreach ($condition->toArray() as $clausedTerm) {
+                            if (get_class($clausedTerm) === Variable::class && $clausedTerm->getVariableName() === $term->getVariableName()) {
+                                $unclausedVariables = false;
+                            }
                         }
                     }
                 }
@@ -59,7 +62,7 @@ class SelectStatement extends AbstractConditionalStatement implements SelectStat
             if ($unclausedVariables) {
                 throw new InvalidArgumentException('At least one variable must be referenced in a \'where\' clause.');
             }
-            return sprintf('%s SELECT %s WHERE { %s %s}', $preQuery, $variables, $conditionsString, $optionalConditionsString);
+            return sprintf('%sSELECT %sWHERE {%s %s}', $preQuery, $variables, $conditionsString, $optionalConditionsString);
         }
         else {
             // Select statements must have a 'where' clause.

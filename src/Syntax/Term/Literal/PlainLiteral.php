@@ -33,4 +33,19 @@ class PlainLiteral extends AbstractLiteral implements TermInterface
             default => null,
         };
     }
+
+    /**
+     * Getters.
+     */
+
+    public function getType(): string
+    {
+        return match (gettype($this->value)) {
+            'boolean' => 'xsd:boolean',
+            'double' => 'xsd:decimal',
+            'integer' => 'xsd:integer',
+            'string' => 'xsd:string',
+            default => throw new InvalidArgumentException(sprintf('Plain literal "%s" has unknown type "%s"', $this->getRawValue(), gettype($this->value))),
+        };
+    }
 }

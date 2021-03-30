@@ -27,11 +27,6 @@ abstract class AbstractLiteral extends AbstractTerm implements TermInterface
 
     abstract public function serialize(): string;
 
-    public function getRawValue(): string
-    {
-        return $this->value;
-    }
-
     /**
      * @throws InvalidArgumentException
      */
@@ -56,4 +51,15 @@ abstract class AbstractLiteral extends AbstractTerm implements TermInterface
             throw new InvalidArgumentException(sprintf('Literal value "%s" cannot be parsed', $this->value));
         }
     }
+
+    /**
+     * Getters.
+     */
+
+    public function getRawValue(): string
+    {
+        return (string) $this->value;
+    }
+
+    abstract public function getType(): string;
 }

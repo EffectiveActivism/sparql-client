@@ -22,9 +22,9 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class ClientRequestTest extends KernelTestCase
 {
-    const NAMESPACES = 'PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>; PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>; PREFIX owl: <http://www.w3.org/2002/07/owl#>; PREFIX skos: <http://www.w3.org/2004/02/skos/core#>; PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>; PREFIX schema: <http://schema.org/>; ';
+    const NAMESPACES = 'PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX owl: <http://www.w3.org/2002/07/owl#> PREFIX skos: <http://www.w3.org/2004/02/skos/core#> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> PREFIX schema: <http://schema.org/>';
 
-    const SELECT_STATEMENT_EXPECTED_QUERY = 'query=' . self::NAMESPACES . ' SELECT ?subject ?object  WHERE { ?subject schema:headline ?object . }';
+    const SELECT_STATEMENT_EXPECTED_QUERY = 'query=' . self::NAMESPACES . ' SELECT ?subject ?object WHERE { ?subject schema:headline ?object . }';
 
     const INSERT_STATEMENT_EXPECTED_QUERY = 'update=' . self::NAMESPACES . ' INSERT { <urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece> schema:headline "Lorem Ipsum" } WHERE { <urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece> schema:headline ?object . }';
 
@@ -36,7 +36,7 @@ class ClientRequestTest extends KernelTestCase
 
     const REPLACE_STATEMENT_EXPECTED_QUERY = 'update=' . self::NAMESPACES . ' DELETE { ?subject schema:headline ?object } INSERT { ?subject schema:headline "Lorem Ipsum" } WHERE { ?subject rdf:type schema:Article . }';
 
-    const HASHED_QUERY_UUID = 'c1bccd5e-4f4c-5aec-91ea-6bb85587c97f';
+    const HASHED_QUERY_UUID = '3959149f-83a7-53a6-82c8-7ca190789516';
 
     /**
      * @covers \EffectiveActivism\SparQlClient\Client\SparQlClient
