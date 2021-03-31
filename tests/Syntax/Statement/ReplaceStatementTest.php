@@ -26,7 +26,7 @@ class ReplaceStatementTest extends KernelTestCase
         $statement = new ReplaceStatement($triple);
         $statement->with($triple);
         $statement->where([$triple]);
-        $statement->where([$triple], true);
+        $statement->optionallyWhere([$triple]);
         $this->assertEquals(self::REPLACE_STATEMENT, $statement->toQuery());
     }
 
