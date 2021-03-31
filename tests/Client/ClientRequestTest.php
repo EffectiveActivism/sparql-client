@@ -13,7 +13,6 @@ use EffectiveActivism\SparQlClient\Syntax\Triple\TripleInterface;
 use EffectiveActivism\SparQlClient\Tests\Environment\TestKernel;
 use Exception;
 use InvalidArgumentException;
-use Psr\Cache\CacheItemInterface;
 use Psr\Cache\InvalidArgumentException as CacheInvalidArgumentException;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
@@ -323,10 +322,15 @@ class ClientRequestTest extends KernelTestCase
     {
         $cacheAdapterStub = $this->getMockBuilder(TagAwareAdapter::class)
             ->setConstructorArgs([new ArrayAdapter()])
-            ->onlyMethods(['getItem', 'get'])
+            ->onlyMethods(['getItem'])
             ->getMock();
+        $cacheItem = new CacheItem();
+        $reflectedCacheItem = new \ReflectionObject($cacheItem);
+        $reflectedProperty = $reflectedCacheItem->getProperty('key');
+        $reflectedProperty->setAccessible(true);
+        $reflectedProperty->setValue($cacheItem, 'foo');
         $exceptionStub = new class extends Exception implements CacheInvalidArgumentException {};
-        $cacheAdapterStub->method('get')->willReturn(call_user_func($this->returnArgument(1)));
+        $cacheAdapterStub->expects($this->at(0))->method('getItem')->willReturn($cacheItem);
         $cacheAdapterStub->expects($this->at(1))->method('getItem')->willThrowException($exceptionStub);
         $selectResponseContent = file_get_contents(__DIR__ . '/../fixtures/client-select-request.xml');
         $httpClient = new MockHttpClient([new MockResponse($selectResponseContent)]);

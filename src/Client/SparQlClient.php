@@ -114,7 +114,7 @@ class SparQlClient implements SparQlClientInterface
                 $cacheItem->tag($tags);
                 $this->cacheAdapter->save($cacheItem);
             } catch (CacheException|InvalidArgumentException $exception) {
-                $this->logger->info($exception->getMessage());
+                throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
             }
         }
         // Return response as either a set of terms or a set of triples.
