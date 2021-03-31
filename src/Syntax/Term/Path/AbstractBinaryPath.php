@@ -31,7 +31,7 @@ abstract class AbstractBinaryPath extends AbstractPath implements TermInterface
         return $this->term2;
     }
 
-    public function getVariableName(): string
+    public function getVariableName(): string|null
     {
         return $this->term1->getVariableName();
     }

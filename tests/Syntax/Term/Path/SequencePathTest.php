@@ -1,6 +1,6 @@
 <?php
 
-namespace EffectiveActivism\SparQlClient\Tests\Syntax\Path;
+namespace EffectiveActivism\SparQlClient\Tests\Syntax\Term\Path;
 
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\Iri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Path\SequencePath;

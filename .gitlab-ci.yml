@@ -25,4 +25,5 @@ before_script:
 
 test:app:
   script:
-    - ./vendor/bin/phpunit --coverage-text
+    - ./vendor/bin/phpunit --coverage-text --coverage-xml coverage/
+    - php .gitlab/phpunit-threshold.php ./coverage/index.xml 100

@@ -1,6 +1,6 @@
 <?php
 
-namespace EffectiveActivism\SparQlClient\Tests\Syntax\Literal;
+namespace EffectiveActivism\SparQlClient\Tests\Syntax\Term\Literal;
 
 use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
 use InvalidArgumentException;
@@ -62,5 +62,17 @@ class PlainLiteralTest extends KernelTestCase
         $this->expectException(InvalidArgumentException::class);
         $literal = new PlainLiteral('"""\'\'\'lorem');
         $literal->serialize();
+    }
+
+    public function testType()
+    {
+        $literal = new PlainLiteral(false);
+        $this->assertEquals('xsd:boolean', $literal->getType());
+        $literal = new PlainLiteral(12.3);
+        $this->assertEquals('xsd:decimal', $literal->getType());
+        $literal = new PlainLiteral(12);
+        $this->assertEquals('xsd:integer', $literal->getType());
+        $literal = new PlainLiteral('lorem');
+        $this->assertEquals('xsd:string', $literal->getType());
     }
 }

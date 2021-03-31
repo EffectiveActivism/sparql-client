@@ -1,6 +1,6 @@
 <?php
 
-namespace EffectiveActivism\SparQlClient\Tests\Syntax\Variable;
+namespace EffectiveActivism\SparQlClient\Tests\Syntax\Term\Variable;
 
 use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
 use InvalidArgumentException;
@@ -42,5 +42,11 @@ class VariableTest extends KernelTestCase
         foreach (self::VALID_VARIABLES as $validVariable) {
             $this->assertInstanceOf(Variable::class, new Variable($validVariable));
         }
+    }
+
+    public function testVariableRawValue()
+    {
+        $variable = new Variable('subject');
+        $this->assertEquals('subject', $variable->getRawValue());
     }
 }

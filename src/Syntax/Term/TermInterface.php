@@ -12,7 +12,7 @@ interface TermInterface
 
     public function getRawValue(): string;
 
-    public function getVariableName(): string;
+    public function getVariableName(): string|null;
 
     /**
      * Setters.

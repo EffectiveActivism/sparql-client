@@ -70,12 +70,6 @@ class TypedLiteral extends AbstractLiteral implements TermInterface
             return 'xsd:boolean';
         }
         elseif (in_array($this->dataType->getRawValue(), [
-            'xsd:dateTime',
-            'http://www.w3.org/2001/XMLSchema#dateTime'
-        ])) {
-            return 'xsd:dateTime';
-        }
-        elseif (in_array($this->dataType->getRawValue(), [
             'xsd:decimal',
             'http://www.w3.org/2001/XMLSchema#decimal'
         ])) {
@@ -86,6 +80,7 @@ class TypedLiteral extends AbstractLiteral implements TermInterface
             'http://www.w3.org/2001/XMLSchema#:negativeInteger',
             'http://www.w3.org/2001/XMLSchema#:long',
             'http://www.w3.org/2001/XMLSchema#:int',
+            'http://www.w3.org/2001/XMLSchema#:integer',
             'http://www.w3.org/2001/XMLSchema#:short',
             'http://www.w3.org/2001/XMLSchema#:byte',
             'http://www.w3.org/2001/XMLSchema#:nonNegativeInteger',
@@ -98,6 +93,7 @@ class TypedLiteral extends AbstractLiteral implements TermInterface
             'xsd:negativeInteger',
             'xsd:long',
             'xsd:int',
+            'xsd:integer',
             'xsd:short',
             'xsd:byte',
             'xsd:nonNegativeInteger',
