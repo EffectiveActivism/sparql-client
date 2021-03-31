@@ -15,7 +15,7 @@ abstract class AbstractConditionalStatement extends AbstractStatement implements
 
     protected array $variables = [];
 
-    public function where(array $triplesOrConstraints, bool $optional = false): ConditionalStatementInterface
+    public function where(array $triplesOrConstraints): ConditionalStatementInterface
     {
         foreach ($triplesOrConstraints as $tripleorConstraint) {
             if (!($tripleorConstraint instanceof TripleInterface) && !($tripleorConstraint instanceof ConstraintInterface)) {
@@ -27,12 +27,23 @@ abstract class AbstractConditionalStatement extends AbstractStatement implements
                 }
             }
         }
-        if ($optional) {
-            $this->optionalConditions = $triplesOrConstraints;
+        $this->conditions = $triplesOrConstraints;
+        return $this;
+    }
+
+    public function optionallyWhere(array $triplesOrConstraints): ConditionalStatementInterface
+    {
+        foreach ($triplesOrConstraints as $tripleorConstraint) {
+            if (!($tripleorConstraint instanceof TripleInterface) && !($tripleorConstraint instanceof ConstraintInterface)) {
+                throw new InvalidArgumentException(sprintf('Invalid condition class: %s', get_class($tripleorConstraint)));
+            }
+            foreach ($tripleorConstraint->toArray() as $term) {
+                if (get_class($term) === PrefixedIri::class && !in_array($term->getPrefix(), array_keys($this->namespaces))) {
+                    throw new InvalidArgumentException(sprintf('Prefix "%s" is not defined', $term->getPrefix()));
+                }
+            }
         }
-        else {
-            $this->conditions = $triplesOrConstraints;
-        }
+        $this->optionalConditions = $triplesOrConstraints;
         return $this;
     }
 

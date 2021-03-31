@@ -27,7 +27,7 @@ class InsertStatementTest extends KernelTestCase
         $triple = new Triple($subject, $predicate, $object);
         $statement = new InsertStatement($triple);
         $statement->where([$triple]);
-        $statement->where([$triple], true);
+        $statement->optionallyWhere([$triple]);
         $this->assertEquals(self::INSERT_STATEMENT, $statement->toQuery());
     }
 
