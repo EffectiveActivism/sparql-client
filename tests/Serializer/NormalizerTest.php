@@ -2,6 +2,7 @@
 
 namespace EffectiveActivism\SparQlClient\Tests\Serializer;
 
+use EffectiveActivism\SparQlClient\Exception\InvalidResultException;
 use EffectiveActivism\SparQlClient\Serializer\Normalizer\SparQlResultDenormalizer;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\Iri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
@@ -119,5 +120,66 @@ class NormalizerTest extends KernelTestCase
         $term = array_shift($set);
         $this->assertInstanceOf(PlainLiteral::class, $term);
         $this->assertEquals('"Ipsum"', $term->serialize());
+    }
+
+    public function testNormalizerExceptions()
+    {
+        // Test normalizing data with unknown type.
+        $data = [
+            'results' => [
+                'result' => [
+                    'binding' => [
+                        'unknown_type' => '',
+                        '@name' => '',
+                    ],
+                ],
+            ],
+        ];
+        $normalizer = new SparQlResultDenormalizer();
+        $threwException = false;
+        try {
+            $normalizer->denormalize($data, SparQlResultDenormalizer::TYPE);
+        } catch (InvalidResultException) {
+            $threwException = true;
+        }
+        $this->assertTrue($threwException);
+        // Test normalizing data with unknown literal.
+        $data = [
+            'results' => [
+                'result' => [
+                    'binding' => [
+                        'literal' => 2,
+                        '@name' => '',
+                    ],
+                ],
+            ],
+        ];
+        $normalizer = new SparQlResultDenormalizer();
+        $threwException = false;
+        try {
+            $normalizer->denormalize($data, SparQlResultDenormalizer::TYPE);
+        } catch (InvalidResultException) {
+            $threwException = true;
+        }
+        $this->assertTrue($threwException);
+        // Test normalizing data with invalid url.
+        $data = [
+            'results' => [
+                'result' => [
+                    'binding' => [
+                        'uri' => 'invalid_url',
+                        '@name' => '',
+                    ],
+                ],
+            ],
+        ];
+        $normalizer = new SparQlResultDenormalizer();
+        $threwException = false;
+        try {
+            $normalizer->denormalize($data, SparQlResultDenormalizer::TYPE);
+        } catch (InvalidResultException) {
+            $threwException = true;
+        }
+        $this->assertTrue($threwException);
     }
 }

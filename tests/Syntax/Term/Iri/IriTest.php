@@ -1,6 +1,6 @@
 <?php
 
-namespace EffectiveActivism\SparQlClient\Tests\Syntax\Iri;
+namespace EffectiveActivism\SparQlClient\Tests\Syntax\Term\Iri;
 
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\Iri;
 use InvalidArgumentException;
@@ -43,5 +43,11 @@ class IriTest extends KernelTestCase
     {
         $iri = new Iri(self::IRI);
         $this->assertEquals(sprintf('<%s>', self::IRI), $iri->serialize());
+    }
+
+    public function testRawValue()
+    {
+        $iri = new Iri(self::IRI);
+        $this->assertEquals(self::IRI, $iri->getRawValue());
     }
 }

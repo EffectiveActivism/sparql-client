@@ -4,9 +4,9 @@ namespace EffectiveActivism\SparQlClient\Syntax\Term;
 
 abstract class AbstractTerm implements TermInterface
 {
-    protected string $variableName;
+    protected string|null $variableName = null;
 
-    public function getVariableName(): string
+    public function getVariableName(): string|null
     {
         return $this->variableName;
     }

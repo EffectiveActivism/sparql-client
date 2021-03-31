@@ -1,6 +1,6 @@
 <?php
 
-namespace EffectiveActivism\SparQlClient\Tests\Syntax\Iri;
+namespace EffectiveActivism\SparQlClient\Tests\Syntax\Term\Iri;
 
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
 use InvalidArgumentException;
@@ -56,5 +56,11 @@ class PrefixedIriTest extends KernelTestCase
         $prefix = new PrefixedIri('lorem', 'ipsum');
         $this->assertEquals('lorem', $prefix->getPrefix());
         $this->assertEquals('ipsum', $prefix->getLocalPart());
+    }
+
+    public function testRawValue()
+    {
+        $prefix = new PrefixedIri('lorem', 'ipsum');
+        $this->assertEquals(sprintf('%s:%s', 'lorem', 'ipsum'), $prefix->getRawValue());
     }
 }

@@ -28,7 +28,7 @@ abstract class AbstractUnaryPath extends AbstractPath implements TermInterface
         return $this->term;
     }
 
-    public function getVariableName(): string
+    public function getVariableName(): string|null
     {
         return $this->term->getVariableName();
     }

@@ -20,7 +20,6 @@ use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
 use EffectiveActivism\SparQlClient\Syntax\Triple\TripleInterface;
 use Psr\Cache\CacheException;
 use Psr\Cache\InvalidArgumentException;
-use Psr\Log\LoggerInterface;
 use Symfony\Component\Serializer\Encoder\XmlEncoder;
 use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Serializer\SerializerInterface;
@@ -39,20 +38,17 @@ class SparQlClient implements SparQlClientInterface
 
     protected HttpClientInterface $httpClient;
 
-    protected LoggerInterface $logger;
-
     protected array $namespaces = [];
 
     protected SerializerInterface $serializer;
 
     protected string $sparQlEndpoint;
 
-    public function __construct(array $configuration, TagAwareCacheInterface $cacheAdapter, HttpClientInterface $httpClient, LoggerInterface $logger)
+    public function __construct(array $configuration, TagAwareCacheInterface $cacheAdapter, HttpClientInterface $httpClient)
     {
         $this->sparQlEndpoint = $configuration['sparql_endpoint'];
         $this->cacheAdapter = $cacheAdapter;
         $this->httpClient = $httpClient;
-        $this->logger = $logger;
         $this->namespaces = $configuration['namespaces'];
         $normalizers = [new SparQlResultDenormalizer()];
         $encoders = [new XmlEncoder()];
@@ -94,17 +90,17 @@ class SparQlClient implements SparQlClientInterface
                 return $responseContent;
             });
         } catch (InvalidArgumentException $exception) {
-            $this->logger->info($exception->getMessage());
+            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
         }
         // Update cache for successful select statement requests, if uncached.
         if (!$cacheHit) {
             $tags = [];
-            /** @var TripleInterface $triple */
-            foreach (array_merge($statement->getConditions(), $statement->getOptionalConditions()) as $triple) {
-                /** @var TermInterface $term */
-                foreach ([$triple->getSubject(), $triple->getObject()] as $term) {
-                    if ($term instanceof AbstractIri) {
-                        $tags[] = $this->getKey($term->serialize());
+            foreach (array_merge($statement->getConditions(), $statement->getOptionalConditions()) as $tripleOrConstraint) {
+                if ($tripleOrConstraint instanceof TripleInterface) {
+                    foreach ([$tripleOrConstraint->getSubject(), $tripleOrConstraint->getObject()] as $term) {
+                        if ($term instanceof AbstractIri) {
+                            $tags[] = $this->getKey($term->serialize());
+                        }
                     }
                 }
             }
@@ -113,8 +109,8 @@ class SparQlClient implements SparQlClientInterface
                 $cacheItem->set($responseContent);
                 $cacheItem->tag($tags);
                 $this->cacheAdapter->save($cacheItem);
-            } catch (CacheException $exception) {
-                $this->logger->info($exception->getMessage());
+            } catch (CacheException|InvalidArgumentException $exception) {
+                throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
             }
         }
         // Return response as either a set of terms or a set of triples.
@@ -151,7 +147,7 @@ class SparQlClient implements SparQlClientInterface
         $query = $statement->toQuery();
         $parameters = ['body' => ['update' => $query]];
         try {
-            $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent(false);
+            $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent();
             // Invalidate cache for delete and update statements.
             $tags = [];
             /** @var TripleInterface $triple */
@@ -164,10 +160,8 @@ class SparQlClient implements SparQlClientInterface
                 }
             }
             $this->cacheAdapter->invalidateTags($tags);
-        } catch (HttpClientExceptionInterface $exception) {
+        } catch (HttpClientExceptionInterface|InvalidArgumentException $exception) {
             throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
-        } catch (InvalidArgumentException $exception) {
-            $this->logger->info($exception->getMessage());
         }
         return [];
     }
@@ -180,7 +174,7 @@ class SparQlClient implements SparQlClientInterface
         $query = $statement->toQuery();
         $parameters = ['body' => ['update' => $query]];
         try {
-            $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent(false);
+            $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent();
             // Invalidate cache for delete and update statements.
             $tags = [];
             /** @var TripleInterface $triple */
@@ -193,10 +187,8 @@ class SparQlClient implements SparQlClientInterface
                 }
             }
             $this->cacheAdapter->invalidateTags($tags);
-        } catch (HttpClientExceptionInterface $exception) {
+        } catch (HttpClientExceptionInterface|InvalidArgumentException $exception) {
             throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
-        } catch (InvalidArgumentException $exception) {
-            $this->logger->info($exception->getMessage());
         }
         return [];
     }
@@ -209,7 +201,7 @@ class SparQlClient implements SparQlClientInterface
         $query = $statement->toQuery();
         $parameters = ['body' => ['update' => $query]];
         try {
-            $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent(false);
+            $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent();
         } catch (HttpClientExceptionInterface $exception) {
             throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
         }
