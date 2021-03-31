@@ -94,17 +94,17 @@ class SparQlClient implements SparQlClientInterface
                 return $responseContent;
             });
         } catch (InvalidArgumentException $exception) {
-            $this->logger->info($exception->getMessage());
+            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
         }
         // Update cache for successful select statement requests, if uncached.
         if (!$cacheHit) {
             $tags = [];
-            /** @var TripleInterface $triple */
-            foreach (array_merge($statement->getConditions(), $statement->getOptionalConditions()) as $triple) {
-                /** @var TermInterface $term */
-                foreach ([$triple->getSubject(), $triple->getObject()] as $term) {
-                    if ($term instanceof AbstractIri) {
-                        $tags[] = $this->getKey($term->serialize());
+            foreach (array_merge($statement->getConditions(), $statement->getOptionalConditions()) as $tripleOrConstraint) {
+                if ($tripleOrConstraint instanceof TripleInterface) {
+                    foreach ([$tripleOrConstraint->getSubject(), $tripleOrConstraint->getObject()] as $term) {
+                        if ($term instanceof AbstractIri) {
+                            $tags[] = $this->getKey($term->serialize());
+                        }
                     }
                 }
             }
@@ -113,7 +113,7 @@ class SparQlClient implements SparQlClientInterface
                 $cacheItem->set($responseContent);
                 $cacheItem->tag($tags);
                 $this->cacheAdapter->save($cacheItem);
-            } catch (CacheException $exception) {
+            } catch (CacheException|InvalidArgumentException $exception) {
                 $this->logger->info($exception->getMessage());
             }
         }
@@ -151,7 +151,7 @@ class SparQlClient implements SparQlClientInterface
         $query = $statement->toQuery();
         $parameters = ['body' => ['update' => $query]];
         try {
-            $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent(false);
+            $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent();
             // Invalidate cache for delete and update statements.
             $tags = [];
             /** @var TripleInterface $triple */
@@ -164,10 +164,8 @@ class SparQlClient implements SparQlClientInterface
                 }
             }
             $this->cacheAdapter->invalidateTags($tags);
-        } catch (HttpClientExceptionInterface $exception) {
+        } catch (HttpClientExceptionInterface|InvalidArgumentException $exception) {
             throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
-        } catch (InvalidArgumentException $exception) {
-            $this->logger->info($exception->getMessage());
         }
         return [];
     }
@@ -180,7 +178,7 @@ class SparQlClient implements SparQlClientInterface
         $query = $statement->toQuery();
         $parameters = ['body' => ['update' => $query]];
         try {
-            $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent(false);
+            $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent();
             // Invalidate cache for delete and update statements.
             $tags = [];
             /** @var TripleInterface $triple */
@@ -193,10 +191,8 @@ class SparQlClient implements SparQlClientInterface
                 }
             }
             $this->cacheAdapter->invalidateTags($tags);
-        } catch (HttpClientExceptionInterface $exception) {
+        } catch (HttpClientExceptionInterface|InvalidArgumentException $exception) {
             throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
-        } catch (InvalidArgumentException $exception) {
-            $this->logger->info($exception->getMessage());
         }
         return [];
     }
@@ -209,7 +205,7 @@ class SparQlClient implements SparQlClientInterface
         $query = $statement->toQuery();
         $parameters = ['body' => ['update' => $query]];
         try {
-            $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent(false);
+            $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent();
         } catch (HttpClientExceptionInterface $exception) {
             throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
         }

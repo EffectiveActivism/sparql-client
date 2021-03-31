@@ -39,6 +39,9 @@ class ReplaceStatement extends AbstractConditionalStatement implements ReplaceSt
 
     public function toQuery(): string
     {
+        if (!isset($this->replacement)) {
+            throw new InvalidArgumentException('Replace (DELETE+INSERT) statement is missing a \'with\' clause');
+        }
         $preQuery = parent::toQuery();
         $conditionsString = '';
         foreach ($this->conditions as $condition) {
