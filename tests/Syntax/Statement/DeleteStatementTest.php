@@ -27,7 +27,7 @@ class DeleteStatementTest extends KernelTestCase
         $triple = new Triple($subject, $predicate, $object);
         $statement = new DeleteStatement($triple);
         $statement->where([$triple]);
-        $statement->where([$triple], true);
+        $statement->optionallyWhere([$triple]);
         $this->assertEquals(self::DELETE_STATEMENT, $statement->toQuery());
     }
 

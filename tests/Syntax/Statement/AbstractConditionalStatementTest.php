@@ -26,6 +26,13 @@ class AbstractConditionalStatementTest extends KernelTestCase
             $threwException = true;
         }
         $this->assertTrue($threwException);
+        $threwException = false;
+        try {
+            $class->optionallyWhere([$predicate]);
+        } catch (InvalidArgumentException) {
+            $threwException = true;
+        }
+        $this->assertTrue($threwException);
         // Test statement with unknown prefix.
         $subject = new Iri('urn:uuid:ed61d3c8-9203-11eb-9714-83cf7e09838c');
         $predicate = new PrefixedIri('unknown', 'headline');
@@ -35,6 +42,13 @@ class AbstractConditionalStatementTest extends KernelTestCase
         $threwException = false;
         try {
             $class->where([$triple]);
+        } catch (InvalidArgumentException) {
+            $threwException = true;
+        }
+        $this->assertTrue($threwException);
+        $threwException = false;
+        try {
+            $class->optionallyWhere([$triple]);
         } catch (InvalidArgumentException) {
             $threwException = true;
         }
