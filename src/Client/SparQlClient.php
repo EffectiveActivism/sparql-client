@@ -20,7 +20,6 @@ use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
 use EffectiveActivism\SparQlClient\Syntax\Triple\TripleInterface;
 use Psr\Cache\CacheException;
 use Psr\Cache\InvalidArgumentException;
-use Psr\Log\LoggerInterface;
 use Symfony\Component\Serializer\Encoder\XmlEncoder;
 use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Serializer\SerializerInterface;
@@ -39,20 +38,17 @@ class SparQlClient implements SparQlClientInterface
 
     protected HttpClientInterface $httpClient;
 
-    protected LoggerInterface $logger;
-
     protected array $namespaces = [];
 
     protected SerializerInterface $serializer;
 
     protected string $sparQlEndpoint;
 
-    public function __construct(array $configuration, TagAwareCacheInterface $cacheAdapter, HttpClientInterface $httpClient, LoggerInterface $logger)
+    public function __construct(array $configuration, TagAwareCacheInterface $cacheAdapter, HttpClientInterface $httpClient)
     {
         $this->sparQlEndpoint = $configuration['sparql_endpoint'];
         $this->cacheAdapter = $cacheAdapter;
         $this->httpClient = $httpClient;
-        $this->logger = $logger;
         $this->namespaces = $configuration['namespaces'];
         $normalizers = [new SparQlResultDenormalizer()];
         $encoders = [new XmlEncoder()];
