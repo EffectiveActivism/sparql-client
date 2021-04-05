@@ -43,11 +43,10 @@ class InsertStatement extends AbstractConditionalStatement implements InsertStat
                 if (get_class($term) === Variable::class) {
                     $hasVariables = true;
                     foreach ($this->conditions as $condition) {
-                        if ($condition instanceof TripleInterface) {
-                            foreach ($condition->toArray() as $clausedTerm) {
-                                if (get_class($clausedTerm) === Variable::class && $clausedTerm->getVariableName() === $term->getVariableName()) {
-                                    $unclausedVariables = false;
-                                }
+                        foreach ($condition->toArray() as $clausedTerm) {
+                            if (get_class($clausedTerm) === Variable::class && $clausedTerm->getVariableName() === $term->getVariableName()) {
+                                $unclausedVariables = false;
+                                break 3;
                             }
                         }
                     }
