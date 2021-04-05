@@ -2,9 +2,8 @@
 
 namespace EffectiveActivism\SparQlClient\Syntax\Statement;
 
-use EffectiveActivism\SparQlClient\Syntax\Constraint\ConstraintInterface;
 use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
-use EffectiveActivism\SparQlClient\Syntax\Triple\TripleInterface;
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\TripleInterface;
 use InvalidArgumentException;
 
 class SelectStatement extends AbstractConditionalStatement implements SelectStatementInterface
@@ -33,18 +32,13 @@ class SelectStatement extends AbstractConditionalStatement implements SelectStat
         }
         $conditionsString = '';
         foreach ($this->conditions as $condition) {
-            $conditionsString .= sprintf(' %s .', $condition);
+            $conditionsString .= sprintf(' %s .', $condition->serialize());
         }
-        $optionalConditionsString = '';
-        foreach ($this->optionalConditions as $condition) {
-            $optionalConditionsString .= sprintf('OPTIONAL {%s} .', $condition);
-        }
-        if (!empty($conditionsString) || !empty($optionalConditionsString)) {
+        if (!empty($conditionsString)) {
             // At least one variable (if any) must be referenced in a 'where' clause.
             $unclausedVariables = true;
             foreach ($this->variables as $term) {
-                /** @var TripleInterface|ConstraintInterface $triple */
-                foreach (array_merge($this->conditions, $this->optionalConditions) as $condition) {
+                foreach ($this->conditions as $condition) {
                     if ($condition instanceof TripleInterface) {
                         foreach ($condition->toArray() as $clausedTerm) {
                             if (get_class($clausedTerm) === Variable::class && $clausedTerm->getVariableName() === $term->getVariableName()) {
@@ -57,7 +51,7 @@ class SelectStatement extends AbstractConditionalStatement implements SelectStat
             if ($unclausedVariables) {
                 throw new InvalidArgumentException('At least one variable must be referenced in a \'where\' clause.');
             }
-            return sprintf('%sSELECT %sWHERE {%s %s}', $preQuery, $variables, $conditionsString, $optionalConditionsString);
+            return sprintf('%sSELECT %sWHERE {%s }', $preQuery, $variables, $conditionsString);
         }
         else {
             // Select statements must have a 'where' clause.

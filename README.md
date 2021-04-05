@@ -36,11 +36,11 @@ Retrieve any subjects that have a `schema:headline` of `"Lorem"@la`.
 namespace App\Controller;
 
 use EffectiveActivism\SparQlClient\Client\SparQlClientInterface;
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\Triple;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
 use EffectiveActivism\SparQlClient\Syntax\Term\TermInterface;
 use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
-use EffectiveActivism\SparQlClient\Syntax\Triple\Triple;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
 class MyController extends AbstractController
@@ -84,10 +84,10 @@ Insert the following triple:
 namespace App\Controller;
 
 use EffectiveActivism\SparQlClient\Client\SparQlClientInterface;
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\Triple;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\Iri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
-use EffectiveActivism\SparQlClient\Syntax\Triple\Triple;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
 class MyController extends AbstractController
@@ -123,10 +123,10 @@ if the subject has type `schema:Article`.
 namespace App\Controller;
 
 use EffectiveActivism\SparQlClient\Client\SparQlClientInterface;
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\Triple;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
 use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
-use EffectiveActivism\SparQlClient\Syntax\Triple\Triple;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
 class MyController extends AbstractController
@@ -169,10 +169,10 @@ with a `schema:headline` of `"ipsum"@la`.
 namespace App\Controller;
 
 use EffectiveActivism\SparQlClient\Client\SparQlClientInterface;
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\Triple;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
 use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
-use EffectiveActivism\SparQlClient\Syntax\Triple\Triple;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
 class MyController extends AbstractController
@@ -289,11 +289,11 @@ below statement will throw an InvalidArgumentException because the
 namespace App\Controller;
 
 use EffectiveActivism\SparQlClient\Client\SparQlClientInterface;
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\Triple;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\Iri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
 use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
-use EffectiveActivism\SparQlClient\Syntax\Triple\Triple;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
 class MyController extends AbstractController
@@ -311,6 +311,20 @@ class MyController extends AbstractController
         $sparQlClient->execute($statement);
     }
 }
+```
+
+## Optional clauses
+
+To add an optional clause, use the
+`EffectiveActivism\SparQlClient\Syntax\Optionally\Optionally` class.
+
+```php
+<?php
+
+use \EffectiveActivism\SparQlClient\Syntax\Pattern\Optionally\Optionally;
+
+$optionalClause = new Optionally([$triple, $filter]);
+$statement->where([$triple, $optionalClause]);
 ```
 
 ## Constraints
@@ -333,11 +347,11 @@ The example below showcase how to select all subjects that has a
 namespace App\Controller;
 
 use EffectiveActivism\SparQlClient\Client\SparQlClientInterface;
-use EffectiveActivism\SparQlClient\Syntax\Constraint\FilterNotExists;
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\FilterNotExists;
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\Triple;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
 use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
-use EffectiveActivism\SparQlClient\Syntax\Triple\Triple;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
 class MyController extends AbstractController
@@ -368,9 +382,9 @@ ensures some argument validation.
 ```php
 <?php
 
-use EffectiveActivism\SparQlClient\Syntax\Constraint\Filter;
-use EffectiveActivism\SparQlClient\Syntax\Constraint\Operator\Binary\Equal;
-use EffectiveActivism\SparQlClient\Syntax\Constraint\Operator\Binary\NotEqual;
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\Filter;
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\Operator\Binary\Equal;
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\Operator\Binary\NotEqual;
 use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
 
 $object1 = new PlainLiteral('Lorem');
