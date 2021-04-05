@@ -4,6 +4,8 @@ namespace EffectiveActivism\SparQlClient\Client;
 
 use EffectiveActivism\SparQlClient\Constant;
 use EffectiveActivism\SparQlClient\Exception\SparQlException;
+use EffectiveActivism\SparQlClient\Syntax\Pattern\PatternInterface;
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\TripleInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\DeleteStatement;
 use EffectiveActivism\SparQlClient\Syntax\Statement\DeleteStatementInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\InsertStatementInterface;
@@ -17,7 +19,6 @@ use EffectiveActivism\SparQlClient\Serializer\Normalizer\SparQlResultDenormalize
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\AbstractIri;
 use EffectiveActivism\SparQlClient\Syntax\Term\TermInterface;
 use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
-use EffectiveActivism\SparQlClient\Syntax\Triple\TripleInterface;
 use Psr\Cache\CacheException;
 use Psr\Cache\InvalidArgumentException;
 use Symfony\Component\Serializer\Encoder\XmlEncoder;
@@ -95,9 +96,9 @@ class SparQlClient implements SparQlClientInterface
         // Update cache for successful select statement requests, if uncached.
         if (!$cacheHit) {
             $tags = [];
-            foreach (array_merge($statement->getConditions(), $statement->getOptionalConditions()) as $tripleOrConstraint) {
-                if ($tripleOrConstraint instanceof TripleInterface) {
-                    foreach ([$tripleOrConstraint->getSubject(), $tripleOrConstraint->getObject()] as $term) {
+            foreach ($statement->getConditions() as $condition) {
+                if ($condition instanceof TripleInterface) {
+                    foreach ([$condition->getSubject(), $condition->getObject()] as $term) {
                         if ($term instanceof AbstractIri) {
                             $tags[] = $this->getKey($term->serialize());
                         }
@@ -116,25 +117,27 @@ class SparQlClient implements SparQlClientInterface
         // Return response as either a set of terms or a set of triples.
         $result = $sets = $this->serializer->deserialize($responseContent, SparQlResultDenormalizer::TYPE, 'xml');
         if ($toTriples === true) {
-            $triples = array_merge($statement->getConditions(), $statement->getOptionalConditions());
+            $conditions = $statement->getConditions();
             foreach ($sets as $set) {
-                /** @var TripleInterface $triple */
-                foreach ($triples as $triple) {
-                    /** @var TermInterface $term */
-                    foreach ($set as $term) {
-                        if (get_class($triple->getSubject()) === Variable::class && $triple->getSubject()->getVariableName() === $term->getVariableName()) {
-                            $triple->setSubject($term);
-                        }
-                        if (get_class($triple->getPredicate()) === Variable::class && $triple->getPredicate()->getVariableName() === $term->getVariableName()) {
-                            $triple->setPredicate($term);
-                        }
-                        if (get_class($triple->getObject()) === Variable::class && $triple->getObject()->getVariableName() === $term->getVariableName()) {
-                            $triple->setObject($term);
+                /** @var TripleInterface $condition */
+                foreach ($conditions as &$condition) {
+                    if ($condition instanceof TripleInterface) {
+                        /** @var TermInterface $term */
+                        foreach ($set as $term) {
+                            if (get_class($condition->getSubject()) === Variable::class && $condition->getSubject()->getVariableName() === $term->getVariableName()) {
+                                $condition->setSubject($term);
+                            }
+                            if (get_class($condition->getPredicate()) === Variable::class && $condition->getPredicate()->getVariableName() === $term->getVariableName()) {
+                                $condition->setPredicate($term);
+                            }
+                            if (get_class($condition->getObject()) === Variable::class && $condition->getObject()->getVariableName() === $term->getVariableName()) {
+                                $condition->setObject($term);
+                            }
                         }
                     }
                 }
             }
-            $result = $triples;
+            $result = $conditions;
         }
         return $result;
     }
@@ -150,12 +153,14 @@ class SparQlClient implements SparQlClientInterface
             $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent();
             // Invalidate cache for delete and update statements.
             $tags = [];
-            /** @var TripleInterface $triple */
-            foreach (array_merge([$statement->getTripleToDelete()], $statement->getConditions(), $statement->getOptionalConditions()) as $triple) {
-                /** @var TermInterface $term */
-                foreach ([$triple->getSubject(), $triple->getObject()] as $term) {
-                    if ($term instanceof AbstractIri) {
-                        $tags[] = $this->getKey($term->serialize());
+            /** @var PatternInterface $pattern */
+            foreach (array_merge([$statement->getTripleToDelete()], $statement->getConditions()) as $pattern) {
+                if ($pattern instanceof TripleInterface) {
+                    /** @var TermInterface $term */
+                    foreach ([$pattern->getSubject(), $pattern->getObject()] as $term) {
+                        if ($term instanceof AbstractIri) {
+                            $tags[] = $this->getKey($term->serialize());
+                        }
                     }
                 }
             }
@@ -177,14 +182,17 @@ class SparQlClient implements SparQlClientInterface
             $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent();
             // Invalidate cache for delete and update statements.
             $tags = [];
-            /** @var TripleInterface $triple */
-            foreach (array_merge([$statement->getOriginal(), $statement->getReplacement()], $statement->getConditions(), $statement->getOptionalConditions()) as $triple) {
-                /** @var TermInterface $term */
-                foreach ([$triple->getSubject(), $triple->getObject()] as $term) {
-                    if ($term instanceof AbstractIri) {
-                        $tags[] = $this->getKey($term->serialize());
+            /** @var PatternInterface $pattern */
+            foreach (array_merge([$statement->getOriginal(), $statement->getReplacement()], $statement->getConditions()) as $pattern) {
+                if ($pattern instanceof TripleInterface) {
+                    /** @var TermInterface $term */
+                    foreach ([$pattern->getSubject(), $pattern->getObject()] as $term) {
+                        if ($term instanceof AbstractIri) {
+                            $tags[] = $this->getKey($term->serialize());
+                        }
                     }
                 }
+
             }
             $this->cacheAdapter->invalidateTags($tags);
         } catch (HttpClientExceptionInterface|InvalidArgumentException $exception) {

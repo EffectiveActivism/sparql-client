@@ -2,12 +2,12 @@
 
 namespace EffectiveActivism\SparQlClient\Tests\Syntax\Statement;
 
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\Triple;
 use EffectiveActivism\SparQlClient\Syntax\Statement\ReplaceStatement;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\Iri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
 use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
-use EffectiveActivism\SparQlClient\Syntax\Triple\Triple;
 use InvalidArgumentException;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
@@ -15,7 +15,7 @@ class ReplaceStatementTest extends KernelTestCase
 {
     const SUBJECT_URI = 'urn:uuid:89e2f582-918d-11eb-b6ff-1f71a7aa4639';
 
-    const REPLACE_STATEMENT = 'DELETE { <urn:uuid:89e2f582-918d-11eb-b6ff-1f71a7aa4639> <http://schema.org/headline> "Lorem Ipsum" } INSERT { <urn:uuid:89e2f582-918d-11eb-b6ff-1f71a7aa4639> <http://schema.org/headline> "Lorem Ipsum" } WHERE { <urn:uuid:89e2f582-918d-11eb-b6ff-1f71a7aa4639> <http://schema.org/headline> "Lorem Ipsum" . OPTIONAL {<urn:uuid:89e2f582-918d-11eb-b6ff-1f71a7aa4639> <http://schema.org/headline> "Lorem Ipsum"} .}';
+    const REPLACE_STATEMENT = 'DELETE { <urn:uuid:89e2f582-918d-11eb-b6ff-1f71a7aa4639> <http://schema.org/headline> "Lorem Ipsum" } INSERT { <urn:uuid:89e2f582-918d-11eb-b6ff-1f71a7aa4639> <http://schema.org/headline> "Lorem Ipsum" } WHERE { <urn:uuid:89e2f582-918d-11eb-b6ff-1f71a7aa4639> <http://schema.org/headline> "Lorem Ipsum" . }';
 
     public function testReplaceStatement()
     {
@@ -26,7 +26,6 @@ class ReplaceStatementTest extends KernelTestCase
         $statement = new ReplaceStatement($triple);
         $statement->with($triple);
         $statement->where([$triple]);
-        $statement->optionallyWhere([$triple]);
         $this->assertEquals(self::REPLACE_STATEMENT, $statement->toQuery());
     }
 

@@ -2,11 +2,9 @@
 
 namespace EffectiveActivism\SparQlClient\Syntax\Statement;
 
-use EffectiveActivism\SparQlClient\Syntax\Constraint\ConstraintInterface;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
-use EffectiveActivism\SparQlClient\Syntax\Term\TermInterface;
 use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
-use EffectiveActivism\SparQlClient\Syntax\Triple\TripleInterface;
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\TripleInterface;
 use InvalidArgumentException;
 
 class ReplaceStatement extends AbstractConditionalStatement implements ReplaceStatementInterface
@@ -45,11 +43,7 @@ class ReplaceStatement extends AbstractConditionalStatement implements ReplaceSt
         $preQuery = parent::toQuery();
         $conditionsString = '';
         foreach ($this->conditions as $condition) {
-            $conditionsString .= sprintf('%s .', $condition);
-        }
-        $optionalConditionsString = '';
-        foreach ($this->optionalConditions as $condition) {
-            $optionalConditionsString .= sprintf('OPTIONAL {%s} .', $condition);
+            $conditionsString .= sprintf('%s .', $condition->serialize());
         }
         // At least one variable (if any) must be referenced in a 'where' clause.
         $unclausedVariables = true;
@@ -57,8 +51,7 @@ class ReplaceStatement extends AbstractConditionalStatement implements ReplaceSt
         foreach (array_merge($this->original->toArray(), $this->replacement->toArray()) as $term) {
             if (get_class($term) === Variable::class) {
                 $hasVariables = true;
-                /** @var TripleInterface|ConstraintInterface $condition */
-                foreach (array_merge($this->conditions, $this->optionalConditions) as $condition) {
+                foreach ($this->conditions as $condition) {
                     if ($condition instanceof TripleInterface) {
                         foreach ($condition->toArray() as $clausedTerm) {
                             if (get_class($clausedTerm) === Variable::class && $clausedTerm->getVariableName() === $term->getVariableName()) {
@@ -72,8 +65,8 @@ class ReplaceStatement extends AbstractConditionalStatement implements ReplaceSt
         if ($hasVariables && $unclausedVariables) {
             throw new InvalidArgumentException('At least one variable must be referenced in a \'where\' clause.');
         }
-        if (!empty($conditionsString) || !empty($optionalConditionsString)) {
-            return sprintf('%sDELETE { %s } INSERT { %s } WHERE { %s %s}', $preQuery, (string) $this->original, (string) $this->replacement, $conditionsString, $optionalConditionsString);
+        if (!empty($conditionsString)) {
+            return sprintf('%sDELETE { %s } INSERT { %s } WHERE { %s }', $preQuery, $this->original->serialize(), $this->replacement->serialize(), $conditionsString);
         }
         else {
             // Replace statements must have a 'where' clause.
