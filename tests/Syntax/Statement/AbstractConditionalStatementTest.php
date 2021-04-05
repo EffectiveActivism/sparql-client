@@ -2,11 +2,11 @@
 
 namespace EffectiveActivism\SparQlClient\Tests\Syntax\Statement;
 
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\Triple;
 use EffectiveActivism\SparQlClient\Syntax\Statement\AbstractConditionalStatement;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\Iri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
-use EffectiveActivism\SparQlClient\Syntax\Triple\Triple;
 use InvalidArgumentException;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
@@ -26,13 +26,6 @@ class AbstractConditionalStatementTest extends KernelTestCase
             $threwException = true;
         }
         $this->assertTrue($threwException);
-        $threwException = false;
-        try {
-            $class->optionallyWhere([$predicate]);
-        } catch (InvalidArgumentException) {
-            $threwException = true;
-        }
-        $this->assertTrue($threwException);
         // Test statement with unknown prefix.
         $subject = new Iri('urn:uuid:ed61d3c8-9203-11eb-9714-83cf7e09838c');
         $predicate = new PrefixedIri('unknown', 'headline');
@@ -42,13 +35,6 @@ class AbstractConditionalStatementTest extends KernelTestCase
         $threwException = false;
         try {
             $class->where([$triple]);
-        } catch (InvalidArgumentException) {
-            $threwException = true;
-        }
-        $this->assertTrue($threwException);
-        $threwException = false;
-        try {
-            $class->optionallyWhere([$triple]);
         } catch (InvalidArgumentException) {
             $threwException = true;
         }

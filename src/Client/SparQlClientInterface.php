@@ -2,12 +2,12 @@
 
 namespace EffectiveActivism\SparQlClient\Client;
 
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\TripleInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\DeleteStatementInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\InsertStatementInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\ReplaceStatementInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\SelectStatementInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\StatementInterface;
-use EffectiveActivism\SparQlClient\Syntax\Triple\TripleInterface;
 
 interface SparQlClientInterface
 {

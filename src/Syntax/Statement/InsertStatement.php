@@ -2,10 +2,9 @@
 
 namespace EffectiveActivism\SparQlClient\Syntax\Statement;
 
-use EffectiveActivism\SparQlClient\Syntax\Constraint\ConstraintInterface;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
-use EffectiveActivism\SparQlClient\Syntax\Triple\TripleInterface;
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\TripleInterface;
 use InvalidArgumentException;
 
 class InsertStatement extends AbstractConditionalStatement implements InsertStatementInterface
@@ -34,21 +33,16 @@ class InsertStatement extends AbstractConditionalStatement implements InsertStat
         $preQuery = parent::toQuery();
         $conditionsString = '';
         foreach ($this->conditions as $condition) {
-            $conditionsString .= sprintf('%s .', $condition);
+            $conditionsString .= sprintf('%s .', $condition->serialize());
         }
-        $optionalConditionsString = '';
-        foreach ($this->optionalConditions as $condition) {
-            $optionalConditionsString .= sprintf('OPTIONAL {%s} .', $condition);
-        }
-        if (!empty($conditionsString) || !empty($optionalConditionsString)) {
+        if (!empty($conditionsString)) {
             // At least one variable (if any) must be referenced in a 'where' clause.
             $unclausedVariables = true;
             $hasVariables = false;
             foreach ($this->tripleToInsert->toArray() as $term) {
                 if (get_class($term) === Variable::class) {
                     $hasVariables = true;
-                    /** @var TripleInterface|ConstraintInterface $triple */
-                    foreach (array_merge($this->conditions, $this->optionalConditions) as $condition) {
+                    foreach ($this->conditions as $condition) {
                         if ($condition instanceof TripleInterface) {
                             foreach ($condition->toArray() as $clausedTerm) {
                                 if (get_class($clausedTerm) === Variable::class && $clausedTerm->getVariableName() === $term->getVariableName()) {
@@ -62,7 +56,7 @@ class InsertStatement extends AbstractConditionalStatement implements InsertStat
             if ($hasVariables && $unclausedVariables) {
                 throw new InvalidArgumentException('At least one variable must be referenced in a \'where\' clause.');
             }
-            return sprintf('%sINSERT { %s } WHERE { %s %s}', $preQuery, (string) $this->tripleToInsert, $conditionsString, $optionalConditionsString);
+            return sprintf('%sINSERT { %s } WHERE { %s }', $preQuery, $this->tripleToInsert->serialize(), $conditionsString);
         }
         else {
             // Variables are not allowed when not using 'where' clauses.
@@ -71,7 +65,7 @@ class InsertStatement extends AbstractConditionalStatement implements InsertStat
                     throw new InvalidArgumentException(sprintf('Variable "%s" cannot be inserted without being referenced in a \'where\' clause', $term->getVariableName()));
                 }
             }
-            return sprintf('%sINSERT DATA { %s }', $preQuery, (string) $this->tripleToInsert);
+            return sprintf('%sINSERT DATA { %s }', $preQuery, $this->tripleToInsert->serialize());
         }
     }
 }

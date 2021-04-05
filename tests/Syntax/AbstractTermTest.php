@@ -1,6 +1,6 @@
 <?php
 
-namespace EffectiveActivism\SparQlClient\Tests\Syntax;
+namespace EffectiveActivism\SparQlClient\Tests\Syntax\Term;
 
 use EffectiveActivism\SparQlClient\Syntax\Term\AbstractTerm;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
