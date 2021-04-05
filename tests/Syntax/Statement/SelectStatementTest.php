@@ -26,6 +26,7 @@ class SelectStatementTest extends KernelTestCase
         $statement->where([$triple]);
         $statement->optionallyWhere([$triple]);
         $this->assertEquals(self::SELECT_STATEMENT, $statement->toQuery());
+        $this->assertEquals([$subjectVariable], $statement->getVariables());
     }
 
     public function testSelectExceptions()

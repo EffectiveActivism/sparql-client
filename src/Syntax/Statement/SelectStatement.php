@@ -18,12 +18,7 @@ class SelectStatement extends AbstractConditionalStatement implements SelectStat
     public function __construct(array $variables, array $extraNamespaces = [])
     {
         parent::__construct($extraNamespaces);
-        foreach ($variables as $variable) {
-            if (get_class($variable) !== Variable::class) {
-                throw new InvalidArgumentException(sprintf('Invalid variable class: %s', get_class($variable)));
-            }
-        }
-        $this->variables = $variables;
+        $this->setVariables($variables);
     }
 
     /**
@@ -68,5 +63,21 @@ class SelectStatement extends AbstractConditionalStatement implements SelectStat
             // Select statements must have a 'where' clause.
             throw new InvalidArgumentException('Select statement is missing a \'where\' clause');
         }
+    }
+
+    public function getVariables(): array
+    {
+        return $this->variables;
+    }
+
+    public function setVariables(array $variables): SelectStatementInterface
+    {
+        foreach ($variables as $variable) {
+            if (get_class($variable) !== Variable::class) {
+                throw new InvalidArgumentException(sprintf('Invalid variable class: %s', get_class($variable)));
+            }
+        }
+        $this->variables = $variables;
+        return $this;
     }
 }
