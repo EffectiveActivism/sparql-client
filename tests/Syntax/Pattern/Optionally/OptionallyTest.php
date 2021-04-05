@@ -18,10 +18,13 @@ class OptionallyTest extends KernelTestCase
 
     public function testOptionally()
     {
-        $triple = new Triple(new Iri(self::IRI), new PrefixedIri('schema', 'headline'), new PlainLiteral('Lorem'));
+        $subject = new Iri(self::IRI);
+        $predicate = new PrefixedIri('schema', 'headline');
+        $object = new PlainLiteral('Lorem');
+        $triple = new Triple($subject, $predicate, $object);
         $optionalClause = new Optionally([$triple]);
         $this->assertEquals(self::SERIALIZED_VALUE, $optionalClause->serialize());
-        $this->assertEquals([$triple], $optionalClause->toArray());
+        $this->assertEquals([$subject, $predicate, $object], $optionalClause->toArray());
     }
 
     public function testInvalidFilterExists()
