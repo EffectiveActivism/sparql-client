@@ -3,6 +3,7 @@
 namespace EffectiveActivism\SparQlClient\Syntax\Pattern\Optionally;
 
 use EffectiveActivism\SparQlClient\Syntax\Pattern\PatternInterface;
+use EffectiveActivism\SparQlClient\Syntax\Term\TermInterface;
 use InvalidArgumentException;
 
 class Optionally implements OptionallyInterface
@@ -23,7 +24,15 @@ class Optionally implements OptionallyInterface
 
     public function toArray(): array
     {
-        return $this->patterns;
+        $terms = [];
+        foreach ($this->patterns as $pattern) {
+            foreach ($pattern->toArray() as $item) {
+                if ($item instanceof TermInterface) {
+                    $terms[] = $item;
+                }
+            }
+        }
+        return $terms;
     }
 
     public function serialize(): string
