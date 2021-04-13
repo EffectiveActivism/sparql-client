@@ -61,7 +61,7 @@ class SelectStatement extends AbstractConditionalStatement implements SelectStat
             if ($unclausedVariables) {
                 throw new InvalidArgumentException('At least one variable must be referenced in a \'where\' clause.');
             }
-            return sprintf('%sSELECT %sWHERE {%s } %s %s', $preQuery, $variables, $conditionsString, $limitString, $offsetString);
+            return trim(sprintf('%sSELECT %sWHERE {%s } %s %s', $preQuery, $variables, $conditionsString, $limitString, $offsetString));
         }
         else {
             // Select statements must have a 'where' clause.
