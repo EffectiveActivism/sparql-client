@@ -30,6 +30,8 @@ class ClientRequestTest extends KernelTestCase
 
     const SELECT_STATEMENT_EXPECTED_QUERY = 'query=' . self::NAMESPACES . ' SELECT ?subject ?object WHERE { ?subject schema:headline ?object . }';
 
+    const SELECT_STATEMENT_LIMIT_OFFSET_EXPECTED_QUERY = 'query=' . self::NAMESPACES . ' SELECT ?subject ?object WHERE { ?subject schema:headline ?object . } LIMIT 1 OFFSET 2';
+
     const INSERT_STATEMENT_EXPECTED_QUERY = 'update=' . self::NAMESPACES . ' INSERT { <urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece> schema:headline "Lorem Ipsum" } WHERE { <urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece> schema:headline ?object . }';
 
     const INSERT_STATEMENT_WITHOUT_CONDITION_EXPECTED_QUERY = 'update=' . self::NAMESPACES . ' INSERT DATA { <urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece> schema:headline "Lorem Ipsum" }';
@@ -208,6 +210,37 @@ class ClientRequestTest extends KernelTestCase
         $this->assertEquals('object', $triple->getObject()->getVariableName());
     }
 
+    /**
+     * @covers \EffectiveActivism\SparQlClient\Client\SparQlClient
+     * @covers \EffectiveActivism\SparQlClient\Syntax\Statement\SelectStatement
+     */
+    public function testSelectStatementWithLimitAndOffsetRequest()
+    {
+        $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
+        $receivedQuery = null;
+        $httpClient = new MockHttpClient(function ($method, $url, $options) use (&$receivedQuery) {
+            $receivedQuery = $options['body'];
+            return new MockResponse(file_get_contents(__DIR__ . '/../fixtures/client-select-request.xml'));
+        });
+        $kernel = new TestKernel('test', true);
+        $kernel->boot();
+        $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
+        $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
+        /** @var SparQlClientInterface $sparQlClient */
+        $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
+        $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
+        $subject = new Variable('subject');
+        $predicate = new PrefixedIri('schema', 'headline');
+        $object = new Variable('object');
+        $statement = $sparQlClient
+            ->select([$subject, $object])
+            ->where([new Triple($subject, $predicate, $object)])
+            ->limit(1)
+            ->offset(2);
+        $sparQlClient->execute($statement);
+        $this->assertEquals(self::SELECT_STATEMENT_LIMIT_OFFSET_EXPECTED_QUERY, urldecode($receivedQuery));
+    }
+
     public function testCaching()
     {
         $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
@@ -293,8 +326,28 @@ class ClientRequestTest extends KernelTestCase
         $predicate = new PrefixedIri('schema', 'headline');
         $object = new PrefixedIri('schema', 'Article');
         $triple = new Triple($subject, $predicate, $object);
-        $this->expectException(SparQlException::class);
-        $sparQlClient->execute($sparQlClient->select([$subject])->where([$triple]));
+        $statement = $sparQlClient->select([$subject])->where([$triple]);
+        $threwException = false;
+        try {
+            $statement->limit(-1);
+        } catch (InvalidArgumentException) {
+            $threwException = true;
+        }
+        $this->assertTrue($threwException);
+        $threwException = false;
+        try {
+            $statement->offset(-1);
+        } catch (InvalidArgumentException) {
+            $threwException = true;
+        }
+        $this->assertTrue($threwException);
+        $threwException = false;
+        try {
+            $sparQlClient->execute($statement);
+        } catch (SparQlException) {
+            $threwException = true;
+        }
+        $this->assertTrue($threwException);
     }
 
     public function testClientSelectStatementCacheException()
