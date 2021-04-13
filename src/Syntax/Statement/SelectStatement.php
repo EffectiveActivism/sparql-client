@@ -3,11 +3,14 @@
 namespace EffectiveActivism\SparQlClient\Syntax\Statement;
 
 use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
-use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\TripleInterface;
 use InvalidArgumentException;
 
 class SelectStatement extends AbstractConditionalStatement implements SelectStatementInterface
 {
+    protected int $limit = 0;
+
+    protected int $offset = 0;
+
     /** @var Variable[] */
     protected array $variables;
 
@@ -34,6 +37,14 @@ class SelectStatement extends AbstractConditionalStatement implements SelectStat
         foreach ($this->conditions as $condition) {
             $conditionsString .= sprintf(' %s .', $condition->serialize());
         }
+        $limitString = '';
+        if ($this->limit > 0) {
+            $limitString = sprintf('LIMIT %d', $this->limit);
+        }
+        $offsetString = '';
+        if ($this->offset > 0) {
+            $offsetString = sprintf('OFFSET %d', $this->offset);
+        }
         if (!empty($conditionsString)) {
             // At least one variable (if any) must be referenced in a 'where' clause.
             $unclausedVariables = true;
@@ -50,12 +61,30 @@ class SelectStatement extends AbstractConditionalStatement implements SelectStat
             if ($unclausedVariables) {
                 throw new InvalidArgumentException('At least one variable must be referenced in a \'where\' clause.');
             }
-            return sprintf('%sSELECT %sWHERE {%s }', $preQuery, $variables, $conditionsString);
+            return sprintf('%sSELECT %sWHERE {%s } %s %s', $preQuery, $variables, $conditionsString, $limitString, $offsetString);
         }
         else {
             // Select statements must have a 'where' clause.
             throw new InvalidArgumentException('Select statement is missing a \'where\' clause');
         }
+    }
+
+    public function limit(int $limit): SelectStatementInterface
+    {
+        if ($limit < 0) {
+            throw new InvalidArgumentException(sprintf('Limit must be non-negative, "%d" provided', $limit));
+        }
+        $this->limit = $limit;
+        return $this;
+    }
+
+    public function offset(int $offset): SelectStatementInterface
+    {
+        if ($offset < 0) {
+            throw new InvalidArgumentException(sprintf('Offset must be non-negative, "%d" provided', $offset));
+        }
+        $this->offset = $offset;
+        return $this;
     }
 
     public function getVariables(): array
