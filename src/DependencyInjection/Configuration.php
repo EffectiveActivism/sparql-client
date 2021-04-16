@@ -17,7 +17,7 @@ class Configuration implements ConfigurationInterface
                     ->isRequired()
                 ->end() // sparql_endpoint
                 ->arrayNode('namespaces')
-                    ->scalarPrototype()->end()
+                    ->useAttributeAsKey('name')
                     ->scalarPrototype()->end()
                     ->defaultValue([])
                 ->end() // namespaces
