@@ -16,12 +16,6 @@ abstract class AbstractLiteral extends AbstractTerm implements TermInterface
 
     public function __construct(bool|float|int|string $value)
     {
-        if(!match (gettype($value)) {
-            'string' => preg_match(sprintf('/%s/u', Constant::LITERAL), $value) > 0,
-            default => true,
-        }) {
-            throw new InvalidArgumentException(sprintf('Value "%s" is not a valid literal', $value));
-        }
         $this->value = $value;
     }
 

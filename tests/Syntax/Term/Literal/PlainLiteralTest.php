@@ -17,6 +17,7 @@ class PlainLiteralTest extends KernelTestCase
         '"0"^^xsd:decimal' => 0.0,
         '"true"^^xsd:boolean' => true,
         '"false"^^xsd:boolean' => false,
+        "\"lorem\nipsum\"" => "lorem\nipsum",
     ];
 
     public function testValidLiterals()
