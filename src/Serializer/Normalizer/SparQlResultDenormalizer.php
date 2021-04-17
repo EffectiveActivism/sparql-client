@@ -28,12 +28,14 @@ class SparQlResultDenormalizer implements DenormalizerInterface
         $sets = [];
         if (isset($data['results']) && is_array($data['results'])) {
             foreach ($data['results'] as $result) {
-                if (key($result) === 'binding') {
-                    $sets[] = $this->getTerms($result[key($result)]);
-                }
-                elseif (isset($result[0]) && is_array($result[0]) && key($result[0]) === 'binding') {
-                    foreach ($result as $binding) {
-                        $sets[] = $this->getTerms($binding['binding']);
+                if (is_array($result)) {
+                    if (key($result) === 'binding') {
+                        $sets[] = $this->getTerms($result[key($result)]);
+                    }
+                    elseif (isset($result[0]) && is_array($result[0]) && key($result[0]) === 'binding') {
+                        foreach ($result as $binding) {
+                            $sets[] = $this->getTerms($binding['binding']);
+                        }
                     }
                 }
             }
