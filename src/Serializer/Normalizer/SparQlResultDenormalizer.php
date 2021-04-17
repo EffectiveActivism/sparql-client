@@ -26,7 +26,7 @@ class SparQlResultDenormalizer implements DenormalizerInterface
     public function denormalize($data, string $type, string $format = null, array $context = []): array
     {
         $sets = [];
-        if (isset($data['results'])) {
+        if (isset($data['results']) && is_array($data['results'])) {
             foreach ($data['results'] as $result) {
                 if (key($result) === 'binding') {
                     $sets[] = $this->getTerms($result[key($result)]);
