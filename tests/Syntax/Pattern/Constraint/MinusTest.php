@@ -64,7 +64,10 @@ class MinusTest extends KernelTestCase
                 $filter
             ]);
         $this->assertEquals(self::SERIALIZED_FILTER_NESTED, $statement->toQuery());
-        $this->assertCount(3, $filter->toArray());
+        $this->assertEquals([$subjectVariable, $filterPredicate, $filterObject], $filter->getTerms());
+        $this->assertEquals([new Minus([
+            new Triple($subjectVariable, $filterPredicate, $filterObject)
+        ])], $filter->toArray());
     }
 
     public function testInvalidMinus()

@@ -95,16 +95,7 @@ class SparQlClient implements SparQlClientInterface
         }
         // Update cache for successful select statement requests, if uncached.
         if (!$cacheHit) {
-            $tags = [];
-            foreach ($statement->getConditions() as $condition) {
-                if ($condition instanceof TripleInterface) {
-                    foreach ([$condition->getSubject(), $condition->getObject()] as $term) {
-                        if ($term instanceof AbstractIri) {
-                            $tags[] = $this->getKey($term->serialize());
-                        }
-                    }
-                }
-            }
+            $tags = $this->extractTags($statement->getConditions());
             try {
                 $cacheItem = $this->cacheAdapter->getItem($queryKey);
                 $cacheItem->set($responseContent);
@@ -152,18 +143,7 @@ class SparQlClient implements SparQlClientInterface
         try {
             $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent();
             // Invalidate cache for delete and update statements.
-            $tags = [];
-            /** @var PatternInterface $pattern */
-            foreach (array_merge([$statement->getTripleToDelete()], $statement->getConditions()) as $pattern) {
-                if ($pattern instanceof TripleInterface) {
-                    /** @var TermInterface $term */
-                    foreach ([$pattern->getSubject(), $pattern->getObject()] as $term) {
-                        if ($term instanceof AbstractIri) {
-                            $tags[] = $this->getKey($term->serialize());
-                        }
-                    }
-                }
-            }
+            $tags = $this->extractTags(array_merge([$statement->getTripleToDelete()], $statement->getConditions()));
             $this->cacheAdapter->invalidateTags($tags);
         } catch (HttpClientExceptionInterface|InvalidArgumentException $exception) {
             throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
@@ -181,19 +161,7 @@ class SparQlClient implements SparQlClientInterface
         try {
             $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent();
             // Invalidate cache for delete and update statements.
-            $tags = [];
-            /** @var PatternInterface $pattern */
-            foreach (array_merge([$statement->getOriginal(), $statement->getReplacement()], $statement->getConditions()) as $pattern) {
-                if ($pattern instanceof TripleInterface) {
-                    /** @var TermInterface $term */
-                    foreach ([$pattern->getSubject(), $pattern->getObject()] as $term) {
-                        if ($term instanceof AbstractIri) {
-                            $tags[] = $this->getKey($term->serialize());
-                        }
-                    }
-                }
-
-            }
+            $tags = $this->extractTags(array_merge([$statement->getOriginal(), $statement->getReplacement()], $statement->getConditions()));
             $this->cacheAdapter->invalidateTags($tags);
         } catch (HttpClientExceptionInterface|InvalidArgumentException $exception) {
             throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);

@@ -64,7 +64,10 @@ class FilterNotExistsTest extends KernelTestCase
                 $filter
             ]);
         $this->assertEquals(self::SERIALIZED_FILTER_NESTED, $statement->toQuery());
-        $this->assertCount(3, $filter->toArray());
+        $this->assertEquals([$subjectVariable, $filterPredicate, $filterObject], $filter->getTerms());
+        $this->assertEquals([new FilterNotExists([
+            new Triple($subjectVariable, $filterPredicate, $filterObject)
+        ])], $filter->toArray());
     }
 
     public function testInvalidFilterNotExists()

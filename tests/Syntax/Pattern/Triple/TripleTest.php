@@ -17,7 +17,8 @@ class TripleTest extends KernelTestCase
         $predicate = new Iri('http://schema.org/headline');
         $object = new PlainLiteral("Lorem Ipsum");
         $triple = new Triple($subject, $predicate, $object);
-        $this->assertEquals($triple->toArray(), [$subject, $predicate, $object]);
+        $this->assertEquals([$subject, $predicate, $object], $triple->getTerms());
+        $this->assertEquals([$subject, $predicate, $object], $triple->toArray());
         $triple->setSubject($subject);
         $triple->setPredicate($predicate);
         $triple->setObject($object);

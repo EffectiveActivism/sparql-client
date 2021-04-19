@@ -24,7 +24,8 @@ class OptionallyTest extends KernelTestCase
         $triple = new Triple($subject, $predicate, $object);
         $optionalClause = new Optionally([$triple]);
         $this->assertEquals(self::SERIALIZED_VALUE, $optionalClause->serialize());
-        $this->assertEquals([$subject, $predicate, $object], $optionalClause->toArray());
+        $this->assertEquals([$subject, $predicate, $object], $optionalClause->getTerms());
+        $this->assertEquals([$triple], $optionalClause->toArray());
     }
 
     public function testInvalidFilterExists()

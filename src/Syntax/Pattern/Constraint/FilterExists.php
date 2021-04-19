@@ -32,9 +32,14 @@ class FilterExists implements ConstraintInterface
 
     public function toArray(): array
     {
+        return $this->patterns;
+    }
+
+    public function getTerms(): array
+    {
         $terms = [];
         foreach ($this->patterns as $pattern) {
-            foreach ($pattern->toArray() as $item) {
+            foreach ($pattern->getTerms() as $item) {
                 if ($item instanceof TermInterface) {
                     $terms[] = $item;
                 }
