@@ -20,17 +20,16 @@ trait CacheTrait
     {
         /** @var PatternInterface $pattern */
         foreach ($patterns as $pattern) {
-            if ($pattern instanceof TripleInterface) {
-                foreach ([$pattern->getSubject(), $pattern->getObject()] as $term) {
-                    if (
-                        $term instanceof AbstractIri ||
-                        $term instanceof AbstractLiteral
-                    ) {
-                        $tags[] = $this->getKey($term->serialize());
-                    }
-                }
+            if (
+                $pattern instanceof AbstractIri ||
+                $pattern instanceof AbstractLiteral
+            ) {
+                $tags[] = $this->getKey($pattern->serialize());
             }
-            else {
+            elseif ($pattern instanceof TripleInterface) {
+                $tags = $this->extractTags([$pattern->getSubject(), $pattern->getObject()], $tags);
+            }
+            elseif ($pattern instanceof PatternInterface) {
                 $tags = $this->extractTags($pattern->toArray(), $tags);
             }
         }
