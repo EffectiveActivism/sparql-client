@@ -22,6 +22,11 @@ class Filter implements ConstraintInterface
 
     public function toArray(): array
     {
+        return $this->getTerms();
+    }
+
+    public function getTerms(): array
+    {
         $terms = [];
         if ($this->operator instanceof UnaryOperatorInterface) {
             $terms[] = $this->operator->getExpression();

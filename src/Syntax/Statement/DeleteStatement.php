@@ -17,7 +17,7 @@ class DeleteStatement extends AbstractConditionalStatement implements DeleteStat
     public function __construct(TripleInterface $triple, array $extraNamespaces = [])
     {
         parent::__construct($extraNamespaces);
-        foreach ($triple->toArray() as $term) {
+        foreach ($triple->getTerms() as $term) {
             if (get_class($term) === PrefixedIri::class && !in_array($term->getPrefix(), array_keys($this->namespaces))) {
                 throw new InvalidArgumentException(sprintf('Prefix "%s" is not defined', $term->getPrefix()));
             }
@@ -39,11 +39,11 @@ class DeleteStatement extends AbstractConditionalStatement implements DeleteStat
             // At least one variable (if any) must be referenced in a 'where' clause.
             $unclausedVariables = true;
             $hasVariables = false;
-            foreach ($this->tripleToDelete->toArray() as $term) {
+            foreach ($this->tripleToDelete->getTerms() as $term) {
                 if (get_class($term) === Variable::class) {
                     $hasVariables = true;
                     foreach ($this->conditions as $condition) {
-                        foreach ($condition->toArray() as $clausedTerm) {
+                        foreach ($condition->getTerms() as $clausedTerm) {
                             if (get_class($clausedTerm) === Variable::class && $clausedTerm->getVariableName() === $term->getVariableName()) {
                                 $unclausedVariables = false;
                                 break 3;
@@ -59,7 +59,7 @@ class DeleteStatement extends AbstractConditionalStatement implements DeleteStat
         }
         else {
             // Variables are not allowed when not using 'where' clauses.
-            foreach ($this->tripleToDelete->toArray() as $term) {
+            foreach ($this->tripleToDelete->getTerms() as $term) {
                 if (get_class($term) === Variable::class) {
                     throw new InvalidArgumentException(sprintf('Variable "%s" cannot be deleted without being referenced in a \'where\' clause', $term->getVariableName()));
                 }
