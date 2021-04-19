@@ -16,7 +16,7 @@ class ReplaceStatement extends AbstractConditionalStatement implements ReplaceSt
     public function __construct(TripleInterface $triple, array $extraNamespaces = [])
     {
         parent::__construct($extraNamespaces);
-        foreach ($triple->toArray() as $term) {
+        foreach ($triple->getTerms() as $term) {
             if (get_class($term) === PrefixedIri::class && !in_array($term->getPrefix(), array_keys($this->namespaces))) {
                 throw new InvalidArgumentException(sprintf('Prefix "%s" is not defined', $term->getPrefix()));
             }
@@ -26,7 +26,7 @@ class ReplaceStatement extends AbstractConditionalStatement implements ReplaceSt
 
     public function with(TripleInterface $triple): ReplaceStatementInterface
     {
-        foreach ($triple->toArray() as $term) {
+        foreach ($triple->getTerms() as $term) {
             if (get_class($term) === PrefixedIri::class && !in_array($term->getPrefix(), array_keys($this->namespaces))) {
                 throw new InvalidArgumentException(sprintf('Prefix "%s" is not defined', $term->getPrefix()));
             }
@@ -48,11 +48,11 @@ class ReplaceStatement extends AbstractConditionalStatement implements ReplaceSt
         // At least one variable (if any) must be referenced in a 'where' clause.
         $unclausedVariables = true;
         $hasVariables = false;
-        foreach (array_merge($this->original->toArray(), $this->replacement->toArray()) as $term) {
+        foreach (array_merge($this->original->getTerms(), $this->replacement->getTerms()) as $term) {
             if (get_class($term) === Variable::class) {
                 $hasVariables = true;
                 foreach ($this->conditions as $condition) {
-                    foreach ($condition->toArray() as $clausedTerm) {
+                    foreach ($condition->getTerms() as $clausedTerm) {
                         if (get_class($clausedTerm) === Variable::class && $clausedTerm->getVariableName() === $term->getVariableName()) {
                             $unclausedVariables = false;
                             break 3;

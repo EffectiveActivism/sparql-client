@@ -26,7 +26,7 @@ class Triple implements TripleInterface
 
     public function toArray(): array
     {
-        return [$this->subject, $this->predicate, $this->object];
+        return $this->getTerms();
     }
 
     /**
@@ -46,6 +46,11 @@ class Triple implements TripleInterface
     public function getSubject(): TermInterface
     {
         return $this->subject;
+    }
+
+    public function getTerms(): array
+    {
+        return [$this->subject, $this->predicate, $this->object];
     }
 
     /**

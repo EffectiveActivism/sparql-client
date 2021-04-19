@@ -43,5 +43,7 @@ class FilterTest extends KernelTestCase
                 $filter3,
             ]);
         $this->assertEquals(self::SERIALIZED_FILTER, $statement->toQuery());
+        $this->assertEquals([$subjectVariable], $filter1->getTerms());
+        $this->assertEquals([], $filter1->toArray());
     }
 }

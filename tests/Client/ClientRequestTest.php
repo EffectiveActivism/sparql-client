@@ -4,6 +4,7 @@ namespace EffectiveActivism\SparQlClient\Tests\Client;
 
 use EffectiveActivism\SparQlClient\Client\SparQlClientInterface;
 use EffectiveActivism\SparQlClient\Exception\SparQlException;
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Optionally\Optionally;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\Triple;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\TripleInterface;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\Iri;
@@ -28,7 +29,7 @@ class ClientRequestTest extends KernelTestCase
 {
     const NAMESPACES = 'PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX owl: <http://www.w3.org/2002/07/owl#> PREFIX skos: <http://www.w3.org/2004/02/skos/core#> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> PREFIX schema: <http://schema.org/>';
 
-    const SELECT_STATEMENT_EXPECTED_QUERY = 'query=' . self::NAMESPACES . ' SELECT ?subject ?object WHERE { ?subject schema:headline ?object . }';
+    const SELECT_STATEMENT_EXPECTED_QUERY = 'query=' . self::NAMESPACES . ' SELECT ?subject ?object WHERE { ?subject schema:headline ?object . OPTIONAL { ?subject schema:headline ?object . } . }';
 
     const SELECT_STATEMENT_LIMIT_OFFSET_EXPECTED_QUERY = 'query=' . self::NAMESPACES . ' SELECT ?subject ?object WHERE { ?subject schema:headline ?object . } LIMIT 1 OFFSET 2';
 
@@ -68,7 +69,12 @@ class ClientRequestTest extends KernelTestCase
         $object = new Variable('object');
         $statement = $sparQlClient
             ->select([$subject, $object])
-            ->where([new Triple($subject, $predicate, $object)]);
+            ->where([
+                new Triple($subject, $predicate, $object),
+                new Optionally([
+                    new Triple($subject, $predicate, $object),
+                ])
+            ]);
         $resultSet = $sparQlClient->execute($statement);
         $this->assertCount(2, $resultSet);
         $firstSet = $resultSet[0];
