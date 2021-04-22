@@ -4,7 +4,10 @@ namespace EffectiveActivism\SparQlClient\Tests\Client;
 
 use EffectiveActivism\SparQlClient\Client\ShaclClientInterface;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\Triple;
+use EffectiveActivism\SparQlClient\Syntax\Statement\ConstructStatement;
+use EffectiveActivism\SparQlClient\Syntax\Statement\DeleteStatement;
 use EffectiveActivism\SparQlClient\Syntax\Statement\InsertStatement;
+use EffectiveActivism\SparQlClient\Syntax\Statement\ReplaceStatement;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\Iri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
@@ -28,8 +31,7 @@ class ShaclClientTest extends KernelTestCase
     {
         $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
         $receivedQuery = null;
-        $httpClient = new MockHttpClient(function ($method, $url, $options) use (&$receivedQuery) {
-            $receivedQuery = $options['body'];
+        $httpClient = new MockHttpClient(function ($method, $url, $options) {
             return new MockResponse(file_get_contents(__DIR__ . '/../fixtures/shacl-validation-request.ntriple'));
         });
         $kernel = new TestKernel('test', true);
@@ -46,6 +48,46 @@ class ShaclClientTest extends KernelTestCase
         $statement->where([
             new Triple($subject, $predicate, new Variable('object')),
         ]);
-        $shaclClient->validate($statement);
+        $this->assertTrue($shaclClient->validate($statement));
+        $statement = new DeleteStatement(new Triple($subject, $predicate, $object), ['schema' => 'http://schema.org/']);
+        $statement->where([
+            new Triple($subject, $predicate, new Variable('object')),
+        ]);
+        $this->assertTrue($shaclClient->validate($statement));
+        $statement = new ReplaceStatement(new Triple($subject, $predicate, $object), ['schema' => 'http://schema.org/']);
+        $statement->with(new Triple($subject, $predicate, $object));
+        $statement->where([
+            new Triple($subject, $predicate, new Variable('object')),
+        ]);
+        $this->assertTrue($shaclClient->validate($statement));
+        $statement = new ConstructStatement([new Triple($subject, $predicate, $object)], ['schema' => 'http://schema.org/']);
+        $statement->where([
+            new Triple($subject, $predicate, new Variable('object')),
+        ]);
+        $this->assertTrue($shaclClient->validate($statement));
+    }
+
+    public function testFailedValidation()
+    {
+        $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
+        $receivedQuery = null;
+        $httpClient = new MockHttpClient(function ($method, $url, $options) {
+            return new MockResponse(file_get_contents(__DIR__ . '/../fixtures/shacl-validation-request-failed.ntriple'));
+        });
+        $kernel = new TestKernel('test', true);
+        $kernel->boot();
+        $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
+        $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
+        /** @var ShaclClientInterface $shaclClient */
+        $shaclClient = $kernel->getContainer()->get(ShaclClientInterface::class);
+        $shaclClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
+        $subject = new Iri('urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece');
+        $predicate = new PrefixedIri('schema', 'headline');
+        $object = new PlainLiteral('Lorem Ipsum');
+        $statement = new InsertStatement(new Triple($subject, $predicate, $object), ['schema' => 'http://schema.org/']);
+        $statement->where([
+            new Triple($subject, $predicate, new Variable('object')),
+        ]);
+        $this->assertFalse($shaclClient->validate($statement));
     }
 }

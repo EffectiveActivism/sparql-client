@@ -185,6 +185,11 @@ class SparQlClient implements SparQlClientInterface
         return [];
     }
 
+    public function construct(array $triples): ConstructStatementInterface
+    {
+        return new ConstructStatement($triples, $this->getNamespaces());
+    }
+
     public function delete(TripleInterface $triple): DeleteStatement
     {
         return new DeleteStatement($triple, $this->getNamespaces());

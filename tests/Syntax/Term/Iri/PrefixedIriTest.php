@@ -63,4 +63,10 @@ class PrefixedIriTest extends KernelTestCase
         $prefix = new PrefixedIri('lorem', 'ipsum');
         $this->assertEquals(sprintf('%s:%s', 'lorem', 'ipsum'), $prefix->getRawValue());
     }
+
+    public function testSerialize()
+    {
+        $prefix = new PrefixedIri('lorem', 'ipsum');
+        $this->assertEquals(sprintf('%s:%s', 'lorem', 'ipsum'), $prefix->serialize());
+    }
 }

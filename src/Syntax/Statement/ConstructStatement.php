@@ -78,7 +78,7 @@ class ConstructStatement extends AbstractConditionalStatement implements Constru
      * Getters.
      */
 
-    public function getTripleToConstruct(): array
+    public function getTriplesToConstruct(): array
     {
         return $this->triplesToConstruct;
     }

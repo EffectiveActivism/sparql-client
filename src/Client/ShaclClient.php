@@ -4,6 +4,7 @@ namespace EffectiveActivism\SparQlClient\Client;
 
 use EffectiveActivism\SparQlClient\Constant;
 use EffectiveActivism\SparQlClient\Serializer\Normalizer\RdfXmlDenormalizer;
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\TripleInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\ConstructStatement;
 use EffectiveActivism\SparQlClient\Syntax\Statement\ConstructStatementInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\DeleteStatement;
@@ -13,6 +14,7 @@ use EffectiveActivism\SparQlClient\Syntax\Statement\InsertStatementInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\ReplaceStatement;
 use EffectiveActivism\SparQlClient\Syntax\Statement\ReplaceStatementInterface;
 use EffectiveActivism\SparQlClient\Serializer\Encoder\NTripleDecoder;
+use EffectiveActivism\SparQlClient\Syntax\Term\Literal\TypedLiteral;
 use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -56,13 +58,22 @@ class ShaclClient implements ShaclClientInterface
             'contentToValidate' => $constructStatement->toQuery(),
             'reportSyntax' => 'application/rdf+xml',
         ];
-        dump($data);
         $responseContent = $this->httpClient->request('POST', $this->shaclEndpoint, [
             'body' => json_encode($data),
         ])->getContent();
         $sets = $this->serializer->decode($responseContent, NTripleDecoder::FORMAT);
-        dump($sets);
-        return true;
+        /** @var TripleInterface $triple */
+        foreach ($sets as $triple) {
+            if (
+                $triple->getPredicate()->serialize() === '<http://www.w3.org/ns/shacl#conforms>' &&
+                $triple->getObject() instanceof TypedLiteral &&
+                $triple->getObject()->getType() === 'xsd:boolean' &&
+                in_array($triple->getObject()->serialize(), ['"true"^^<http://www.w3.org/2001/XMLSchema#boolean>', '"true"^xsd:boolean'])
+            ) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

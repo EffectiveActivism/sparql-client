@@ -1,0 +1,4 @@
+<urn:uuid:dc6d5e66-a37e-11eb-8f45-c35a2b30fad8> <http://example.org/foo> _:foo .
+<urn:uuid:dc6d5e66-a37e-11eb-8f45-c35a2b30fad8> <http://example.org/foo> "true"^^<http://www.w3.org/2001/XMLSchema#boolean> .
+<urn:uuid:dc6d5e66-a37e-11eb-8f45-c35a2b30fad8> <http://example.org/foo> "foo"@la .
+<urn:uuid:dc6d5e66-a37e-11eb-8f45-c35a2b30fad8> <http://example.org/foo> "foo" .

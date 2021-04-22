@@ -19,15 +19,23 @@ class InsertStatementTest extends KernelTestCase
 
     const INSERT_STATEMENT = 'INSERT { <urn:uuid:89e2f582-918d-11eb-b6ff-1f71a7aa4639> <http://schema.org/headline> "Lorem Ipsum" } WHERE { <urn:uuid:89e2f582-918d-11eb-b6ff-1f71a7aa4639> <http://schema.org/headline> "Lorem Ipsum" . }';
 
+    const INSERT_STATEMENT_VARIABLE = 'INSERT { <urn:uuid:89e2f582-918d-11eb-b6ff-1f71a7aa4639> <http://schema.org/headline> ?object } WHERE { <urn:uuid:89e2f582-918d-11eb-b6ff-1f71a7aa4639> <http://schema.org/headline> ?object . }';
+
     public function testInsertStatement()
     {
         $subject = new Iri(self::SUBJECT_URI);
         $predicate = new Iri('http://schema.org/headline');
         $object = new PlainLiteral("Lorem Ipsum");
+        $objectVariable = new Variable('object');
         $triple = new Triple($subject, $predicate, $object);
         $statement = new InsertStatement($triple);
         $statement->where([$triple]);
         $this->assertEquals(self::INSERT_STATEMENT, $statement->toQuery());
+        $this->assertEquals($triple, $statement->getTripleToInsert());
+        $triple = new Triple($subject, $predicate, $objectVariable);
+        $statement = new InsertStatement($triple);
+        $statement->where([$triple]);
+        $this->assertEquals(self::INSERT_STATEMENT_VARIABLE, $statement->toQuery());
     }
 
     public function testInsertExceptions()

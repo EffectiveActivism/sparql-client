@@ -17,16 +17,16 @@ class Configuration implements ConfigurationInterface
                     ->info('Provide an endpoint for a SPARQL server.')
                     ->isRequired()
                 ->end() // sparql_endpoint
+                ->scalarNode('shacl_endpoint')
+                    ->info('Optionally provide an endpoint for a SHACL validation service.')
+                    ->defaultValue('')
+                ->end() // shacl_endpoint
                 ->arrayNode('namespaces')
                     ->info('Namespaces that are used in queries and updates.')
                     ->useAttributeAsKey('name')
                     ->scalarPrototype()->end()
                     ->defaultValue([])
                 ->end() // namespaces
-                ->scalarNode('shacl_endpoint')
-                    ->info('Optionally provide an endpoint for a SHACL validation service.')
-                    ->defaultValue('')
-                ->end() // sparql_endpoint
             ->end()
         ;
         return $treeBuilder;

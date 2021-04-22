@@ -21,7 +21,6 @@ class NTripleDecoder implements DecoderInterface
         foreach(preg_split("/((\r?\n)|(\r\n?))/", $data) as $line) {
             $line = trim($line, '. ');
             if (preg_match('/^((?:<.*>)|(?:_:.*)|(?:".*"(?:(?:\^\^<.*>)|(?:@.*))?)) ((?:<.*>)|(?:_:.*)|(?:".*"(?:(?:\^\^<.*>)|(?:@.*))?)) ((?:<.*>)|(?:_:.*)|(?:".*"(?:(?:\^\^<.*>)|(?:@.*))?))$/m', $line, $matches)) {
-                dump($matches);
                 if (count($matches) === 4) {
                     $subject = $this->extractTerm($matches[1]);
                     $predicate = $this->extractTerm($matches[2]);
@@ -41,23 +40,25 @@ class NTripleDecoder implements DecoderInterface
         return self::FORMAT === $format;
     }
 
-    public function extractTerm(string $data): TermInterface
+    protected function extractTerm(string $data): TermInterface
     {
         // Check for blank nodes.
-        if (preg_match('/^_:(.*)$/m', $data, $matches)) {
+        if (preg_match('/^_:(.+)$/m', $data, $matches)) {
             return new BlankNode($matches[1]);
         }
         // Check for IRIs.
-        elseif (preg_match('/^<(.*)>$/m', $data, $matches)) {
+        elseif (preg_match('/^<(.+)>$/m', $data, $matches)) {
             return new Iri($matches[1]);
         }
         // Check for typed literals.
         elseif (preg_match('/^(".*")\^\^<(.*)>$/m', $data, $matches)) {
             return new TypedLiteral(trim($matches[1], '"'), new Iri($matches[2]));
         }
+        // Check for plain literals with language tag.
         elseif(preg_match('/^(".*")@(.*)$/m', $data, $matches)) {
             return new PlainLiteral(trim($matches[1], '"'), $matches[2]);
         }
+        // Check for plain literals.
         elseif (preg_match('/(".*")$/m', $data, $matches)) {
             return new PlainLiteral(trim($matches[1], '"'));
         }

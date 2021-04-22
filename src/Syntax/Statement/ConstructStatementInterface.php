@@ -10,5 +10,5 @@ interface ConstructStatementInterface extends ConditionalStatementInterface
      * Getters.
      */
 
-    public function getTripleToConstruct(): array;
+    public function getTriplesToConstruct(): array;
 }
