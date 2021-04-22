@@ -4,8 +4,9 @@ namespace EffectiveActivism\SparQlClient\Client;
 
 use EffectiveActivism\SparQlClient\Constant;
 use EffectiveActivism\SparQlClient\Exception\SparQlException;
-use EffectiveActivism\SparQlClient\Syntax\Pattern\PatternInterface;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\TripleInterface;
+use EffectiveActivism\SparQlClient\Syntax\Statement\ConstructStatement;
+use EffectiveActivism\SparQlClient\Syntax\Statement\ConstructStatementInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\DeleteStatement;
 use EffectiveActivism\SparQlClient\Syntax\Statement\DeleteStatementInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\InsertStatementInterface;
@@ -16,7 +17,6 @@ use EffectiveActivism\SparQlClient\Syntax\Statement\SelectStatementInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\StatementInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\InsertStatement;
 use EffectiveActivism\SparQlClient\Serializer\Normalizer\SparQlResultDenormalizer;
-use EffectiveActivism\SparQlClient\Syntax\Term\Iri\AbstractIri;
 use EffectiveActivism\SparQlClient\Syntax\Term\TermInterface;
 use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
 use Psr\Cache\CacheException;
@@ -62,17 +62,18 @@ class SparQlClient implements SparQlClientInterface
     public function execute(StatementInterface $statement, bool $toTriples = false): array
     {
         return match (get_class($statement)) {
+            ConstructStatement::class => $this->handleQueryStatment($statement, $toTriples),
             DeleteStatement::class => $this->handleDeleteStatement($statement),
             InsertStatement::class => $this->handleInsertStatement($statement),
             ReplaceStatement::class => $this->handleReplaceStatement($statement),
-            SelectStatement::class => $this->handleSelectStatement($statement, $toTriples)
+            SelectStatement::class => $this->handleQueryStatment($statement, $toTriples)
         };
     }
 
     /**
      * @throws SparQlException
      */
-    protected function handleSelectStatement(SelectStatementInterface $statement, bool $toTriples): array
+    protected function handleQueryStatment(ConstructStatementInterface|SelectStatementInterface $statement, bool $toTriples): array
     {
         $query = $statement->toQuery();
         $parameters = ['body' => ['query' => $query]];
