@@ -14,9 +14,15 @@ class Configuration implements ConfigurationInterface
             ->fixXmlConfig('namespace')
             ->children()
                 ->scalarNode('sparql_endpoint')
+                    ->info('Provide an endpoint for a SPARQL server.')
                     ->isRequired()
                 ->end() // sparql_endpoint
+                ->scalarNode('shacl_endpoint')
+                    ->info('Optionally provide an endpoint for a SHACL validation service.')
+                    ->defaultValue('')
+                ->end() // shacl_endpoint
                 ->arrayNode('namespaces')
+                    ->info('Namespaces that are used in queries and updates.')
                     ->useAttributeAsKey('name')
                     ->scalarPrototype()->end()
                     ->defaultValue([])

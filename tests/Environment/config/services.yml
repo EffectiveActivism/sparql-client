@@ -5,6 +5,9 @@ services:
     autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
     public: true # Allows testing services.
 
+  EffectiveActivism\SparQlClient\Client\ShaclClientInterface:
+    class: EffectiveActivism\SparQlClient\Client\ShaclClient
+
   EffectiveActivism\SparQlClient\Client\SparQlClientInterface:
     class: EffectiveActivism\SparQlClient\Client\SparQlClient
 
