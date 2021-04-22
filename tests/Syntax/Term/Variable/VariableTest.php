@@ -49,4 +49,10 @@ class VariableTest extends KernelTestCase
         $variable = new Variable('subject');
         $this->assertEquals('subject', $variable->getRawValue());
     }
+
+    public function testVariableSerialized()
+    {
+        $variable = new Variable('subject');
+        $this->assertEquals('?subject', $variable->serialize());
+    }
 }

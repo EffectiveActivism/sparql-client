@@ -14,6 +14,7 @@ class BundleTest extends KernelTestCase
 {
     const TEST_CONFIG = [
         'sparql_endpoint' => 'http://test-sparql-endpoint:9999/blazegraph/sparql',
+        'shacl_endpoint' => '',
         'namespaces' => [
             'schema' => 'http://schema.org/',
         ]
@@ -42,7 +43,7 @@ class BundleTest extends KernelTestCase
         $extension->load([
             'sparql_client' => self::TEST_CONFIG
         ], $containerBuilderStub);
-        $this->assertEquals([0 => self::TEST_CONFIG], $definition->getArguments());
+        $this->assertEquals([0 => self::TEST_CONFIG, 1 => self::TEST_CONFIG], $definition->getArguments());
         $this->assertEquals('sparql_client', $extension->getAlias());
     }
 }

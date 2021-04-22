@@ -63,5 +63,23 @@ class SelectStatementTest extends KernelTestCase
             $threwException = true;
         }
         $this->assertTrue($threwException);
+        // Test limit.
+        $threwException = false;
+        $statement = new SelectStatement([$subjectVariable]);
+        try {
+            $statement->limit(-1);
+        } catch (InvalidArgumentException) {
+            $threwException = true;
+        }
+        $this->assertTrue($threwException);
+        // Test offset.
+        $threwException = false;
+        $statement = new SelectStatement([$subjectVariable]);
+        try {
+            $statement->offset(-1);
+        } catch (InvalidArgumentException) {
+            $threwException = true;
+        }
+        $this->assertTrue($threwException);
     }
 }

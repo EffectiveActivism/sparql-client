@@ -67,4 +67,13 @@ class InsertStatement extends AbstractConditionalStatement implements InsertStat
             return sprintf('%sINSERT DATA { %s }', $preQuery, $this->tripleToInsert->serialize());
         }
     }
+
+    /**
+     * Getters.
+     */
+
+    public function getTripleToInsert(): TripleInterface
+    {
+        return $this->tripleToInsert;
+    }
 }

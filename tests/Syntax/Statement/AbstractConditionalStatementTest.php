@@ -14,6 +14,19 @@ class AbstractConditionalStatementTest extends KernelTestCase
 {
     const QUERY = 'PREFIX schema: <http://schema.org/> ';
 
+    public function testStatement()
+    {
+        $subject = new Iri('urn:uuid:ed61d3c8-9203-11eb-9714-83cf7e09838c');
+        $predicate = new PrefixedIri('schema', 'headline');
+        $object = new PlainLiteral('Lorem');
+        $triple = new Triple($subject, $predicate, $object);
+        $class = new class([
+            'schema' => 'http://schema.org/',
+        ]) extends AbstractConditionalStatement {};
+        $class->where([$triple]);
+        $this->assertEquals([$triple], $class->getConditions());
+    }
+
     public function testExceptions()
     {
         // Test statement with invalid condition class.

@@ -1,6 +1,6 @@
 <?php
 
-namespace EffectiveActivism\SparQlClient\Tests\Serializer;
+namespace EffectiveActivism\SparQlClient\Tests\Serializer\Normalizer;
 
 use EffectiveActivism\SparQlClient\Exception\InvalidResultException;
 use EffectiveActivism\SparQlClient\Serializer\Normalizer\SparQlResultDenormalizer;
@@ -29,7 +29,7 @@ class NormalizerTest extends KernelTestCase
      */
     public function testOneResultOneVariable()
     {
-        $data = file_get_contents(__DIR__ . '/../fixtures/normalizer-one-result-one-variable.xml');
+        $data = file_get_contents(__DIR__ . '/../../fixtures/normalizer-one-result-one-variable.xml');
         $denormalizedData = $this->serializer->deserialize($data, SparQlResultDenormalizer::TYPE, 'xml');
         $this->assertCount(1, $denormalizedData);
         $set = array_shift($denormalizedData);
@@ -45,7 +45,7 @@ class NormalizerTest extends KernelTestCase
      */
     public function testTranslatedPlainLiteral()
     {
-        $data = file_get_contents(__DIR__ . '/../fixtures/normalizer-translated-plain-literal.xml');
+        $data = file_get_contents(__DIR__ . '/../../fixtures/normalizer-translated-plain-literal.xml');
         $denormalizedData = $this->serializer->deserialize($data, SparQlResultDenormalizer::TYPE, 'xml');
         $this->assertCount(1, $denormalizedData);
         $set = array_shift($denormalizedData);
@@ -61,7 +61,7 @@ class NormalizerTest extends KernelTestCase
      */
     public function testTypedLiteral()
     {
-        $data = file_get_contents(__DIR__ . '/../fixtures/normalizer-typed-literal.xml');
+        $data = file_get_contents(__DIR__ . '/../../fixtures/normalizer-typed-literal.xml');
         $denormalizedData = $this->serializer->deserialize($data, SparQlResultDenormalizer::TYPE, 'xml');
         $this->assertCount(1, $denormalizedData);
         $set = array_shift($denormalizedData);
@@ -81,7 +81,7 @@ class NormalizerTest extends KernelTestCase
      */
     public function testOneResultMultipleVariables()
     {
-        $data = file_get_contents(__DIR__ . '/../fixtures/normalizer-one-result-multiple-variables.xml');
+        $data = file_get_contents(__DIR__ . '/../../fixtures/normalizer-one-result-multiple-variables.xml');
         $denormalizedData = $this->serializer->deserialize($data, SparQlResultDenormalizer::TYPE, 'xml');
         $this->assertCount(1, $denormalizedData);
         $set = array_shift($denormalizedData);
@@ -100,7 +100,7 @@ class NormalizerTest extends KernelTestCase
      */
     public function testMultipleResultsMultipleVariables()
     {
-        $data = file_get_contents(__DIR__ . '/../fixtures/normalizer-multiple-results-multiple-variables.xml');
+        $data = file_get_contents(__DIR__ . '/../../fixtures/normalizer-multiple-results-multiple-variables.xml');
         $denormalizedData = $this->serializer->deserialize($data, SparQlResultDenormalizer::TYPE, 'xml');
         $this->assertCount(2, $denormalizedData);
         $set = array_shift($denormalizedData);

@@ -1,0 +1,2 @@
+_:Bb7386cabX2D87b1X2D4abaX2Dac3cX2D4b138da5b474 <http://www.w3.org/ns/shacl#conforms> "true"^^<http://www.w3.org/2001/XMLSchema#boolean> .
+_:Bb7386cabX2D87b1X2D4abaX2Dac3cX2D4b138da5b474 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/shacl#ValidationReport> .

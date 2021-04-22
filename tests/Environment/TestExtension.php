@@ -2,6 +2,7 @@
 
 namespace EffectiveActivism\SparQlClient\Tests\Environment;
 
+use EffectiveActivism\SparQlClient\Client\ShaclClientInterface;
 use EffectiveActivism\SparQlClient\Client\SparQlClientInterface;
 use EffectiveActivism\SparQlClient\DependencyInjection\Configuration;
 use Exception;
@@ -22,6 +23,8 @@ class TestExtension extends Extension
         $configuration = new Configuration();
         $config = $this->processConfiguration($configuration, $configs);
         $definition = $container->getDefinition(SparQlClientInterface::class);
+        $definition->addArgument($config);
+        $definition = $container->getDefinition(ShaclClientInterface::class);
         $definition->addArgument($config);
     }
 
