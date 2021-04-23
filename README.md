@@ -1,8 +1,30 @@
 # SparQl client
 
-An OOP SparQl client for Symfony with support for SELECT, DELETE,
+An OOP SparQl client for Symfony with support for SELECT, CONSTRUCT, DELETE,
 INSERT and DELETE+INSERT operations. Includes term, namespace and (basic)
 statement validation.
+
+## Table of content
+
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Usage](#usage)
+    - [Select statement](#select-statement)
+    - [Construct statement](#construct-statement)
+    - [Insert statement](#insert-statement)
+    - [Delete statement](#delete-statement)
+    - [Replace statement](#replace-statement)
+    - [Property paths and sets](#property-paths-and-sets)
+        - [Inverse path example](#inverse-path-example)
+        - [Sequence path example](#sequence-path-example)
+        - [Negated set example](#negated-set-example)
+    - [Validation](#validation)
+    - [Optional clauses](#optional-clauses)
+    - [Constraints](#constraints)
+        - [Filter examples](#filter-examples)
+- [SHACL validator](#shacl-validator)
+- [Example docker-compose setup](#example-docker-compose-setup)
+- [Planned features](#planned-features)
 
 ## Installation
 
@@ -14,11 +36,13 @@ composer require effectiveactivism/sparql-client
 ## Configuration
 
 This bundle requires a SparQl endpoint string. You can optionally define
-namespaces that should be included in every request.
+namespaces that should be included in every request. You can also optionally
+define a SHACL endpoint.
 
 ```yaml
 sparql_client:
   sparql_endpoint: http://test-sparql-endpoint:9999/blazegraph/sparql
+  shacl_endpoint: http://test-validator-endpoint/shacl/myshapes/api/validate
   namespaces:
     - schema: http://schema.org/
     - dbo: http://dbpedia.org/ 
@@ -60,11 +84,55 @@ class MyController extends AbstractController
         // Create a select statement.
         $selectStatement = $sparQlClient->select([$subject])->where([$triple]);
         // Perform the query.
-        $result = $sparQlClient->execute($selectStatement);
+        $sets = $sparQlClient->execute($selectStatement);
         // The result will contain each 'subject' found.
-        /** @var TermInterface $term */
-        foreach ($result as $subject) {
-            dump($subject->serialize());
+        /** @var TermInterface[] $set */
+        foreach ($sets as $set) {
+            dump($set[$subject->getVariableName()]);
+        }
+    }
+}
+```
+
+### Construct statement
+
+Construct a set of triples:
+
+```php
+<?php
+
+namespace App\Controller;
+
+use EffectiveActivism\SparQlClient\Client\SparQlClientInterface;
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\Triple;
+use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
+use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
+use EffectiveActivism\SparQlClient\Syntax\Term\TermInterface;
+use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+
+class MyController extends AbstractController
+{
+    public function view(SparQlClientInterface $sparQlClient)
+    {
+        // Add the 'schema' namespace.
+        $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
+        // Add a subject as a variable '_subject'.
+        $subject = new Variable('subject');
+        // Add a prefixed IRI of the form 'schema:headline'.
+        $predicate = new PrefixedIri('schema', 'headline');
+        // Add a plain literal of the form 'Lorem@la'.
+        $object = new PlainLiteral('Lorem', 'la');
+        // Add a triple that contains all the above terms.
+        $triple = new Triple($subject, $predicate, $object);
+        // Create a construct statement.
+        $constructStatement = $sparQlClient->construct([$triple])->where([$triple]);
+        // Perform the query.
+        $sets = $sparQlClient->execute($constructStatement);
+        // The result will contain each 'subject' found.
+        /** @var TermInterface[] $set */
+        foreach ($sets as $set) {
+            dump($set[$subject->getVariableName()]);
         }
     }
 }
@@ -398,10 +466,84 @@ new Filter(new Equal($object1, $object2));
 new Filter(new NotEqual($object1, $object3));
 ```
 
-## Planned features
+# SHACL validator
+
+To use the validator service, define the SHACL validator endpoint.
+You can retrieve the SHACL client as a service.
+Insert, delete, replace and construct statements can be validated.
+
+```php
+<?php
+
+namespace App\Controller;
+
+use EffectiveActivism\SparQlClient\Client\ShaclClientInterface;
+use EffectiveActivism\SparQlClient\Client\SparQlClientInterface;
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\Triple;
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\TripleInterface;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+
+class MyController extends AbstractController
+{
+    public function view(ShaclClientInterface $shaclClient, SparQlClientInterface $sparQlClient)
+    {
+        /** @var TripleInterface $triple */
+        $triple = new Triple(...);
+        $statement = $sparQlClient
+            ->insert($triple)
+            ->where([$triple]);
+        if ($shaclClient->validate($statement)) {
+            dump('statement is valid!');
+        }
+    }
+}
+```
+
+# Example docker-compose setup
+
+The docker services below showcase a working setup. This client has not
+been tested with other triplestores or validators.
+
+The Blazegraph docker image requires no setup.
+To setup the isaitb SHACL validator, go [here](https://www.itb.ec.europa.eu/docs/guides/latest/validatingRDF/#step-4-setup-validator-as-docker-container)
+
+```yaml
+version: '3.3'
+
+services:
+  
+  ###############
+  # Triplestore #
+  ###############
+
+  triplestore:
+    restart: unless-stopped
+    image: nawer/blazegraph:2.1.5
+    volumes:
+      - ./triplestore/data:/var/lib/blazegraph
+    ports:
+      - 9999:9999
+
+  #############
+  # Validator #
+  #############
+
+  validator:
+    restart: unless-stopped
+    image: isaitb/shacl-validator:1.0.0
+    environment:
+      - validator.resourceRoot:/validator/resources/
+    volumes:
+      - ./validator/resources:/validator/resources
+    ports:
+      - 8080:8080
+
+```
+
+# Planned features
 
 - Support for graphs, including named graphs and management operations.
-- Support for ASK, CONSTRUCT and DESCRIBE statements.
+- Support for ASK and DESCRIBE statements.
 - Support for UNION.
 - Support for SERVICE.
 - Support for empty prefixes.
