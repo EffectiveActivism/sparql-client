@@ -1,6 +1,6 @@
 # SparQl client
 
-An OOP SparQl client for Symfony with support for SELECT, DELETE,
+An OOP SparQl client for Symfony with support for SELECT, CONSTRUCT, DELETE,
 INSERT and DELETE+INSERT operations. Includes term, namespace and (basic)
 statement validation.
 
