@@ -4,6 +4,28 @@ An OOP SparQl client for Symfony with support for SELECT, DELETE,
 INSERT and DELETE+INSERT operations. Includes term, namespace and (basic)
 statement validation.
 
+## Table of content
+
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Usage](#usage)
+    - [Select statement](#select-statement)
+    - [Construct statement](#construct-statement)
+    - [Insert statement](#insert-statement)
+    - [Delete statement](#delete-statement)
+    - [Replace statement](#replace-statement)
+    - [Property paths and sets](#property-paths-and-sets)
+        - [Inverse path example](#inverse-path-example)
+        - [Sequence path example](#sequence-path-example)
+        - [Negated set example](#negated-set-example)
+    - [Validation](#validation)
+    - [Optional clauses](#optional-clauses)
+    - [Constraints](#constraints)
+        - [Filter examples](#filter-examples)
+- [SHACL validator](#shacl-validator)
+- [Example docker-compose setup](#example-docker-compose-setup)
+- [Planned features](#planned-features)
+
 ## Installation
 
 To install, run
@@ -444,7 +466,7 @@ new Filter(new Equal($object1, $object2));
 new Filter(new NotEqual($object1, $object3));
 ```
 
-## SHACL validator
+# SHACL validator
 
 To use the validator service, define the SHACL validator endpoint.
 You can retrieve the SHACL client as a service.
@@ -477,7 +499,7 @@ class MyController extends AbstractController
 }
 ```
 
-## Example docker-compose setup
+# Example docker-compose setup
 
 The docker services below showcase a working setup. This client has not
 been tested with other triplestores or validators.
@@ -518,7 +540,7 @@ services:
 
 ```
 
-## Planned features
+# Planned features
 
 - Support for graphs, including named graphs and management operations.
 - Support for ASK and DESCRIBE statements.
