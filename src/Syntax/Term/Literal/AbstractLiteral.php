@@ -29,10 +29,10 @@ abstract class AbstractLiteral extends AbstractTerm implements TermInterface
         if (!is_string($this->value)) {
             return '"';
         }
-        elseif (!str_contains($this->value, '"')) {
+        elseif (!str_contains($this->value, '"') && !str_contains("\n", $this->value)) {
             return '"';
         }
-        elseif (!str_contains($this->value, '\'')) {
+        elseif (!str_contains($this->value, '\'') && !str_contains("\n", $this->value)) {
             return '\'';
         }
         elseif (!str_contains($this->value, '"""')) {
