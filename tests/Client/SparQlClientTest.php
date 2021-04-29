@@ -470,6 +470,25 @@ class SparQlClientTest extends KernelTestCase
         $sparQlClient->execute($sparQlClient->select([$subject])->where([$triple]));
     }
 
+    public function testClientAskStatementException()
+    {
+        $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
+        $httpClient = new MockHttpClient([new MockResponse(null, ['http_code' => 500])]);
+        $kernel = new TestKernel('test', true);
+        $kernel->boot();
+        $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
+        $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
+        /** @var SparQlClientInterface $sparQlClient */
+        $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
+        $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
+        $subject = new Variable('subject');
+        $predicate = new PrefixedIri('schema', 'headline');
+        $object = new PrefixedIri('schema', 'Article');
+        $triple = new Triple($subject, $predicate, $object);
+        $this->expectException(SparQlException::class);
+        $sparQlClient->execute($sparQlClient->ask()->where([$triple]));
+    }
+
     public function testClientDeleteStatementException()
     {
         $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
