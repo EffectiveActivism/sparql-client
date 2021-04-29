@@ -13,7 +13,7 @@ use Symfony\Component\Serializer\Encoder\XmlEncoder;
 use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Serializer\SerializerInterface;
 
-class NormalizerTest extends KernelTestCase
+class SparQlResultDenormalizerTest extends KernelTestCase
 {
     protected SerializerInterface $serializer;
 

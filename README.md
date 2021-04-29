@@ -94,6 +94,48 @@ class MyController extends AbstractController
 }
 ```
 
+### Ask statement
+
+Query whether a set of clauses has a solution:
+
+```php
+<?php
+
+namespace App\Controller;
+
+use EffectiveActivism\SparQlClient\Client\SparQlClientInterface;
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\Triple;
+use EffectiveActivism\SparQlClient\Syntax\Term\Iri\Iri;
+use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
+use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+
+class MyController extends AbstractController
+{
+    public function view(SparQlClientInterface $sparQlClient)
+    {
+        // Add the 'schema' namespace.
+        $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
+        // Add a subject as a variable '_subject'.
+        $subject = new Iri('urn:uuid:5b08b896-a8ee-11eb-acf0-a3d5edd5c2a6');
+        // Add a prefixed IRI of the form 'schema:headline'.
+        $predicate = new PrefixedIri('schema', 'headline');
+        // Add a plain literal of the form 'Lorem@la'.
+        $object = new PlainLiteral('Lorem', 'la');
+        // Add a triple that contains all the above terms.
+        $triple = new Triple($subject, $predicate, $object);
+        // Create an ask statement.
+        $askStatement = $sparQlClient->ask()->where([$triple]);
+        // Perform the query.
+        $result = $sparQlClient->execute($askStatement);
+        // The result will be a boolean value.
+        if ($result === true) {
+            dump('yes');
+        }
+    }
+}
+```
+
 ### Construct statement
 
 Construct a set of triples:
@@ -543,7 +585,7 @@ services:
 # Planned features
 
 - Support for graphs, including named graphs and management operations.
-- Support for ASK and DESCRIBE statements.
+- Support for DESCRIBE statements.
 - Support for UNION.
 - Support for SERVICE.
 - Support for empty prefixes.
