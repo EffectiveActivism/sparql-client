@@ -12,7 +12,7 @@ use EffectiveActivism\SparQlClient\Syntax\Statement\StatementInterface;
 
 interface SparQlClientInterface
 {
-    public function execute(StatementInterface $statement, bool $toTriples = false): array;
+    public function execute(StatementInterface $statement, bool $toTriples = false): array|bool;
 
     public function construct(array $triples): ConstructStatementInterface;
 

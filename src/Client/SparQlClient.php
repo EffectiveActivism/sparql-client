@@ -4,7 +4,10 @@ namespace EffectiveActivism\SparQlClient\Client;
 
 use EffectiveActivism\SparQlClient\Constant;
 use EffectiveActivism\SparQlClient\Exception\SparQlException;
+use EffectiveActivism\SparQlClient\Serializer\Normalizer\SparQlAskDenormalizer;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\TripleInterface;
+use EffectiveActivism\SparQlClient\Syntax\Statement\AskStatement;
+use EffectiveActivism\SparQlClient\Syntax\Statement\AskStatementInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\ConstructStatement;
 use EffectiveActivism\SparQlClient\Syntax\Statement\ConstructStatementInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\DeleteStatement;
@@ -51,7 +54,10 @@ class SparQlClient implements SparQlClientInterface
         $this->cacheAdapter = $cacheAdapter;
         $this->httpClient = $httpClient;
         $this->namespaces = $configuration['namespaces'];
-        $normalizers = [new SparQlResultDenormalizer()];
+        $normalizers = [
+            new SparQlResultDenormalizer(),
+            new SparQlAskDenormalizer(),
+        ];
         $encoders = [new XmlEncoder()];
         $this->serializer = new Serializer($normalizers, $encoders);
     }
@@ -59,9 +65,10 @@ class SparQlClient implements SparQlClientInterface
     /**
      * @throws SparQlException
      */
-    public function execute(StatementInterface $statement, bool $toTriples = false): array
+    public function execute(StatementInterface $statement, bool $toTriples = false): array|bool
     {
         return match (get_class($statement)) {
+            AskStatement::class => $this->handleAskStatement($statement),
             ConstructStatement::class => $this->handleQueryStatment($statement, $toTriples),
             DeleteStatement::class => $this->handleDeleteStatement($statement),
             InsertStatement::class => $this->handleInsertStatement($statement),
@@ -137,6 +144,21 @@ class SparQlClient implements SparQlClientInterface
     /**
      * @throws SparQlException
      */
+    protected function handleAskStatement(AskStatementInterface $statement): bool
+    {
+        $query = $statement->toQuery();
+        $parameters = ['body' => ['query' => $query]];
+        try {
+            $responseContent = $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent();
+            return $this->serializer->deserialize($responseContent, SparQlAskDenormalizer::TYPE, 'xml');
+        } catch (HttpClientExceptionInterface $exception) {
+            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
+        }
+    }
+
+    /**
+     * @throws SparQlException
+     */
     protected function handleDeleteStatement(DeleteStatementInterface $statement): array
     {
         $query = $statement->toQuery();
@@ -147,6 +169,21 @@ class SparQlClient implements SparQlClientInterface
             $tags = $this->extractTags(array_merge([$statement->getTripleToDelete()], $statement->getConditions()));
             $this->cacheAdapter->invalidateTags($tags);
         } catch (HttpClientExceptionInterface|InvalidArgumentException $exception) {
+            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
+        }
+        return [];
+    }
+
+    /**
+     * @throws SparQlException
+     */
+    protected function handleInsertStatement(InsertStatementInterface $statement): array
+    {
+        $query = $statement->toQuery();
+        $parameters = ['body' => ['update' => $query]];
+        try {
+            $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent();
+        } catch (HttpClientExceptionInterface $exception) {
             throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
         }
         return [];
@@ -170,19 +207,9 @@ class SparQlClient implements SparQlClientInterface
         return [];
     }
 
-    /**
-     * @throws SparQlException
-     */
-    protected function handleInsertStatement(InsertStatementInterface $statement): array
+    public function ask(): AskStatementInterface
     {
-        $query = $statement->toQuery();
-        $parameters = ['body' => ['update' => $query]];
-        try {
-            $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent();
-        } catch (HttpClientExceptionInterface $exception) {
-            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
-        }
-        return [];
+        return new AskStatement($this->getNamespaces());
     }
 
     public function construct(array $triples): ConstructStatementInterface
