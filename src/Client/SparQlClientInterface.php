@@ -3,6 +3,7 @@
 namespace EffectiveActivism\SparQlClient\Client;
 
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\TripleInterface;
+use EffectiveActivism\SparQlClient\Syntax\Statement\AskStatementInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\ConstructStatementInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\DeleteStatementInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\InsertStatementInterface;
@@ -13,6 +14,8 @@ use EffectiveActivism\SparQlClient\Syntax\Statement\StatementInterface;
 interface SparQlClientInterface
 {
     public function execute(StatementInterface $statement, bool $toTriples = false): array|bool;
+
+    public function ask(): AskStatementInterface;
 
     public function construct(array $triples): ConstructStatementInterface;
 
