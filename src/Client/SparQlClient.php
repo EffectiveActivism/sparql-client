@@ -148,12 +148,36 @@ class SparQlClient implements SparQlClientInterface
     {
         $query = $statement->toQuery();
         $parameters = ['body' => ['query' => $query]];
+        $cacheHit = true;
+        $responseContent = null;
+        $queryKey = $this->getKey($query);
         try {
-            $responseContent = $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent();
-            return $this->serializer->deserialize($responseContent, SparQlAskDenormalizer::TYPE, 'xml');
-        } catch (HttpClientExceptionInterface $exception) {
+            $responseContent = $this->cacheAdapter->get($queryKey, function (ItemInterface $item) use ($parameters, &$cacheHit) {
+                $responseContent = null;
+                try {
+                    $responseContent = $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent();
+                    $cacheHit = false;
+                } catch (HttpClientExceptionInterface $exception) {
+                    throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
+                }
+                return $responseContent;
+            });
+        } catch (InvalidArgumentException $exception) {
             throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
         }
+        // Update cache for successful ask statement requests, if uncached.
+        if (!$cacheHit) {
+            $tags = $this->extractTags($statement->getConditions());
+            try {
+                $cacheItem = $this->cacheAdapter->getItem($queryKey);
+                $cacheItem->set($responseContent);
+                $cacheItem->tag($tags);
+                $this->cacheAdapter->save($cacheItem);
+            } catch (CacheException|InvalidArgumentException $exception) {
+                throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
+            }
+        }
+        return $this->serializer->deserialize($responseContent, SparQlAskDenormalizer::TYPE, 'xml');
     }
 
     /**
@@ -165,7 +189,7 @@ class SparQlClient implements SparQlClientInterface
         $parameters = ['body' => ['update' => $query]];
         try {
             $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent();
-            // Invalidate cache for delete and update statements.
+            // Invalidate cache for delete statements.
             $tags = $this->extractTags(array_merge([$statement->getTripleToDelete()], $statement->getConditions()));
             $this->cacheAdapter->invalidateTags($tags);
         } catch (HttpClientExceptionInterface|InvalidArgumentException $exception) {
@@ -183,6 +207,9 @@ class SparQlClient implements SparQlClientInterface
         $parameters = ['body' => ['update' => $query]];
         try {
             $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent();
+            // Invalidate cache for insert statements.
+            $tags = $this->extractTags(array_merge([$statement->getTripleToInsert()], $statement->getConditions()));
+            $this->cacheAdapter->invalidateTags($tags);
         } catch (HttpClientExceptionInterface $exception) {
             throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
         }
