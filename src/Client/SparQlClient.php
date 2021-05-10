@@ -210,7 +210,7 @@ class SparQlClient implements SparQlClientInterface
             // Invalidate cache for insert statements.
             $tags = $this->extractTags(array_merge([$statement->getTripleToInsert()], $statement->getConditions()));
             $this->cacheAdapter->invalidateTags($tags);
-        } catch (HttpClientExceptionInterface $exception) {
+        } catch (HttpClientExceptionInterface|InvalidArgumentException $exception) {
             throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
         }
         return [];
@@ -234,31 +234,49 @@ class SparQlClient implements SparQlClientInterface
         return [];
     }
 
+    /**
+     * @throws SparQlException
+     */
     public function ask(): AskStatementInterface
     {
         return new AskStatement($this->getNamespaces());
     }
 
+    /**
+     * @throws SparQlException
+     */
     public function construct(array $triples): ConstructStatementInterface
     {
         return new ConstructStatement($triples, $this->getNamespaces());
     }
 
+    /**
+     * @throws SparQlException
+     */
     public function delete(TripleInterface $triple): DeleteStatement
     {
         return new DeleteStatement($triple, $this->getNamespaces());
     }
 
+    /**
+     * @throws SparQlException
+     */
     public function insert(TripleInterface $triple): InsertStatement
     {
         return new InsertStatement($triple, $this->getNamespaces());
     }
 
+    /**
+     * @throws SparQlException
+     */
     public function replace(TripleInterface $triple): ReplaceStatementInterface
     {
         return new ReplaceStatement($triple, $this->getNamespaces());
     }
 
+    /**
+     * @throws SparQlException
+     */
     public function select(array $variables): SelectStatement
     {
         return new SelectStatement($variables, $this->getNamespaces());

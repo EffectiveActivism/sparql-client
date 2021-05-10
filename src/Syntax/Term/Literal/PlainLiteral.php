@@ -3,8 +3,8 @@
 namespace EffectiveActivism\SparQlClient\Syntax\Term\Literal;
 
 use EffectiveActivism\SparQlClient\Constant;
+use EffectiveActivism\SparQlClient\Exception\SparQlException;
 use EffectiveActivism\SparQlClient\Syntax\Term\TermInterface;
-use InvalidArgumentException;
 
 class PlainLiteral extends AbstractLiteral implements TermInterface
 {
@@ -13,11 +13,14 @@ class PlainLiteral extends AbstractLiteral implements TermInterface
      */
     protected string|null $languageTag;
 
+    /**
+     * @throws SparQlException
+     */
     public function __construct(bool|float|int|string $value, string $optionalLanguageTag = null)
     {
         parent::__construct($value);
         if ($optionalLanguageTag !== null && preg_match(sprintf('/%s/', Constant::LANGUAGE_TAG), $optionalLanguageTag) <= 0) {
-            throw new InvalidArgumentException(sprintf('Language tag "%s" is not valid', $optionalLanguageTag));
+            throw new SparQlException(sprintf('Language tag "%s" is not valid', $optionalLanguageTag));
         }
         $this->languageTag = $optionalLanguageTag;
     }
@@ -38,6 +41,9 @@ class PlainLiteral extends AbstractLiteral implements TermInterface
      * Getters.
      */
 
+    /**
+     * @throws SparQlException
+     */
     public function getType(): string
     {
         return match (gettype($this->value)) {
@@ -45,7 +51,7 @@ class PlainLiteral extends AbstractLiteral implements TermInterface
             'double' => 'xsd:decimal',
             'integer' => 'xsd:integer',
             'string' => 'xsd:string',
-            default => throw new InvalidArgumentException(sprintf('Plain literal "%s" has unknown type "%s"', $this->getRawValue(), gettype($this->value))),
+            default => throw new SparQlException(sprintf('Plain literal "%s" has unknown type "%s"', $this->getRawValue(), gettype($this->value))),
         };
     }
 }

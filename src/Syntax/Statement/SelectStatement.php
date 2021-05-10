@@ -2,8 +2,8 @@
 
 namespace EffectiveActivism\SparQlClient\Syntax\Statement;
 
+use EffectiveActivism\SparQlClient\Exception\SparQlException;
 use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
-use InvalidArgumentException;
 
 class SelectStatement extends AbstractConditionalStatement implements SelectStatementInterface
 {
@@ -15,7 +15,7 @@ class SelectStatement extends AbstractConditionalStatement implements SelectStat
     protected array $variables;
 
     /**
-     * @throws InvalidArgumentException
+     * @throws SparQlException
      */
     public function __construct(array $variables, array $extraNamespaces = [])
     {
@@ -24,7 +24,7 @@ class SelectStatement extends AbstractConditionalStatement implements SelectStat
     }
 
     /**
-     * @throws InvalidArgumentException
+     * @throws SparQlException
      */
     public function toQuery(): string
     {
@@ -59,29 +59,35 @@ class SelectStatement extends AbstractConditionalStatement implements SelectStat
                 }
             }
             if ($unclausedVariables) {
-                throw new InvalidArgumentException('At least one variable must be referenced in a \'where\' clause.');
+                throw new SparQlException('At least one variable must be referenced in a \'where\' clause.');
             }
             return trim(sprintf('%sSELECT %sWHERE {%s } %s %s', $preQuery, $variables, $conditionsString, $limitString, $offsetString));
         }
         else {
             // Select statements must have a 'where' clause.
-            throw new InvalidArgumentException('Select statement is missing a \'where\' clause');
+            throw new SparQlException('Select statement is missing a \'where\' clause');
         }
     }
 
+    /**
+     * @throws SparQlException
+     */
     public function limit(int $limit): SelectStatementInterface
     {
         if ($limit < 0) {
-            throw new InvalidArgumentException(sprintf('Limit must be non-negative, "%d" provided', $limit));
+            throw new SparQlException(sprintf('Limit must be non-negative, "%d" provided', $limit));
         }
         $this->limit = $limit;
         return $this;
     }
 
+    /**
+     * @throws SparQlException
+     */
     public function offset(int $offset): SelectStatementInterface
     {
         if ($offset < 0) {
-            throw new InvalidArgumentException(sprintf('Offset must be non-negative, "%d" provided', $offset));
+            throw new SparQlException(sprintf('Offset must be non-negative, "%d" provided', $offset));
         }
         $this->offset = $offset;
         return $this;
@@ -92,11 +98,14 @@ class SelectStatement extends AbstractConditionalStatement implements SelectStat
         return $this->variables;
     }
 
+    /**
+     * @throws SparQlException
+     */
     public function setVariables(array $variables): SelectStatementInterface
     {
         foreach ($variables as $variable) {
             if (get_class($variable) !== Variable::class) {
-                throw new InvalidArgumentException(sprintf('Invalid variable class: %s', get_class($variable)));
+                throw new SparQlException(sprintf('Invalid variable class: %s', get_class($variable)));
             }
         }
         $this->variables = $variables;

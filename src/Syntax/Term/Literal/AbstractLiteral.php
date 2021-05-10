@@ -2,11 +2,10 @@
 
 namespace EffectiveActivism\SparQlClient\Syntax\Term\Literal;
 
-use EffectiveActivism\SparQlClient\Constant;
+use EffectiveActivism\SparQlClient\Exception\SparQlException;
 use EffectiveActivism\SparQlClient\Syntax\Term\AbstractTerm;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\AbstractIri;
 use EffectiveActivism\SparQlClient\Syntax\Term\TermInterface;
-use InvalidArgumentException;
 
 abstract class AbstractLiteral extends AbstractTerm implements TermInterface
 {
@@ -38,7 +37,7 @@ abstract class AbstractLiteral extends AbstractTerm implements TermInterface
     }
 
     /**
-     * @throws InvalidArgumentException
+     * @throws SparQlException
      */
     protected function serializeLiteralWrapper(): string
     {
@@ -58,7 +57,7 @@ abstract class AbstractLiteral extends AbstractTerm implements TermInterface
             return '\'\'\'';
         }
         else {
-            throw new InvalidArgumentException(sprintf('Literal value "%s" cannot be parsed', $this->value));
+            throw new SparQlException(sprintf('Literal value "%s" cannot be parsed', $this->value));
         }
     }
 

@@ -2,28 +2,28 @@
 
 namespace EffectiveActivism\SparQlClient\Syntax\Statement;
 
+use EffectiveActivism\SparQlClient\Exception\SparQlException;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\TripleInterface;
-use InvalidArgumentException;
 
 class ConstructStatement extends AbstractConditionalStatement implements ConstructStatementInterface
 {
     protected array $triplesToConstruct;
 
     /**
-     * @throws InvalidArgumentException
+     * @throws SparQlException
      */
     public function __construct(array $triples, array $extraNamespaces = [])
     {
         parent::__construct($extraNamespaces);
         foreach ($triples as $triple) {
             if (!($triple instanceof TripleInterface)) {
-                throw new InvalidArgumentException(sprintf('Invalid triple class: %s', gettype($triple)));
+                throw new SparQlException(sprintf('Invalid triple class: %s', gettype($triple)));
             }
             foreach ($triple->getTerms() as $term) {
                 if (get_class($term) === PrefixedIri::class && !in_array($term->getPrefix(), array_keys($this->namespaces))) {
-                    throw new InvalidArgumentException(sprintf('Prefix "%s" is not defined', $term->getPrefix()));
+                    throw new SparQlException(sprintf('Prefix "%s" is not defined', $term->getPrefix()));
                 }
             }
         }
@@ -31,7 +31,7 @@ class ConstructStatement extends AbstractConditionalStatement implements Constru
     }
 
     /**
-     * @throws InvalidArgumentException
+     * @throws SparQlException
      */
     public function toQuery(): string
     {
@@ -60,7 +60,7 @@ class ConstructStatement extends AbstractConditionalStatement implements Constru
                 }
             }
             if ($hasVariables && $unclausedVariables) {
-                throw new InvalidArgumentException('At least one variable must be referenced in a \'where\' clause.');
+                throw new SparQlException('At least one variable must be referenced in a \'where\' clause.');
             }
             $tripleString = '';
             /** @var TripleInterface $triple */
@@ -70,7 +70,7 @@ class ConstructStatement extends AbstractConditionalStatement implements Constru
             return sprintf('%sCONSTRUCT { %s } WHERE { %s }', $preQuery, $tripleString, $conditionsString);
         }
         else {
-            throw new InvalidArgumentException('Construct statement is missing a set of triples.');
+            throw new SparQlException('Construct statement is missing a set of triples.');
         }
     }
 
