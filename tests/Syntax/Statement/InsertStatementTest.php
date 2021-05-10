@@ -2,13 +2,13 @@
 
 namespace EffectiveActivism\SparQlClient\Tests\Syntax\Statement;
 
+use EffectiveActivism\SparQlClient\Exception\SparQlException;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\Triple;
 use EffectiveActivism\SparQlClient\Syntax\Statement\InsertStatement;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\Iri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
 use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
-use InvalidArgumentException;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 class InsertStatementTest extends KernelTestCase
@@ -49,7 +49,7 @@ class InsertStatementTest extends KernelTestCase
         $threwException = false;
         try {
             new InsertStatement($triple);
-        } catch (InvalidArgumentException) {
+        } catch (SparQlException) {
             $threwException = true;
         }
         $this->assertTrue($threwException);
@@ -62,7 +62,7 @@ class InsertStatementTest extends KernelTestCase
         $statement->where([$triple2]);
         try {
             $statement->toQuery();
-        } catch (InvalidArgumentException) {
+        } catch (SparQlException) {
             $threwException = true;
         }
         $this->assertTrue($threwException);
@@ -72,7 +72,7 @@ class InsertStatementTest extends KernelTestCase
         $statement = new InsertStatement($triple);
         try {
             $statement->toQuery();
-        } catch (InvalidArgumentException) {
+        } catch (SparQlException) {
             $threwException = true;
         }
         $this->assertTrue($threwException);

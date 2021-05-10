@@ -2,10 +2,10 @@
 
 namespace EffectiveActivism\SparQlClient\Syntax\Statement;
 
+use EffectiveActivism\SparQlClient\Exception\SparQlException;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\TripleInterface;
-use InvalidArgumentException;
 
 class ReplaceStatement extends AbstractConditionalStatement implements ReplaceStatementInterface
 {
@@ -13,32 +13,41 @@ class ReplaceStatement extends AbstractConditionalStatement implements ReplaceSt
 
     protected TripleInterface $replacement;
 
+    /**
+     * @throws SparQlException
+     */
     public function __construct(TripleInterface $triple, array $extraNamespaces = [])
     {
         parent::__construct($extraNamespaces);
         foreach ($triple->getTerms() as $term) {
             if (get_class($term) === PrefixedIri::class && !in_array($term->getPrefix(), array_keys($this->namespaces))) {
-                throw new InvalidArgumentException(sprintf('Prefix "%s" is not defined', $term->getPrefix()));
+                throw new SparQlException(sprintf('Prefix "%s" is not defined', $term->getPrefix()));
             }
         }
         $this->original = $triple;
     }
 
+    /**
+     * @throws SparQlException
+     */
     public function with(TripleInterface $triple): ReplaceStatementInterface
     {
         foreach ($triple->getTerms() as $term) {
             if (get_class($term) === PrefixedIri::class && !in_array($term->getPrefix(), array_keys($this->namespaces))) {
-                throw new InvalidArgumentException(sprintf('Prefix "%s" is not defined', $term->getPrefix()));
+                throw new SparQlException(sprintf('Prefix "%s" is not defined', $term->getPrefix()));
             }
         }
         $this->replacement = $triple;
         return $this;
     }
 
+    /**
+     * @throws SparQlException
+     */
     public function toQuery(): string
     {
         if (!isset($this->replacement)) {
-            throw new InvalidArgumentException('Replace (DELETE+INSERT) statement is missing a \'with\' clause');
+            throw new SparQlException('Replace (DELETE+INSERT) statement is missing a \'with\' clause');
         }
         $preQuery = parent::toQuery();
         $conditionsString = '';
@@ -62,14 +71,14 @@ class ReplaceStatement extends AbstractConditionalStatement implements ReplaceSt
             }
         }
         if ($hasVariables && $unclausedVariables) {
-            throw new InvalidArgumentException('At least one variable must be referenced in a \'where\' clause.');
+            throw new SparQlException('At least one variable must be referenced in a \'where\' clause.');
         }
         if (!empty($conditionsString)) {
             return sprintf('%sDELETE { %s } INSERT { %s } WHERE { %s }', $preQuery, $this->original->serialize(), $this->replacement->serialize(), $conditionsString);
         }
         else {
             // Replace statements must have a 'where' clause.
-            throw new InvalidArgumentException('Replace (DELETE+INSERT) statement is missing a \'where\' clause');
+            throw new SparQlException('Replace (DELETE+INSERT) statement is missing a \'where\' clause');
         }
     }
 

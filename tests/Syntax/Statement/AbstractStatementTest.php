@@ -2,8 +2,8 @@
 
 namespace EffectiveActivism\SparQlClient\Tests\Syntax\Statement;
 
+use EffectiveActivism\SparQlClient\Exception\SparQlException;
 use EffectiveActivism\SparQlClient\Syntax\Statement\AbstractStatement;
-use InvalidArgumentException;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 class AbstractStatementTest extends KernelTestCase
@@ -24,7 +24,7 @@ class AbstractStatementTest extends KernelTestCase
         $threwException = false;
         try {
             new class($namespace) extends AbstractStatement {};
-        } catch (InvalidArgumentException) {
+        } catch (SparQlException) {
             $threwException = true;
         }
         $this->assertTrue($threwException);
@@ -33,7 +33,7 @@ class AbstractStatementTest extends KernelTestCase
         $threwException = false;
         try {
             new class($namespace) extends AbstractStatement {};
-        } catch (InvalidArgumentException) {
+        } catch (SparQlException) {
             $threwException = true;
         }
         $this->assertTrue($threwException);

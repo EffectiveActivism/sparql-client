@@ -3,8 +3,8 @@
 namespace EffectiveActivism\SparQlClient\Syntax\Term\Iri;
 
 use EffectiveActivism\SparQlClient\Constant;
+use EffectiveActivism\SparQlClient\Exception\SparQlException;
 use EffectiveActivism\SparQlClient\Syntax\Term\TermInterface;
-use InvalidArgumentException;
 
 class PrefixedIri extends AbstractIri implements TermInterface
 {
@@ -15,13 +15,16 @@ class PrefixedIri extends AbstractIri implements TermInterface
 
     protected string|null $localPart;
 
+    /**
+     * @throws SparQlException
+     */
     public function __construct(string $prefix, string $localPart)
     {
         if ($prefix !== '' && !preg_match(sprintf('/%s/u', Constant::PN_PREFIX), $prefix)) {
-            throw new InvalidArgumentException(sprintf('Value "%s" is not a valid prefix', $prefix));
+            throw new SparQlException(sprintf('Value "%s" is not a valid prefix', $prefix));
         }
         if (!preg_match(sprintf('/%s/u', Constant::PN_LOCAL), $localPart)) {
-            throw new InvalidArgumentException(sprintf('Value "%s" is not a valid local part', $localPart));
+            throw new SparQlException(sprintf('Value "%s" is not a valid local part', $localPart));
         }
         $this->prefix = $prefix;
         $this->localPart = $localPart;

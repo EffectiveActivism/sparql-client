@@ -2,10 +2,9 @@
 
 namespace EffectiveActivism\SparQlClient\Tests\Syntax\Term\Variable;
 
+use EffectiveActivism\SparQlClient\Exception\SparQlException;
 use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
-use InvalidArgumentException;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
-use Throwable;
 
 class VariableTest extends KernelTestCase
 {
@@ -31,8 +30,8 @@ class VariableTest extends KernelTestCase
             try {
                 new Variable($invalidVariable);
                 $this->assertFalse(true);
-            } catch (Throwable $exception) {
-                $this->assertInstanceOf(InvalidArgumentException::class, $exception);
+            } catch (SparQlException $exception) {
+                $this->assertInstanceOf(SparQlException::class, $exception);
             }
         }
     }

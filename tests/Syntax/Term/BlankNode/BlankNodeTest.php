@@ -2,6 +2,7 @@
 
 namespace EffectiveActivism\SparQlClient\Tests\Syntax\Term\BlankNode;
 
+use EffectiveActivism\SparQlClient\Exception\SparQlException;
 use EffectiveActivism\SparQlClient\Syntax\Term\BlankNode\BlankNode;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
@@ -15,7 +16,7 @@ class BlankNodeTest extends KernelTestCase
         $threwException = false;
         try {
             new BlankNode('_:lorem');
-        } catch (\InvalidArgumentException) {
+        } catch (SparQlException) {
             $threwException = true;
         }
         $this->assertTrue($threwException);

@@ -2,9 +2,9 @@
 
 namespace EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint;
 
+use EffectiveActivism\SparQlClient\Exception\SparQlException;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\PatternInterface;
 use EffectiveActivism\SparQlClient\Syntax\Term\TermInterface;
-use InvalidArgumentException;
 
 class FilterExists implements ConstraintInterface
 {
@@ -15,7 +15,7 @@ class FilterExists implements ConstraintInterface
         foreach ($patterns as $pattern) {
             if (!is_object($pattern) || (!($pattern instanceof PatternInterface))) {
                 $class = is_object($pattern) ? get_class($pattern) : gettype($pattern);
-                throw new InvalidArgumentException(sprintf('Invalid constraint class: %s', $class));
+                throw new SparQlException(sprintf('Invalid constraint class: %s', $class));
             }
         }
         $this->patterns = $patterns;

@@ -15,7 +15,10 @@ class NTripleDecoder implements DecoderInterface
 {
     const FORMAT = 'ntriple';
 
-    public function decode(string $data, string $format, array $context = [])
+    /**
+     * @throws InvalidArgumentException
+     */
+    public function decode(string $data, string $format, array $context = []): array
     {
         $triples = [];
         foreach(preg_split("/((\r?\n)|(\r\n?))/", $data) as $line) {
@@ -35,7 +38,7 @@ class NTripleDecoder implements DecoderInterface
         return $triples;
     }
 
-    public function supportsDecoding(string $format)
+    public function supportsDecoding(string $format): bool
     {
         return self::FORMAT === $format;
     }

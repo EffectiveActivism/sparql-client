@@ -2,10 +2,9 @@
 
 namespace EffectiveActivism\SparQlClient\Tests\Syntax\Term\Iri;
 
+use EffectiveActivism\SparQlClient\Exception\SparQlException;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
-use InvalidArgumentException;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
-use Throwable;
 
 class PrefixedIriTest extends KernelTestCase
 {
@@ -30,16 +29,16 @@ class PrefixedIriTest extends KernelTestCase
             try {
                 new PrefixedIri($prefix, $localPart);
                 $this->assertFalse(true);
-            } catch (InvalidArgumentException $exception) {
-                $this->assertInstanceOf(InvalidArgumentException::class, $exception);
+            } catch (SparQlException $exception) {
+                $this->assertInstanceOf(SparQlException::class, $exception);
             }
         }
         foreach (self::INVALID_LOCAL_PART as $prefix => $localPart) {
             try {
                 new PrefixedIri($prefix, $localPart);
                 $this->assertFalse(true);
-            } catch (InvalidArgumentException $exception) {
-                $this->assertInstanceOf(InvalidArgumentException::class, $exception);
+            } catch (SparQlException $exception) {
+                $this->assertInstanceOf(SparQlException::class, $exception);
             }
         }
     }
