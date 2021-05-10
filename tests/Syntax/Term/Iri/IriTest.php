@@ -2,8 +2,8 @@
 
 namespace EffectiveActivism\SparQlClient\Tests\Syntax\Term\Iri;
 
+use EffectiveActivism\SparQlClient\Exception\SparQlException;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\Iri;
-use InvalidArgumentException;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 class IriTest extends KernelTestCase
@@ -26,8 +26,8 @@ class IriTest extends KernelTestCase
             try {
                 new Iri($invalidIri);
                 $this->assertFalse(true);
-            } catch (InvalidArgumentException $exception) {
-                $this->assertInstanceOf(InvalidArgumentException::class, $exception);
+            } catch (SparQlException $exception) {
+                $this->assertInstanceOf(SparQlException::class, $exception);
             }
         }
     }

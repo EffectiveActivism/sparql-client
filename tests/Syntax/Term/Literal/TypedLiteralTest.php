@@ -2,9 +2,9 @@
 
 namespace EffectiveActivism\SparQlClient\Tests\Syntax\Term\Literal;
 
+use EffectiveActivism\SparQlClient\Exception\SparQlException;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Literal\TypedLiteral;
-use InvalidArgumentException;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 class TypedLiteralTest extends KernelTestCase
@@ -61,7 +61,7 @@ class TypedLiteralTest extends KernelTestCase
     public function testUnknownType()
     {
         $typedLiteral = new TypedLiteral('lorem', new PrefixedIri('xsd', 'unknown'));
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(SparQlException::class);
         $typedLiteral->getType();
     }
 }

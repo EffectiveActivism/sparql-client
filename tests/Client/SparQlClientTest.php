@@ -13,7 +13,6 @@ use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
 use EffectiveActivism\SparQlClient\Tests\Environment\TestKernel;
 use Exception;
-use InvalidArgumentException;
 use Psr\Cache\InvalidArgumentException as CacheInvalidArgumentException;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
@@ -238,7 +237,7 @@ class SparQlClientTest extends KernelTestCase
         $statement = $sparQlClient
             ->replace(new Triple(new Iri('urn:uuid:e998469e-831e-11eb-95f2-a32290c912e6'), new PrefixedIri('schema', 'headline'), new PlainLiteral('Lorem', 'la')))
             ->with(new Triple(new Iri('urn:uuid:e998469e-831e-11eb-95f2-a32290c912e6'), new PrefixedIri('schema', 'headline'), new PlainLiteral('Ipsum', 'la')));
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(SparQlException::class);
         $sparQlClient->execute($statement);
     }
 
@@ -398,14 +397,14 @@ class SparQlClientTest extends KernelTestCase
         $threwException = false;
         try {
             $statement->limit(-1);
-        } catch (InvalidArgumentException) {
+        } catch (SparQlException) {
             $threwException = true;
         }
         $this->assertTrue($threwException);
         $threwException = false;
         try {
             $statement->offset(-1);
-        } catch (InvalidArgumentException) {
+        } catch (SparQlException) {
             $threwException = true;
         }
         $this->assertTrue($threwException);

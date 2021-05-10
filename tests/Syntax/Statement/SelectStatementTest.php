@@ -2,12 +2,12 @@
 
 namespace EffectiveActivism\SparQlClient\Tests\Syntax\Statement;
 
+use EffectiveActivism\SparQlClient\Exception\SparQlException;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\Triple;
 use EffectiveActivism\SparQlClient\Syntax\Statement\SelectStatement;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\Iri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
 use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
-use InvalidArgumentException;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 class SelectStatementTest extends KernelTestCase
@@ -37,7 +37,7 @@ class SelectStatementTest extends KernelTestCase
         $threwException = false;
         try {
             new SelectStatement([$predicate]);
-        } catch (InvalidArgumentException) {
+        } catch (SparQlException) {
             $threwException = true;
         }
         $this->assertTrue($threwException);
@@ -50,7 +50,7 @@ class SelectStatementTest extends KernelTestCase
             ->where([$triple]);
         try {
             $statement->toQuery();
-        } catch (InvalidArgumentException) {
+        } catch (SparQlException) {
             $threwException = true;
         }
         $this->assertTrue($threwException);
@@ -59,7 +59,7 @@ class SelectStatementTest extends KernelTestCase
         $statement = new SelectStatement([$subjectVariable]);
         try {
             $statement->toQuery();
-        } catch (InvalidArgumentException) {
+        } catch (SparQlException) {
             $threwException = true;
         }
         $this->assertTrue($threwException);
@@ -68,7 +68,7 @@ class SelectStatementTest extends KernelTestCase
         $statement = new SelectStatement([$subjectVariable]);
         try {
             $statement->limit(-1);
-        } catch (InvalidArgumentException) {
+        } catch (SparQlException) {
             $threwException = true;
         }
         $this->assertTrue($threwException);
@@ -77,7 +77,7 @@ class SelectStatementTest extends KernelTestCase
         $statement = new SelectStatement([$subjectVariable]);
         try {
             $statement->offset(-1);
-        } catch (InvalidArgumentException) {
+        } catch (SparQlException) {
             $threwException = true;
         }
         $this->assertTrue($threwException);

@@ -2,8 +2,8 @@
 
 namespace EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\Operator\Binary;
 
+use EffectiveActivism\SparQlClient\Exception\SparQlException;
 use EffectiveActivism\SparQlClient\Syntax\Term\Literal\AbstractLiteral;
-use InvalidArgumentException;
 
 class LessThanOrEqual extends AbstractBinaryOperator implements BinaryOperatorInterface
 {
@@ -13,7 +13,7 @@ class LessThanOrEqual extends AbstractBinaryOperator implements BinaryOperatorIn
     public function __construct(AbstractLiteral $leftExpression, AbstractLiteral $rightExpression)
     {
         if ($leftExpression->getType() !== $rightExpression->getType()) {
-            throw new InvalidArgumentException(sprintf('Type mismatch: "%s" and "%s" must be same type', $leftExpression->getRawValue(), $rightExpression->getRawValue()));
+            throw new SparQlException(sprintf('Type mismatch: "%s" and "%s" must be same type', $leftExpression->getRawValue(), $rightExpression->getRawValue()));
         }
         $this->leftExpression = $leftExpression;
         $this->rightExpression = $rightExpression;

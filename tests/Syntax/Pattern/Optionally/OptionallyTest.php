@@ -2,12 +2,12 @@
 
 namespace EffectiveActivism\SparQlClient\Tests\Syntax\Pattern\Optionally;
 
+use EffectiveActivism\SparQlClient\Exception\SparQlException;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Optionally\Optionally;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\Triple;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\Iri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
-use InvalidArgumentException;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 class OptionallyTest extends KernelTestCase
@@ -30,7 +30,7 @@ class OptionallyTest extends KernelTestCase
 
     public function testInvalidFilterExists()
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(SparQlException::class);
         new Optionally([
             'invalid pattern argument',
         ]);

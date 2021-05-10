@@ -2,13 +2,13 @@
 
 namespace EffectiveActivism\SparQlClient\Tests\Syntax\Statement;
 
+use EffectiveActivism\SparQlClient\Exception\SparQlException;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\Triple;
 use EffectiveActivism\SparQlClient\Syntax\Statement\ConstructStatement;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\Iri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
 use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
-use InvalidArgumentException;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 class ConstructStatementTest extends KernelTestCase
@@ -39,7 +39,7 @@ class ConstructStatementTest extends KernelTestCase
         $threwException = false;
         try {
             new ConstructStatement([$subjectVariable]);
-        } catch (InvalidArgumentException) {
+        } catch (SparQlException) {
             $threwException = true;
         }
         $this->assertTrue($threwException);
@@ -47,7 +47,7 @@ class ConstructStatementTest extends KernelTestCase
         $threwException = false;
         try {
             new ConstructStatement([$triple]);
-        } catch (InvalidArgumentException) {
+        } catch (SparQlException) {
             $threwException = true;
         }
         $this->assertTrue($threwException);
@@ -64,7 +64,7 @@ class ConstructStatementTest extends KernelTestCase
             ->where([$triple]);
         try {
             $statement->toQuery();
-        } catch (InvalidArgumentException) {
+        } catch (SparQlException) {
             $threwException = true;
         }
         $this->assertTrue($threwException);
@@ -73,7 +73,7 @@ class ConstructStatementTest extends KernelTestCase
         $statement = new ConstructStatement([$triple]);
         try {
             $statement->toQuery();
-        } catch (InvalidArgumentException) {
+        } catch (SparQlException) {
             $threwException = true;
         }
         $this->assertTrue($threwException);

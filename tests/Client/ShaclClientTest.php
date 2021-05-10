@@ -3,6 +3,7 @@
 namespace EffectiveActivism\SparQlClient\Tests\Client;
 
 use EffectiveActivism\SparQlClient\Client\ShaclClientInterface;
+use EffectiveActivism\SparQlClient\Exception\ShaclException;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\Triple;
 use EffectiveActivism\SparQlClient\Syntax\Statement\ConstructStatement;
 use EffectiveActivism\SparQlClient\Syntax\Statement\DeleteStatement;
@@ -89,5 +90,30 @@ class ShaclClientTest extends KernelTestCase
             new Triple($subject, $predicate, new Variable('object')),
         ]);
         $this->assertFalse($shaclClient->validate($statement));
+    }
+
+    public function testValidationException()
+    {
+        $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
+        $receivedQuery = null;
+        $httpClient = new MockHttpClient(function ($method, $url, $options) {
+            return new MockResponse(file_get_contents(__DIR__ . '/../fixtures/shacl-validation-request-failed.ntriple'));
+        });
+        $kernel = new TestKernel('test', true);
+        $kernel->boot();
+        $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
+        $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
+        /** @var ShaclClientInterface $shaclClient */
+        $shaclClient = $kernel->getContainer()->get(ShaclClientInterface::class);
+        $shaclClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
+        $subject = new Iri('urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece');
+        $predicate = new PrefixedIri('schema', 'headline');
+        $object = new PlainLiteral('Lorem Ipsum');
+        $statement = new InsertStatement(new Triple(new Variable('unclausedSubject'), $predicate, $object), ['schema' => 'http://schema.org/']);
+        $statement->where([
+            new Triple($subject, $predicate, new Variable('object')),
+        ]);
+        $this->expectException(ShaclException::class);
+        $shaclClient->validate($statement);
     }
 }

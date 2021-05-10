@@ -2,8 +2,8 @@
 
 namespace EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\Operator\Unary;
 
+use EffectiveActivism\SparQlClient\Exception\SparQlException;
 use EffectiveActivism\SparQlClient\Syntax\Term\Literal\AbstractLiteral;
-use InvalidArgumentException;
 
 class Negative extends AbstractUnaryOperator implements UnaryOperatorInterface
 {
@@ -13,7 +13,7 @@ class Negative extends AbstractUnaryOperator implements UnaryOperatorInterface
     public function __construct(AbstractLiteral $expression)
     {
         if ($expression->getType() !== 'xsd:integer') {
-            throw new InvalidArgumentException(sprintf('Expression "%s" is not of type numeric', $expression->getRawValue()));
+            throw new SparQlException(sprintf('Expression "%s" is not of type numeric', $expression->getRawValue()));
         }
         $this->expression = $expression;
     }

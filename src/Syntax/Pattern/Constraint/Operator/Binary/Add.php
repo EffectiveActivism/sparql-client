@@ -2,8 +2,8 @@
 
 namespace EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\Operator\Binary;
 
+use EffectiveActivism\SparQlClient\Exception\SparQlException;
 use EffectiveActivism\SparQlClient\Syntax\Term\Literal\AbstractLiteral;
-use InvalidArgumentException;
 
 class Add extends AbstractBinaryOperator implements BinaryOperatorInterface
 {
@@ -16,7 +16,7 @@ class Add extends AbstractBinaryOperator implements BinaryOperatorInterface
             $leftExpression->getType() !== 'xsd:integer' ||
             $rightExpression->getType() !== 'xsd:integer'
         ) {
-            throw new InvalidArgumentException(sprintf('Type error: "%s" and "%s" must be of type xsd:integer', $leftExpression->getRawValue(), $rightExpression->getRawValue()));
+            throw new SparQlException(sprintf('Type error: "%s" and "%s" must be of type xsd:integer', $leftExpression->getRawValue(), $rightExpression->getRawValue()));
         }
         $this->leftExpression = $leftExpression;
         $this->rightExpression = $rightExpression;

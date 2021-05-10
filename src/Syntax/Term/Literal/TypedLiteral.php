@@ -2,9 +2,9 @@
 
 namespace EffectiveActivism\SparQlClient\Syntax\Term\Literal;
 
+use EffectiveActivism\SparQlClient\Exception\SparQlException;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\AbstractIri;
 use EffectiveActivism\SparQlClient\Syntax\Term\TermInterface;
-use InvalidArgumentException;
 
 class TypedLiteral extends AbstractLiteral implements TermInterface
 {
@@ -19,6 +19,9 @@ class TypedLiteral extends AbstractLiteral implements TermInterface
         $this->dataType = $dataType;
     }
 
+    /**
+     * @throws SparQlException
+     */
     public function serialize(): string
     {
         if ($this->dataType === null) {
@@ -27,7 +30,7 @@ class TypedLiteral extends AbstractLiteral implements TermInterface
                 'double' => sprintf('"%s"^^xsd:decimal', $this->value),
                 'integer' => sprintf('"%s"^^xsd:integer', $this->value),
                 'string' => sprintf('%s%s%s', $this->serializeLiteralWrapper(), $this->value, $this->serializeLiteralWrapper()),
-                default => throw new InvalidArgumentException(sprintf('Typed literal "%s" has unknown type "%s"', $this->getRawValue(), gettype($this->value))),
+                default => throw new SparQlException(sprintf('Typed literal "%s" has unknown type "%s"', $this->getRawValue(), gettype($this->value))),
             };
         }
         elseif (in_array($this->dataType->serialize(), ['xsd:boolean', 'http://www.w3.org/2001/XMLSchema#boolean'])) {
@@ -52,6 +55,9 @@ class TypedLiteral extends AbstractLiteral implements TermInterface
      * Getters.
      */
 
+    /**
+     * @throws SparQlException
+     */
     public function getType(): string
     {
         if ($this->dataType === null) {
@@ -60,7 +66,7 @@ class TypedLiteral extends AbstractLiteral implements TermInterface
                 'double' => 'xsd:decimal',
                 'integer' => 'xsd:integer',
                 'string' => 'xsd:string',
-                default => throw new InvalidArgumentException(sprintf('Typed literal "%s" has unknown type "%s"', $this->getRawValue(), gettype($this->value))),
+                default => throw new SparQlException(sprintf('Typed literal "%s" has unknown type "%s"', $this->getRawValue(), gettype($this->value))),
             };
         }
         elseif (in_array($this->dataType->getRawValue(), [
@@ -111,6 +117,6 @@ class TypedLiteral extends AbstractLiteral implements TermInterface
         ])) {
             return 'xsd:string';
         }
-        throw new InvalidArgumentException(sprintf('Typed literal "%s" has unknown type "%s"', $this->getRawValue(), gettype($this->value)));
+        throw new SparQlException(sprintf('Typed literal "%s" has unknown type "%s"', $this->getRawValue(), gettype($this->value)));
     }
 }
