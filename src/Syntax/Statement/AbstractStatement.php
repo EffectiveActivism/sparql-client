@@ -29,7 +29,6 @@ abstract class AbstractStatement implements StatementInterface
     public function toQuery(): string
     {
         $query = '';
-        // TODO: Include config namespaces.
         foreach ($this->namespaces as $prefix => $url) {
             $query .= sprintf('PREFIX %s: <%s> ', $prefix, $url);
         }
