@@ -2,9 +2,9 @@
 
 namespace EffectiveActivism\SparQlClient\Tests\Syntax\Pattern\Constraint\Operator\Unary;
 
+use EffectiveActivism\SparQlClient\Exception\SparQlException;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\Operator\Unary\Positive;
 use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
-use InvalidArgumentException;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 class PositiveTest extends KernelTestCase
@@ -21,7 +21,7 @@ class PositiveTest extends KernelTestCase
     public function testInvalidOperator()
     {
         $term = new PlainLiteral('lorem');
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(SparQlException::class);
         new Positive($term);
     }
 }

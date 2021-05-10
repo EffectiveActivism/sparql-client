@@ -2,11 +2,11 @@
 
 namespace EffectiveActivism\SparQlClient\Tests\Syntax\Term\Set;
 
+use EffectiveActivism\SparQlClient\Exception\SparQlException;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\Iri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
 use EffectiveActivism\SparQlClient\Syntax\Term\Path\InversePath;
 use EffectiveActivism\SparQlClient\Syntax\Term\Set\NegatedPropertySet;
-use InvalidArgumentException;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 class NegatedPropertySetTest extends KernelTestCase
@@ -37,7 +37,7 @@ class NegatedPropertySetTest extends KernelTestCase
         $threwException = false;
         try {
             new NegatedPropertySet([$literal]);
-        } catch (InvalidArgumentException) {
+        } catch (SparQlException) {
             $threwException = true;
         }
         $this->assertTrue($threwException);

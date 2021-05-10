@@ -2,13 +2,13 @@
 
 namespace EffectiveActivism\SparQlClient\Tests\Syntax\Statement;
 
+use EffectiveActivism\SparQlClient\Exception\SparQlException;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\Triple;
 use EffectiveActivism\SparQlClient\Syntax\Statement\ReplaceStatement;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\Iri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
 use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
-use InvalidArgumentException;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 class ReplaceStatementTest extends KernelTestCase
@@ -40,7 +40,7 @@ class ReplaceStatementTest extends KernelTestCase
         try {
             $statement = new ReplaceStatement($triple);
             $statement->toQuery();
-        } catch (InvalidArgumentException) {
+        } catch (SparQlException) {
             $threwException = true;
         }
         $this->assertTrue($threwException);
@@ -50,7 +50,7 @@ class ReplaceStatementTest extends KernelTestCase
         $threwException = false;
         try {
             new ReplaceStatement($triple);
-        } catch (InvalidArgumentException) {
+        } catch (SparQlException) {
             $threwException = true;
         }
         $this->assertTrue($threwException);
@@ -61,7 +61,7 @@ class ReplaceStatementTest extends KernelTestCase
         try {
             $statement = new ReplaceStatement($triple1);
             $statement->with($triple2);
-        } catch (InvalidArgumentException) {
+        } catch (SparQlException) {
             $threwException = true;
         }
         $this->assertTrue($threwException);
@@ -76,7 +76,7 @@ class ReplaceStatementTest extends KernelTestCase
             ->where([$triple2]);
         try {
             $statement->toQuery();
-        } catch (InvalidArgumentException) {
+        } catch (SparQlException) {
             $threwException = true;
         }
         $this->assertTrue($threwException);
@@ -87,7 +87,7 @@ class ReplaceStatementTest extends KernelTestCase
         $statement->with($triple);
         try {
             $statement->toQuery();
-        } catch (InvalidArgumentException) {
+        } catch (SparQlException) {
             $threwException = true;
         }
         $this->assertTrue($threwException);

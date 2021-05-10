@@ -3,13 +3,13 @@
 namespace EffectiveActivism\SparQlClient\Tests\Syntax\Pattern\Constraint;
 
 use EffectiveActivism\SparQlClient\Client\SparQlClientInterface;
+use EffectiveActivism\SparQlClient\Exception\SparQlException;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\FilterNotExists;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\Triple;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
 use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
 use EffectiveActivism\SparQlClient\Tests\Environment\TestKernel;
-use InvalidArgumentException;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 class FilterNotExistsTest extends KernelTestCase
@@ -72,7 +72,7 @@ class FilterNotExistsTest extends KernelTestCase
 
     public function testInvalidFilterNotExists()
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(SparQlException::class);
         new FilterNotExists([
             'invalid filter argument',
         ]);

@@ -2,9 +2,9 @@
 
 namespace EffectiveActivism\SparQlClient\Tests\Syntax\Pattern\Constraint\Operator\Binary;
 
+use EffectiveActivism\SparQlClient\Exception\SparQlException;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\Operator\Binary\Divide;
 use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
-use InvalidArgumentException;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 class DivideTest extends KernelTestCase
@@ -23,7 +23,7 @@ class DivideTest extends KernelTestCase
     {
         $term1 = new PlainLiteral('lorem');
         $term2 = new PlainLiteral('ipsum');
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(SparQlException::class);
         new Divide($term1, $term2);
     }
 }

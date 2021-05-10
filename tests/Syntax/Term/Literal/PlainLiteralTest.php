@@ -2,8 +2,8 @@
 
 namespace EffectiveActivism\SparQlClient\Tests\Syntax\Term\Literal;
 
+use EffectiveActivism\SparQlClient\Exception\SparQlException;
 use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
-use InvalidArgumentException;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 class PlainLiteralTest extends KernelTestCase
@@ -42,7 +42,7 @@ class PlainLiteralTest extends KernelTestCase
 
     public function testLiteralWithInvalidLanguage()
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(SparQlException::class);
         new PlainLiteral('lorem', 'latin');
     }
 
@@ -60,7 +60,7 @@ class PlainLiteralTest extends KernelTestCase
 
     public function testLiteralInvalidWrappers()
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(SparQlException::class);
         $literal = new PlainLiteral('"""\'\'\'lorem');
         $literal->serialize();
     }
