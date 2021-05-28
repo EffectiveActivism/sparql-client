@@ -10,6 +10,7 @@ use EffectiveActivism\SparQlClient\Syntax\Statement\InsertStatementInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\ReplaceStatementInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\SelectStatementInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\StatementInterface;
+use Symfony\Component\HttpFoundation\File\File;
 
 interface SparQlClientInterface
 {
@@ -26,6 +27,8 @@ interface SparQlClientInterface
     public function replace(TripleInterface $triple): ReplaceStatementInterface;
 
     public function select(array $variables): SelectStatementInterface;
+
+    public function upload(File $file, string $contentType = 'application/x-turtle'): bool;
 
     /**
      * Getters.

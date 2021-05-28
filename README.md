@@ -22,6 +22,7 @@ statement validation.
     - [Optional clauses](#optional-clauses)
     - [Constraints](#constraints)
         - [Filter examples](#filter-examples)
+    - [Upload files](#upload-files)
 - [SHACL validator](#shacl-validator)
 - [Example docker-compose setup](#example-docker-compose-setup)
 - [Planned features](#planned-features)
@@ -507,6 +508,36 @@ new Filter(new Equal($object1, $object2));
 // Throws an InvalidArgumentException because the argument data types do not match.
 new Filter(new NotEqual($object1, $object3));
 ```
+
+## Upload files
+
+To upload a file containing a vocabulary, use the `upload` method.
+
+```php
+<?php
+
+namespace App\Controller;
+
+use EffectiveActivism\SparQlClient\Client\SparQlClientInterface;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\HttpFoundation\Request;
+
+class MyController extends AbstractController
+{
+    public function view(Request $request, SparQlClientInterface $sparQlClient)
+    {
+        /** @var UploadedFile $file */
+        $file = $request->files->get('file');
+        if ($sparQlClient->upload($file, 'application/rdf+xml')) {
+            dump('File uploaded!');
+        }
+    }
+}
+```
+
+You must specify the content type of the file as the second parameter.
+A default content type of `application/x-turtle` is assumed.
 
 # SHACL validator
 
