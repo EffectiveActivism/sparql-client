@@ -20,6 +20,7 @@ use Symfony\Component\Cache\Adapter\TagAwareAdapter;
 use Symfony\Component\Cache\CacheItem;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
+use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Contracts\Cache\TagAwareCacheInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -637,5 +638,35 @@ class SparQlClientTest extends KernelTestCase
         $triple = new Triple($subject, $predicate, $object);
         $this->expectException(SparQlException::class);
         $sparQlClient->execute($sparQlClient->insert($triple)->where([$triple]));
+    }
+
+    public function testUpload()
+    {
+        $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
+        $selectResponseContent = file_get_contents(__DIR__ . '/../fixtures/client-upload-request.xml');
+        $httpClient = new MockHttpClient([new MockResponse($selectResponseContent), new MockResponse(null)]);
+        $kernel = new TestKernel('test', true);
+        $kernel->boot();
+        $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
+        $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
+        /** @var SparQlClientInterface $sparQlClient */
+        $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
+        $file = $this->createMock(File::class);
+        $this->assertTrue($sparQlClient->upload($file));
+    }
+
+    public function testUploadException()
+    {
+        $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
+        $httpClient = new MockHttpClient([new MockResponse(null, ['http_code' => 500])]);
+        $kernel = new TestKernel('test', true);
+        $kernel->boot();
+        $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
+        $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
+        /** @var SparQlClientInterface $sparQlClient */
+        $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
+        $file = $this->createMock(File::class);
+        $this->expectException(SparQlException::class);
+        $sparQlClient->upload($file);
     }
 }

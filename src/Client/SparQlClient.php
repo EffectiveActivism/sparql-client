@@ -24,11 +24,13 @@ use EffectiveActivism\SparQlClient\Syntax\Term\TermInterface;
 use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
 use Psr\Cache\CacheException;
 use Psr\Cache\InvalidArgumentException;
+use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\Serializer\Encoder\XmlEncoder;
 use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Contracts\Cache\TagAwareCacheInterface;
+use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface as HttpClientExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -280,6 +282,24 @@ class SparQlClient implements SparQlClientInterface
     public function select(array $variables): SelectStatement
     {
         return new SelectStatement($variables, $this->getNamespaces());
+    }
+
+    /**
+     * @throws SparQlException
+     */
+    public function upload(File $file, string $contentType = 'application/x-turtle'): bool
+    {
+        try {
+            $this->httpClient->request('POST', $this->sparQlEndpoint, [
+                'headers' => [
+                    'Content-Type' => $contentType,
+                ],
+                'body' => $file->getContent(),
+            ]);
+            return true;
+        } catch (ExceptionInterface $exception) {
+            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
+        }
     }
 
     /**
