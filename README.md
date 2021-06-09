@@ -373,6 +373,91 @@ $negatedSet = new NegatedPropertySet([$predicate, $inversePredicate]);
 dump($negatedSet->serialize());
 ```
 
+### Assignment
+
+Two assignment options are available: BIND and VALUES.
+
+#### BIND example
+
+```php
+<?php
+
+namespace App\Controller;
+
+use EffectiveActivism\SparQlClient\Client\SparQlClientInterface;
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Assignment\Bind;
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\Operator\Binary\Multiply;use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
+use EffectiveActivism\SparQlClient\Syntax\Term\Literal\TypedLiteral;
+use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+
+class MyController extends AbstractController
+{
+    public function view(SparQlClientInterface $sparQlClient)
+    {
+        $commentCountVariable = new Variable('commentCount');
+        $multipliedCommentCountVariable = new Variable('multipliedCommentCount');
+        $multiplier = new TypedLiteral(2);
+        // Bind an expression such as a multiplication to a variable.
+        $bind = new Bind(new Multiply($multiplier, $commentCountVariable), $multipliedCommentCountVariable);
+        $selectStatement = $sparQlClient
+            ->select([$commentCountVariable])
+            ->where([$bind]);
+        $sparQlClient->execute($selectStatement);
+    }
+}
+```
+
+#### VALUES example
+
+To use `UNDEF` in a VALUES expression, use `null`. Value arrays must have
+the same dimension as the variables array.
+
+```php
+<?php
+
+namespace App\Controller;
+
+use EffectiveActivism\SparQlClient\Client\SparQlClientInterface;
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Assignment\Values;
+use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
+use EffectiveActivism\SparQlClient\Syntax\Term\Literal\TypedLiteral;
+use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+
+class MyController extends AbstractController
+{
+    public function view(SparQlClientInterface $sparQlClient)
+    {
+        $headlineVariable = new Variable('headline');
+        $commentCountVariable = new Variable('commentCount');
+        $headlineValue1 = new PlainLiteral('Lorem');
+        $headlineValue2 = new PlainLiteral('Ipsum');
+        $commentCountValue1 = new TypedLiteral(2);
+        $values = new Values([
+            $headlineVariable,
+            $commentCountVariable
+        ], [
+            // Each sub-array has the same dimension as the variable array
+            // above.
+            [$headlineValue1, $headlineValue2],
+            // Null values are used to signify an undefined value.
+            [$commentCountValue1, null]
+        ]);
+        $selectStatement = $sparQlClient
+            ->select([$headlineVariable, $commentCountVariable])
+            ->where([$values]);
+        $sparQlClient->execute($selectStatement);
+    }
+}
+```
+
+The above example will produce the following statement
+
+```
+SELECT ?headline ?commentCount WHERE { VALUES ( ?headline ?commentCount ) { ( "Lorem" "2"^^xsd:integer ) ( "Ipsum" UNDEF ) } . }
+```
+
 ## Validation
 
 This bundle supports validation of terms. For example, the below assignment
