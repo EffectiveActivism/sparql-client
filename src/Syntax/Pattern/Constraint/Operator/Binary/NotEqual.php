@@ -4,15 +4,20 @@ namespace EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\Operator\Bina
 
 use EffectiveActivism\SparQlClient\Exception\SparQlException;
 use EffectiveActivism\SparQlClient\Syntax\Term\Literal\AbstractLiteral;
+use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
 
 class NotEqual extends AbstractBinaryOperator implements BinaryOperatorInterface
 {
     /**
      * @see http://www.w3.org/TR/xpath-functions/#func-numeric-equal.
      */
-    public function __construct(AbstractLiteral $leftExpression, AbstractLiteral $rightExpression)
+    public function __construct(AbstractLiteral|Variable $leftExpression, AbstractLiteral|Variable $rightExpression)
     {
-        if ($leftExpression->getType() !== $rightExpression->getType()) {
+        if (
+            $leftExpression instanceof AbstractLiteral &&
+            $rightExpression instanceof AbstractLiteral &&
+            $leftExpression->getType() !== $rightExpression->getType()
+        ) {
             throw new SparQlException(sprintf('Type mismatch: "%s" and "%s" must be same type', $leftExpression->getRawValue(), $rightExpression->getRawValue()));
         }
         $this->leftExpression = $leftExpression;
