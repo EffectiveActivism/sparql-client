@@ -18,6 +18,9 @@ statement validation.
         - [Inverse path example](#inverse-path-example)
         - [Sequence path example](#sequence-path-example)
         - [Negated set example](#negated-set-example)
+    - [Assignment](#assignment)
+        - [Bind example](#bind-example)
+        - [Values example](#values-example)
     - [Validation](#validation)
     - [Optional clauses](#optional-clauses)
     - [Constraints](#constraints)
@@ -458,7 +461,7 @@ The above example will produce the following statement
 SELECT ?headline ?commentCount WHERE { VALUES ( ?headline ?commentCount ) { ( "Lorem" "2"^^xsd:integer ) ( "Ipsum" UNDEF ) } . }
 ```
 
-## Validation
+### Validation
 
 This bundle supports validation of terms. For example, the below assignment
 will throw an InvalidArgumentException because the prefix contains illegal
@@ -509,7 +512,7 @@ class MyController extends AbstractController
 }
 ```
 
-## Optional clauses
+### Optional clauses
 
 To add an optional clause, use the
 `EffectiveActivism\SparQlClient\Syntax\Optionally\Optionally` class.
@@ -523,7 +526,7 @@ $optionalClause = new Optionally([$triple, $filter]);
 $statement->where([$triple, $optionalClause]);
 ```
 
-## Constraints
+### Constraints
 
 To apply a constraint, such as a filter, use the
 `EffectiveActivism\SparQlClient\Syntax\Constraint` classes.
@@ -531,7 +534,7 @@ To apply a constraint, such as a filter, use the
 To use an operator with the `Filter()` class, use the
 `EffectiveActivism\SparQlClient\Syntax\Constraint\Operator` classes.
 
-### Filter examples
+#### Filter examples
 
 The example below showcase how to select all subjects that has a
 `schema:headline` value of `lorem` except any subjects with a
@@ -594,7 +597,7 @@ new Filter(new Equal($object1, $object2));
 new Filter(new NotEqual($object1, $object3));
 ```
 
-## Upload files
+### Upload files
 
 To upload a file containing a vocabulary, use the `upload` method.
 
