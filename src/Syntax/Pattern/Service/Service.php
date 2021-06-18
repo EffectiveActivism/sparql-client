@@ -4,7 +4,6 @@ namespace EffectiveActivism\SparQlClient\Syntax\Pattern\Service;
 
 use EffectiveActivism\SparQlClient\Exception\SparQlException;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\PatternInterface;
-use EffectiveActivism\SparQlClient\Syntax\Pattern\Service\ServiceInterface;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\AbstractIri;
 use EffectiveActivism\SparQlClient\Syntax\Term\TermInterface;
 
