@@ -10,6 +10,7 @@ statement validation.
 - [Configuration](#configuration)
 - [Usage](#usage)
     - [Select statement](#select-statement)
+        - [Limit, offset and order](#limit-offset-and-order)
     - [Construct statement](#construct-statement)
     - [Insert statement](#insert-statement)
     - [Delete statement](#delete-statement)
@@ -97,6 +98,27 @@ class MyController extends AbstractController
         }
     }
 }
+```
+
+#### Limit, offset and order
+
+Select statements can use result modifiers:
+
+```php
+<?php
+
+use EffectiveActivism\SparQlClient\Syntax\Order\Asc;
+use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\Operator\Binary\Multiply;
+use EffectiveActivism\SparQlClient\Syntax\Term\Literal\TypedLiteral;
+
+$selectStatement->limit(3);
+
+$selectStatement->offset(2);
+
+$orderVariable = new Variable('orderByThis');
+$multiplier = new TypedLiteral(2);
+$selectStatement->orderBy([new Asc(new Multiply($orderVariable, $multiplier))]);
 ```
 
 ### Ask statement

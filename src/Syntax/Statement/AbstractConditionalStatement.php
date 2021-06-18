@@ -11,8 +11,6 @@ abstract class AbstractConditionalStatement extends AbstractStatement implements
     /** @var PatternInterface[] */
     protected array $conditions = [];
 
-    protected array $variables = [];
-
     /**
      * @throws SparQlException
      */
