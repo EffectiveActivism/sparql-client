@@ -1,6 +1,6 @@
 # SparQl client
 
-An OOP SparQl client for Symfony with support for SELECT, CONSTRUCT, DELETE,
+An OOP SparQl 1.1 client for Symfony with support for SELECT, CONSTRUCT, DELETE,
 INSERT and DELETE+INSERT operations. Includes term, namespace and (basic)
 statement validation.
 
@@ -23,6 +23,7 @@ statement validation.
         - [Values example](#values-example)
     - [Validation](#validation)
     - [Optional clauses](#optional-clauses)
+    - [Service](#service)
     - [Constraints](#constraints)
         - [Filter examples](#filter-examples)
     - [Upload files](#upload-files)
@@ -526,6 +527,43 @@ $optionalClause = new Optionally([$triple, $filter]);
 $statement->where([$triple, $optionalClause]);
 ```
 
+### Service
+
+To use a service, use the
+`EffectiveActivism\SparQlClient\Syntax\Pattern\Service\Service` class.
+
+The first parameter is the service IRI, while the second parameter is an array
+of patterns to use with the service.
+
+```php
+<?php
+
+use \EffectiveActivism\SparQlClient\Syntax\Pattern\Service\Service;
+use \EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\Triple;
+use \EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
+use \EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
+use \EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
+
+$service = new Service(
+    new PrefixedIri('bds', 'search'),
+    [
+        new Triple(
+            new Variable('object'),
+            new PrefixedIri('bds', 'search'),
+            new PlainLiteral('foo')
+        )
+    ]
+);
+$statement->where([
+    $service,
+    new Triple(
+      new Variable('subject'),
+      new Variable('predicate'),
+      new Variable('object')
+    )
+]);
+```
+
 ### Constraints
 
 To apply a constraint, such as a filter, use the
@@ -698,7 +736,6 @@ services:
       - ./validator/resources:/validator/resources
     ports:
       - 8080:8080
-
 ```
 
 # Planned features
@@ -706,7 +743,6 @@ services:
 - Support for graphs, including named graphs and management operations.
 - Support for DESCRIBE statements.
 - Support for UNION.
-- Support for SERVICE.
 - Support for empty prefixes.
 - Validation of typed literals using their datatype.
 - Improve error reporting from triplestores.
