@@ -76,25 +76,37 @@ class TypedLiteral extends AbstractLiteral implements TermInterface
             return 'xsd:boolean';
         }
         elseif (in_array($this->dataType->getRawValue(), [
+            'http://www.w3.org/2001/XMLSchema#date',
+            'xsd:date',
+        ])) {
+            return 'xsd:date';
+        }
+        elseif (in_array($this->dataType->getRawValue(), [
+            'http://www.w3.org/2001/XMLSchema#dateTime',
+            'xsd:dateTime',
+        ])) {
+            return 'xsd:dateTime';
+        }
+        elseif (in_array($this->dataType->getRawValue(), [
             'xsd:decimal',
             'http://www.w3.org/2001/XMLSchema#decimal'
         ])) {
             return 'xsd:decimal';
         }
         elseif (in_array($this->dataType->getRawValue(), [
-            'http://www.w3.org/2001/XMLSchema#:nonPositiveInteger',
-            'http://www.w3.org/2001/XMLSchema#:negativeInteger',
-            'http://www.w3.org/2001/XMLSchema#:long',
-            'http://www.w3.org/2001/XMLSchema#:int',
-            'http://www.w3.org/2001/XMLSchema#:integer',
-            'http://www.w3.org/2001/XMLSchema#:short',
-            'http://www.w3.org/2001/XMLSchema#:byte',
-            'http://www.w3.org/2001/XMLSchema#:nonNegativeInteger',
-            'http://www.w3.org/2001/XMLSchema#:unsignedLong',
-            'http://www.w3.org/2001/XMLSchema#:unsignedInt',
-            'http://www.w3.org/2001/XMLSchema#:unsignedShort',
-            'http://www.w3.org/2001/XMLSchema#:unsignedByte',
-            'http://www.w3.org/2001/XMLSchema#:positiveInteger',
+            'http://www.w3.org/2001/XMLSchema#nonPositiveInteger',
+            'http://www.w3.org/2001/XMLSchema#negativeInteger',
+            'http://www.w3.org/2001/XMLSchema#long',
+            'http://www.w3.org/2001/XMLSchema#int',
+            'http://www.w3.org/2001/XMLSchema#integer',
+            'http://www.w3.org/2001/XMLSchema#short',
+            'http://www.w3.org/2001/XMLSchema#byte',
+            'http://www.w3.org/2001/XMLSchema#nonNegativeInteger',
+            'http://www.w3.org/2001/XMLSchema#unsignedLong',
+            'http://www.w3.org/2001/XMLSchema#unsignedInt',
+            'http://www.w3.org/2001/XMLSchema#unsignedShort',
+            'http://www.w3.org/2001/XMLSchema#unsignedByte',
+            'http://www.w3.org/2001/XMLSchema#positiveInteger',
             'xsd:nonPositiveInteger',
             'xsd:negativeInteger',
             'xsd:long',
@@ -112,10 +124,16 @@ class TypedLiteral extends AbstractLiteral implements TermInterface
             return 'xsd:integer';
         }
         elseif (in_array($this->dataType->getRawValue(), [
-            'http://www.w3.org/2001/XMLSchema#:string',
+            'http://www.w3.org/2001/XMLSchema#string',
             'xsd:string',
         ])) {
             return 'xsd:string';
+        }
+        elseif (in_array($this->dataType->getRawValue(), [
+            'http://www.w3.org/2001/XMLSchema#time',
+            'xsd:time',
+        ])) {
+            return 'xsd:time';
         }
         throw new SparQlException(sprintf('Typed literal "%s" has unknown type "%s"', $this->getRawValue(), gettype($this->value)));
     }
