@@ -24,6 +24,7 @@ use EffectiveActivism\SparQlClient\Syntax\Term\TermInterface;
 use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
 use Psr\Cache\CacheException;
 use Psr\Cache\InvalidArgumentException;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\Serializer\Encoder\XmlEncoder;
 use Symfony\Component\Serializer\Serializer;
@@ -44,17 +45,20 @@ class SparQlClient implements SparQlClientInterface
 
     protected HttpClientInterface $httpClient;
 
+    protected LoggerInterface $logger;
+
     protected array $namespaces = [];
 
     protected SerializerInterface $serializer;
 
     protected string $sparQlEndpoint;
 
-    public function __construct(array $configuration, TagAwareCacheInterface $cacheAdapter, HttpClientInterface $httpClient)
+    public function __construct(array $configuration, TagAwareCacheInterface $cacheAdapter, HttpClientInterface $httpClient, LoggerInterface $logger)
     {
         $this->sparQlEndpoint = $configuration['sparql_endpoint'];
         $this->cacheAdapter = $cacheAdapter;
         $this->httpClient = $httpClient;
+        $this->logger = $logger;
         $this->namespaces = $configuration['namespaces'];
         $normalizers = [
             new SparQlResultDenormalizer(),
@@ -85,6 +89,7 @@ class SparQlClient implements SparQlClientInterface
     protected function handleQueryStatment(ConstructStatementInterface|SelectStatementInterface $statement, bool $toTriples): array
     {
         $query = $statement->toQuery();
+        $this->logger->debug($query);
         $parameters = ['body' => ['query' => $query]];
         $cacheHit = true;
         $responseContent = null;
@@ -149,6 +154,7 @@ class SparQlClient implements SparQlClientInterface
     protected function handleAskStatement(AskStatementInterface $statement): bool
     {
         $query = $statement->toQuery();
+        $this->logger->debug($query);
         $parameters = ['body' => ['query' => $query]];
         $cacheHit = true;
         $responseContent = null;
@@ -188,6 +194,7 @@ class SparQlClient implements SparQlClientInterface
     protected function handleDeleteStatement(DeleteStatementInterface $statement): array
     {
         $query = $statement->toQuery();
+        $this->logger->debug($query);
         $parameters = ['body' => ['update' => $query]];
         try {
             $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent();
@@ -206,6 +213,7 @@ class SparQlClient implements SparQlClientInterface
     protected function handleInsertStatement(InsertStatementInterface $statement): array
     {
         $query = $statement->toQuery();
+        $this->logger->debug($query);
         $parameters = ['body' => ['update' => $query]];
         try {
             $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent();
@@ -224,6 +232,7 @@ class SparQlClient implements SparQlClientInterface
     protected function handleReplaceStatement(ReplaceStatementInterface $statement): array
     {
         $query = $statement->toQuery();
+        $this->logger->debug($query);
         $parameters = ['body' => ['update' => $query]];
         try {
             $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent();
