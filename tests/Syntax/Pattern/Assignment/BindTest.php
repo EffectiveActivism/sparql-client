@@ -16,7 +16,7 @@ class BindTest extends KernelTestCase
 {
     const NAMESPACES = 'PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX owl: <http://www.w3.org/2002/07/owl#> PREFIX skos: <http://www.w3.org/2004/02/skos/core#> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> PREFIX schema: <http://schema.org/>';
 
-    const SERIALIZED_BIND = self::NAMESPACES . ' SELECT ?subject ?processedCommentCountVariable WHERE { ?subject schema:commentCount ?commentCount . BIND ("2"^^xsd:integer * ?commentCount ) AS ?processedCommentCountVariable . }';
+    const SERIALIZED_BIND = self::NAMESPACES . ' SELECT ?subject ?processedCommentCountVariable WHERE { ?subject schema:commentCount ?commentCount . BIND ("2"^^xsd:integer * ?commentCount AS ?processedCommentCountVariable ) . }';
 
     public function testBind()
     {
