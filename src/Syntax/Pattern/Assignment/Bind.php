@@ -42,6 +42,6 @@ class Bind implements AssignmentInterface
 
     public function serialize(): string
     {
-        return sprintf('BIND (%s ) AS %s', $this->value->serialize(), $this->variable->serialize());
+        return sprintf('BIND (%s AS %s )', $this->value->serialize(), $this->variable->serialize());
     }
 }
