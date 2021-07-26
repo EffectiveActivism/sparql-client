@@ -58,6 +58,27 @@ class TypedLiteralTest extends KernelTestCase
         $this->assertEquals('xsd:boolean', $typedLiteral->getType());
     }
 
+    public function testDateTypedLiteral()
+    {
+        $typedLiteral = new TypedLiteral('2020-01-01+01:00', new PrefixedIri('xsd', 'date'));
+        $this->assertEquals('"2020-01-01+01:00"^^xsd:date', $typedLiteral->serialize());
+        $this->assertEquals('xsd:date', $typedLiteral->getType());
+    }
+
+    public function testDateTimeTypedLiteral()
+    {
+        $typedLiteral = new TypedLiteral('2020-01-01T12:01+01:00', new PrefixedIri('xsd', 'dateTime'));
+        $this->assertEquals('"2020-01-01T12:01+01:00"^^xsd:dateTime', $typedLiteral->serialize());
+        $this->assertEquals('xsd:dateTime', $typedLiteral->getType());
+    }
+
+    public function testTimeTypedLiteral()
+    {
+        $typedLiteral = new TypedLiteral('12:01+01:00', new PrefixedIri('xsd', 'time'));
+        $this->assertEquals('"12:01+01:00"^^xsd:time', $typedLiteral->serialize());
+        $this->assertEquals('xsd:time', $typedLiteral->getType());
+    }
+
     public function testUnknownType()
     {
         $typedLiteral = new TypedLiteral('lorem', new PrefixedIri('xsd', 'unknown'));
