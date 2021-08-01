@@ -50,6 +50,7 @@ class ValuesTest extends KernelTestCase
             $commentCountValue1,
             $headlineValue2
         ], $values->toArray());
+        $this->assertEquals([$headlineVariable, $commentCountVariable], $values->getVariables());
     }
 
     public function testValuesExceptions()

@@ -57,6 +57,11 @@ class Values implements AssignmentInterface
         return $terms;
     }
 
+    public function getVariables(): array
+    {
+        return $this->variables;
+    }
+
     public function serialize(): string
     {
         $variablesString = '';
