@@ -242,7 +242,7 @@ class MyController extends AbstractController
         // Add a triple that contains all the above terms.
         $triple = new Triple($subject, $predicate, $object);
         // Create an insert statement.
-        $insertStatement = $sparQlClient->insert($triple);
+        $insertStatement = $sparQlClient->insert([$triple]);
         // Perform the update.
         $sparQlClient->execute($insertStatement);
     }
@@ -286,7 +286,7 @@ class MyController extends AbstractController
         $object2 = new PrefixedIri('schema', 'Article');
         $tripleToFilter = new Triple($subject, $predicate2, $object2);
         // Create a delete statement.
-        $deleteStatement = $sparQlClient->delete($tripleToDelete)->where([$tripleToFilter]);
+        $deleteStatement = $sparQlClient->delete([$tripleToDelete])->where([$tripleToFilter]);
         // Perform the update.
         $sparQlClient->execute($deleteStatement);
     }
@@ -334,8 +334,8 @@ class MyController extends AbstractController
         $replacementTriple = new Triple($subject, $predicate2, $object2);
         // Create a replace statement.
         $replaceStatement = $sparQlClient
-            ->replace($tripleToReplace)
-            ->with($replacementTriple)
+            ->replace([$tripleToReplace])
+            ->with([$replacementTriple])
             ->where([$tripleToReplace]);
         // Perform the update.
         $sparQlClient->execute($replaceStatement);
@@ -711,7 +711,7 @@ class MyController extends AbstractController
         /** @var TripleInterface $triple */
         $triple = new Triple(...);
         $statement = $sparQlClient
-            ->insert($triple)
+            ->insert([$triple])
             ->where([$triple]);
         if ($shaclClient->validate($statement)) {
             dump('statement is valid!');
