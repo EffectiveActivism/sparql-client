@@ -35,13 +35,13 @@ class SparQlClientTest extends KernelTestCase
 
     const INSERT_STATEMENT_EXPECTED_QUERY = 'update=' . self::NAMESPACES . ' INSERT { <urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece> schema:headline "Lorem Ipsum" } WHERE { <urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece> schema:headline ?object . }';
 
-    const INSERT_STATEMENT_WITHOUT_CONDITION_EXPECTED_QUERY = 'update=' . self::NAMESPACES . ' INSERT DATA { <urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece> schema:headline "Lorem Ipsum" }';
+    const INSERT_STATEMENT_WITHOUT_CONDITION_EXPECTED_QUERY = 'update=' . self::NAMESPACES . ' INSERT DATA { <urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece> schema:headline "Lorem Ipsum" . <urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece> schema:headline "Lorem Ipsum" }';
 
     const DELETE_STATEMENT_EXPECTED_QUERY = 'update=' . self::NAMESPACES . ' DELETE { ?subject schema:headline ?object } WHERE { ?subject rdf:type schema:Article . }';
 
-    const DELETE_STATEMENT_WITHOUT_CONDITION_EXPECTED_QUERY = 'update=' . self::NAMESPACES . ' DELETE DATA { <urn:uuid:e998469e-831e-11eb-95f2-a32290c912e6> schema:headline "Lorem"@la }';
+    const DELETE_STATEMENT_WITHOUT_CONDITION_EXPECTED_QUERY = 'update=' . self::NAMESPACES . ' DELETE DATA { <urn:uuid:e998469e-831e-11eb-95f2-a32290c912e6> schema:headline "Lorem"@la . <urn:uuid:e998469e-831e-11eb-95f2-a32290c912e6> schema:headline "Lorem"@la }';
 
-    const REPLACE_STATEMENT_EXPECTED_QUERY = 'update=' . self::NAMESPACES . ' DELETE { ?subject schema:headline ?object } INSERT { ?subject schema:headline "Lorem Ipsum" } WHERE { ?subject rdf:type schema:Article . }';
+    const REPLACE_STATEMENT_EXPECTED_QUERY = 'update=' . self::NAMESPACES . ' DELETE { ?subject schema:headline ?object . ?subject schema:headline ?object } INSERT { ?subject schema:headline "Lorem Ipsum" . ?subject schema:headline "Lorem Ipsum" } WHERE { ?subject rdf:type schema:Article . }';
 
     const HASHED_QUERY_UUID = '3959149f-83a7-53a6-82c8-7ca190789516';
 
@@ -170,12 +170,13 @@ class SparQlClientTest extends KernelTestCase
         $predicate = new PrefixedIri('schema', 'headline');
         $object = new PlainLiteral('Lorem Ipsum');
         $statement = $sparQlClient
-            ->insert(new Triple($subject, $predicate, $object))
+            ->insert([new Triple($subject, $predicate, $object)])
             ->where([new Triple($subject, $predicate, new Variable('object'))]);
         $sparQlClient->execute($statement);
         $this->assertEquals(self::INSERT_STATEMENT_EXPECTED_QUERY, urldecode($receivedQuery));
+        $triple = new Triple($subject, $predicate, $object);
         $statement = $sparQlClient
-            ->insert(new Triple($subject, $predicate, $object));
+            ->insert([$triple, $triple]);
         $sparQlClient->execute($statement);
         $this->assertEquals(self::INSERT_STATEMENT_WITHOUT_CONDITION_EXPECTED_QUERY, urldecode($receivedQuery));
     }
@@ -200,12 +201,13 @@ class SparQlClientTest extends KernelTestCase
         $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
         $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
         $statement = $sparQlClient
-            ->delete(new Triple(new Variable('subject'), new PrefixedIri('schema', 'headline'), new Variable('object')))
+            ->delete([new Triple(new Variable('subject'), new PrefixedIri('schema', 'headline'), new Variable('object'))])
             ->where([new Triple(new Variable('subject'), new PrefixedIri('rdf', 'type'), new PrefixedIri('schema', 'Article'))]);
         $sparQlClient->execute($statement);
         $this->assertEquals(self::DELETE_STATEMENT_EXPECTED_QUERY, urldecode($receivedQuery));
+        $triple = new Triple(new Iri('urn:uuid:e998469e-831e-11eb-95f2-a32290c912e6'), new PrefixedIri('schema', 'headline'), new PlainLiteral('Lorem', 'la'));
         $statement = $sparQlClient
-            ->delete(new Triple(new Iri('urn:uuid:e998469e-831e-11eb-95f2-a32290c912e6'), new PrefixedIri('schema', 'headline'), new PlainLiteral('Lorem', 'la')));
+            ->delete([$triple, $triple]);
         $sparQlClient->execute($statement);
         $this->assertEquals(self::DELETE_STATEMENT_WITHOUT_CONDITION_EXPECTED_QUERY, urldecode($receivedQuery));
     }
@@ -229,15 +231,18 @@ class SparQlClientTest extends KernelTestCase
         /** @var SparQlClientInterface $sparQlClient */
         $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
         $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
+        $tripleToReplace = new Triple(new Variable('subject'), new PrefixedIri('schema', 'headline'), new Variable('object'));
+        $tripleToInsert = new Triple(new Variable('subject'), new PrefixedIri('schema', 'headline'), new PlainLiteral('Lorem Ipsum'));
         $statement = $sparQlClient
-            ->replace(new Triple(new Variable('subject'), new PrefixedIri('schema', 'headline'), new Variable('object')))
-            ->with(new Triple(new Variable('subject'), new PrefixedIri('schema', 'headline'), new PlainLiteral('Lorem Ipsum')))
+            ->replace([$tripleToReplace, $tripleToReplace])
+            ->with([$tripleToInsert, $tripleToInsert])
             ->where([new Triple(new Variable('subject'), new PrefixedIri('rdf', 'type'), new PrefixedIri('schema', 'Article'))]);
         $sparQlClient->execute($statement);
         $this->assertEquals(self::REPLACE_STATEMENT_EXPECTED_QUERY, urldecode($receivedQuery));
+        $triple = new Triple(new Iri('urn:uuid:e998469e-831e-11eb-95f2-a32290c912e6'), new PrefixedIri('schema', 'headline'), new PlainLiteral('Lorem', 'la'));
         $statement = $sparQlClient
-            ->replace(new Triple(new Iri('urn:uuid:e998469e-831e-11eb-95f2-a32290c912e6'), new PrefixedIri('schema', 'headline'), new PlainLiteral('Lorem', 'la')))
-            ->with(new Triple(new Iri('urn:uuid:e998469e-831e-11eb-95f2-a32290c912e6'), new PrefixedIri('schema', 'headline'), new PlainLiteral('Ipsum', 'la')));
+            ->replace([$triple])
+            ->with([$triple]);
         $this->expectException(SparQlException::class);
         $sparQlClient->execute($statement);
     }
@@ -350,7 +355,7 @@ class SparQlClientTest extends KernelTestCase
         // Cache select query.
         $sparQlClient->execute($sparQlClient->select([$subject])->where([$triple]));
         // Invalidate select query by IRI cache tags.
-        $sparQlClient->execute($sparQlClient->delete($triple)->where([$triple]));
+        $sparQlClient->execute($sparQlClient->delete([$triple])->where([$triple]));
         $this->assertEquals('UNCACHED', $cacheAdapter->get(self::HASHED_QUERY_UUID, function (ItemInterface $item) {
             return 'UNCACHED';
         }));
@@ -373,7 +378,7 @@ class SparQlClientTest extends KernelTestCase
         $object = new PrefixedIri('schema', 'Article');
         $triple = new Triple($subject, $predicate, $object);
         $sparQlClient->execute($sparQlClient->select([$subject])->where([$triple]));
-        $sparQlClient->execute($sparQlClient->replace($triple)->with($triple)->where([$triple]));
+        $sparQlClient->execute($sparQlClient->replace([$triple])->with([$triple])->where([$triple]));
         $this->assertEquals('UNCACHED', $cacheAdapter->get(self::HASHED_QUERY_UUID, function (ItemInterface $item) {
             return 'UNCACHED';
         }));
@@ -557,7 +562,7 @@ class SparQlClientTest extends KernelTestCase
         $object = new PrefixedIri('schema', 'Article');
         $triple = new Triple($subject, $predicate, $object);
         $this->expectException(SparQlException::class);
-        $sparQlClient->execute($sparQlClient->delete($triple)->where([$triple]));
+        $sparQlClient->execute($sparQlClient->delete([$triple])->where([$triple]));
     }
 
     public function testClientDeleteStatementCacheException()
@@ -578,7 +583,7 @@ class SparQlClientTest extends KernelTestCase
         $object = new PrefixedIri('schema', 'Article');
         $triple = new Triple($subject, $predicate, $object);
         $this->expectException(SparQlException::class);
-        $sparQlClient->execute($sparQlClient->delete($triple)->where([$triple]));
+        $sparQlClient->execute($sparQlClient->delete([$triple])->where([$triple]));
     }
 
     public function testClientReplaceStatementException()
@@ -597,7 +602,7 @@ class SparQlClientTest extends KernelTestCase
         $object = new PrefixedIri('schema', 'Article');
         $triple = new Triple($subject, $predicate, $object);
         $this->expectException(SparQlException::class);
-        $sparQlClient->execute($sparQlClient->replace($triple)->with($triple)->where([$triple]));
+        $sparQlClient->execute($sparQlClient->replace([$triple])->with([$triple])->where([$triple]));
     }
 
     public function testClientReplaceStatementCacheException()
@@ -618,7 +623,7 @@ class SparQlClientTest extends KernelTestCase
         $object = new PrefixedIri('schema', 'Article');
         $triple = new Triple($subject, $predicate, $object);
         $this->expectException(SparQlException::class);
-        $sparQlClient->execute($sparQlClient->replace($triple)->with($triple)->where([$triple]));
+        $sparQlClient->execute($sparQlClient->replace([$triple])->with([$triple])->where([$triple]));
     }
 
     public function testClientInsertStatementException()
@@ -637,7 +642,7 @@ class SparQlClientTest extends KernelTestCase
         $object = new PrefixedIri('schema', 'Article');
         $triple = new Triple($subject, $predicate, $object);
         $this->expectException(SparQlException::class);
-        $sparQlClient->execute($sparQlClient->insert($triple)->where([$triple]));
+        $sparQlClient->execute($sparQlClient->insert([$triple])->where([$triple]));
     }
 
     public function testUpload()

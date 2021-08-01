@@ -127,8 +127,9 @@ class SelectStatement extends AbstractConditionalStatement implements SelectStat
     public function setVariables(array $variables): SelectStatementInterface
     {
         foreach ($variables as $variable) {
-            if (get_class($variable) !== Variable::class) {
-                throw new SparQlException(sprintf('Invalid variable class: %s', get_class($variable)));
+            if (!is_object($variable) || get_class($variable) !== Variable::class) {
+                $class = is_object($variable) ? get_class($variable) : gettype($variable);
+                throw new SparQlException(sprintf('Invalid variable class: %s', $class));
             }
         }
         $this->variables = $variables;

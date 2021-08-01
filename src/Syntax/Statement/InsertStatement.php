@@ -9,20 +9,29 @@ use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\TripleInterface;
 
 class InsertStatement extends AbstractConditionalStatement implements InsertStatementInterface
 {
-    protected TripleInterface $tripleToInsert;
+    /** @var TripleInterface[] */
+    protected array $triplesToInsert;
 
     /**
      * @throws SparQlException
      */
-    public function __construct(TripleInterface $triple, array $extraNamespaces = [])
+    public function __construct(array $triples, array $extraNamespaces = [])
     {
         parent::__construct($extraNamespaces);
-        foreach ($triple->getTerms() as $term) {
-            if (get_class($term) === PrefixedIri::class && !in_array($term->getPrefix(), array_keys($this->namespaces))) {
-                throw new SparQlException(sprintf('Prefix "%s" is not defined', $term->getPrefix()));
+        foreach ($triples as $triple) {
+            if (is_object($triple) && $triple instanceof TripleInterface) {
+                foreach ($triple->getTerms() as $term) {
+                    if (get_class($term) === PrefixedIri::class && !in_array($term->getPrefix(), array_keys($this->namespaces))) {
+                        throw new SparQlException(sprintf('Prefix "%s" is not defined', $term->getPrefix()));
+                    }
+                }
+            }
+            else {
+                $class = is_object($triple) ? get_class($triple) : gettype($triple);
+                throw new SparQlException(sprintf('Invalid triple class: %s', $class));
             }
         }
-        $this->tripleToInsert = $triple;
+        $this->triplesToInsert = $triples;
     }
 
     /**
@@ -39,14 +48,16 @@ class InsertStatement extends AbstractConditionalStatement implements InsertStat
             // At least one variable (if any) must be referenced in a 'where' clause.
             $unclausedVariables = true;
             $hasVariables = false;
-            foreach ($this->tripleToInsert->getTerms() as $term) {
-                if (get_class($term) === Variable::class) {
-                    $hasVariables = true;
-                    foreach ($this->conditions as $condition) {
-                        foreach ($condition->getTerms() as $clausedTerm) {
-                            if (get_class($clausedTerm) === Variable::class && $clausedTerm->getVariableName() === $term->getVariableName()) {
-                                $unclausedVariables = false;
-                                break 3;
+            foreach ($this->triplesToInsert as $triple) {
+                foreach ($triple->getTerms() as $term) {
+                    if (get_class($term) === Variable::class) {
+                        $hasVariables = true;
+                        foreach ($this->conditions as $condition) {
+                            foreach ($condition->getTerms() as $clausedTerm) {
+                                if (get_class($clausedTerm) === Variable::class && $clausedTerm->getVariableName() === $term->getVariableName()) {
+                                    $unclausedVariables = false;
+                                    break 4;
+                                }
                             }
                         }
                     }
@@ -55,16 +66,24 @@ class InsertStatement extends AbstractConditionalStatement implements InsertStat
             if ($hasVariables && $unclausedVariables) {
                 throw new SparQlException('At least one variable must be referenced in a \'where\' clause.');
             }
-            return sprintf('%sINSERT { %s } WHERE { %s }', $preQuery, $this->tripleToInsert->serialize(), $conditionsString);
+            $triplesToInsertString = implode(' . ', array_map(function (TripleInterface $triple) {
+                return $triple->serialize();
+            }, $this->triplesToInsert));
+            return sprintf('%sINSERT { %s } WHERE { %s }', $preQuery, $triplesToInsertString, $conditionsString);
         }
         else {
             // Variables are not allowed when not using 'where' clauses.
-            foreach ($this->tripleToInsert->getTerms() as $term) {
-                if (get_class($term) === Variable::class) {
-                    throw new SparQlException(sprintf('Variable "%s" cannot be inserted without being referenced in a \'where\' clause', $term->getVariableName()));
+            foreach ($this->triplesToInsert as $triple) {
+                foreach ($triple->getTerms() as $term) {
+                    if (get_class($term) === Variable::class) {
+                        throw new SparQlException(sprintf('Variable "%s" cannot be inserted without being referenced in a \'where\' clause', $term->getVariableName()));
+                    }
                 }
             }
-            return sprintf('%sINSERT DATA { %s }', $preQuery, $this->tripleToInsert->serialize());
+            $triplesToInsertString = implode(' . ', array_map(function (TripleInterface $triple) {
+                return $triple->serialize();
+            }, $this->triplesToInsert));
+            return sprintf('%sINSERT DATA { %s }', $preQuery, $triplesToInsertString);
         }
     }
 
@@ -72,8 +91,8 @@ class InsertStatement extends AbstractConditionalStatement implements InsertStat
      * Getters.
      */
 
-    public function getTripleToInsert(): TripleInterface
+    public function getTriplesToInsert(): array
     {
-        return $this->tripleToInsert;
+        return $this->triplesToInsert;
     }
 }

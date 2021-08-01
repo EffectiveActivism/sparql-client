@@ -54,9 +54,9 @@ class ShaclClient implements ShaclClientInterface
             }
             else {
                 $triples = match (get_class($statement)) {
-                    DeleteStatement::class => [$statement->getTripleToDelete()],
-                    InsertStatement::class => [$statement->getTripleToInsert()],
-                    ReplaceStatement::class => [$statement->getReplacement()],
+                    DeleteStatement::class => $statement->getTriplesToDelete(),
+                    InsertStatement::class => $statement->getTriplesToInsert(),
+                    ReplaceStatement::class => $statement->getReplacements(),
                 };
                 $constructStatement = new ConstructStatement($triples, $this->getNamespaces());
                 $constructStatement->where($statement->getConditions());

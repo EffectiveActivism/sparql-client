@@ -45,18 +45,18 @@ class ShaclClientTest extends KernelTestCase
         $subject = new Iri('urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece');
         $predicate = new PrefixedIri('schema', 'headline');
         $object = new PlainLiteral('Lorem Ipsum');
-        $statement = new InsertStatement(new Triple($subject, $predicate, $object), ['schema' => 'http://schema.org/']);
+        $statement = new InsertStatement([new Triple($subject, $predicate, $object)], ['schema' => 'http://schema.org/']);
         $statement->where([
             new Triple($subject, $predicate, new Variable('object')),
         ]);
         $this->assertTrue($shaclClient->validate($statement));
-        $statement = new DeleteStatement(new Triple($subject, $predicate, $object), ['schema' => 'http://schema.org/']);
+        $statement = new DeleteStatement([new Triple($subject, $predicate, $object)], ['schema' => 'http://schema.org/']);
         $statement->where([
             new Triple($subject, $predicate, new Variable('object')),
         ]);
         $this->assertTrue($shaclClient->validate($statement));
-        $statement = new ReplaceStatement(new Triple($subject, $predicate, $object), ['schema' => 'http://schema.org/']);
-        $statement->with(new Triple($subject, $predicate, $object));
+        $statement = new ReplaceStatement([new Triple($subject, $predicate, $object)], ['schema' => 'http://schema.org/']);
+        $statement->with([new Triple($subject, $predicate, $object)]);
         $statement->where([
             new Triple($subject, $predicate, new Variable('object')),
         ]);
@@ -85,7 +85,7 @@ class ShaclClientTest extends KernelTestCase
         $subject = new Iri('urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece');
         $predicate = new PrefixedIri('schema', 'headline');
         $object = new PlainLiteral('Lorem Ipsum');
-        $statement = new InsertStatement(new Triple($subject, $predicate, $object), ['schema' => 'http://schema.org/']);
+        $statement = new InsertStatement([new Triple($subject, $predicate, $object)], ['schema' => 'http://schema.org/']);
         $statement->where([
             new Triple($subject, $predicate, new Variable('object')),
         ]);
@@ -109,7 +109,7 @@ class ShaclClientTest extends KernelTestCase
         $subject = new Iri('urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece');
         $predicate = new PrefixedIri('schema', 'headline');
         $object = new PlainLiteral('Lorem Ipsum');
-        $statement = new InsertStatement(new Triple(new Variable('unclausedSubject'), $predicate, $object), ['schema' => 'http://schema.org/']);
+        $statement = new InsertStatement([new Triple(new Variable('unclausedSubject'), $predicate, $object)], ['schema' => 'http://schema.org/']);
         $statement->where([
             new Triple($subject, $predicate, new Variable('object')),
         ]);
