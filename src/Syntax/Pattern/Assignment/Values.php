@@ -7,7 +7,7 @@ use EffectiveActivism\SparQlClient\Syntax\Term\Iri\AbstractIri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Literal\AbstractLiteral;
 use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
 
-class Values implements AssignmentInterface
+class Values implements ValuesInterface
 {
     protected array $variables;
 
