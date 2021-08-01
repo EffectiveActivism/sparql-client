@@ -7,7 +7,7 @@ use EffectiveActivism\SparQlClient\Syntax\Pattern\PatternInterface;
 use EffectiveActivism\SparQlClient\Syntax\Term\TermInterface;
 use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
 
-class Bind implements AssignmentInterface
+class Bind implements BindInterface
 {
     protected PatternInterface|OperatorInterface $value;
 
@@ -38,6 +38,11 @@ class Bind implements AssignmentInterface
             }
         }
         return $terms;
+    }
+
+    public function getVariable(): Variable
+    {
+        return $this->variable;
     }
 
     public function serialize(): string

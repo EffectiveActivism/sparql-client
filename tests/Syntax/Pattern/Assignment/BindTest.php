@@ -44,5 +44,6 @@ class BindTest extends KernelTestCase
             $predicate,
             $commentCountVariable
         ], $bind->getTerms());
+        $this->assertEquals($processedCommentCountVariable, $bind->getVariable());
     }
 }
