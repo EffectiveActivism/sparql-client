@@ -199,7 +199,7 @@ class SparQlClient implements SparQlClientInterface
         try {
             $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent();
             // Invalidate cache for delete statements.
-            $tags = $this->extractTags(array_merge([$statement->getTripleToDelete()], $statement->getConditions()));
+            $tags = $this->extractTags(array_merge($statement->getTriplesToDelete(), $statement->getConditions()));
             $this->cacheAdapter->invalidateTags($tags);
         } catch (HttpClientExceptionInterface|InvalidArgumentException $exception) {
             throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
@@ -218,7 +218,7 @@ class SparQlClient implements SparQlClientInterface
         try {
             $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent();
             // Invalidate cache for insert statements.
-            $tags = $this->extractTags(array_merge([$statement->getTripleToInsert()], $statement->getConditions()));
+            $tags = $this->extractTags(array_merge($statement->getTriplesToInsert(), $statement->getConditions()));
             $this->cacheAdapter->invalidateTags($tags);
         } catch (HttpClientExceptionInterface|InvalidArgumentException $exception) {
             throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
@@ -237,7 +237,7 @@ class SparQlClient implements SparQlClientInterface
         try {
             $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent();
             // Invalidate cache for delete and update statements.
-            $tags = $this->extractTags(array_merge([$statement->getOriginal(), $statement->getReplacement()], $statement->getConditions()));
+            $tags = $this->extractTags(array_merge($statement->getOriginals(), $statement->getReplacements(), $statement->getConditions()));
             $this->cacheAdapter->invalidateTags($tags);
         } catch (HttpClientExceptionInterface|InvalidArgumentException $exception) {
             throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
@@ -264,25 +264,25 @@ class SparQlClient implements SparQlClientInterface
     /**
      * @throws SparQlException
      */
-    public function delete(TripleInterface $triple): DeleteStatement
+    public function delete(array $triples): DeleteStatement
     {
-        return new DeleteStatement($triple, $this->getNamespaces());
+        return new DeleteStatement($triples, $this->getNamespaces());
     }
 
     /**
      * @throws SparQlException
      */
-    public function insert(TripleInterface $triple): InsertStatement
+    public function insert(array $triples): InsertStatement
     {
-        return new InsertStatement($triple, $this->getNamespaces());
+        return new InsertStatement($triples, $this->getNamespaces());
     }
 
     /**
      * @throws SparQlException
      */
-    public function replace(TripleInterface $triple): ReplaceStatementInterface
+    public function replace(array $triples): ReplaceStatementInterface
     {
-        return new ReplaceStatement($triple, $this->getNamespaces());
+        return new ReplaceStatement($triples, $this->getNamespaces());
     }
 
     /**

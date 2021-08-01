@@ -23,8 +23,8 @@ class ReplaceStatementTest extends KernelTestCase
         $predicate = new Iri('http://schema.org/headline');
         $object = new PlainLiteral("Lorem Ipsum");
         $triple = new Triple($subject, $predicate, $object);
-        $statement = new ReplaceStatement($triple);
-        $statement->with($triple);
+        $statement = new ReplaceStatement([$triple]);
+        $statement->with([$triple]);
         $statement->where([$triple]);
         $this->assertEquals(self::REPLACE_STATEMENT, $statement->toQuery());
     }
@@ -38,7 +38,7 @@ class ReplaceStatementTest extends KernelTestCase
         // Test statement with missing 'with' clause.
         $threwException = false;
         try {
-            $statement = new ReplaceStatement($triple);
+            $statement = new ReplaceStatement([$triple]);
             $statement->toQuery();
         } catch (SparQlException) {
             $threwException = true;
@@ -49,7 +49,7 @@ class ReplaceStatementTest extends KernelTestCase
         $triple = new Triple($subject, $unknownPredicate, $object);
         $threwException = false;
         try {
-            new ReplaceStatement($triple);
+            new ReplaceStatement([$triple]);
         } catch (SparQlException) {
             $threwException = true;
         }
@@ -59,8 +59,8 @@ class ReplaceStatementTest extends KernelTestCase
         $triple2 = new Triple($subject, $unknownPredicate, $object);
         $threwException = false;
         try {
-            $statement = new ReplaceStatement($triple1);
-            $statement->with($triple2);
+            $statement = new ReplaceStatement([$triple1]);
+            $statement->with([$triple2]);
         } catch (SparQlException) {
             $threwException = true;
         }
@@ -70,9 +70,9 @@ class ReplaceStatementTest extends KernelTestCase
         $triple = new Triple($unknownSubjectVariable, $predicate, $object);
         $triple2 = new Triple($subject, $predicate, $object);
         $threwException = false;
-        $statement = new ReplaceStatement($triple);
+        $statement = new ReplaceStatement([$triple]);
         $statement
-            ->with($triple)
+            ->with([$triple])
             ->where([$triple2]);
         try {
             $statement->toQuery();
@@ -83,10 +83,28 @@ class ReplaceStatementTest extends KernelTestCase
         // Test statement with variable without where clause.
         $triple = new Triple($unknownSubjectVariable, $predicate, $object);
         $threwException = false;
-        $statement = new ReplaceStatement($triple);
-        $statement->with($triple);
+        $statement = new ReplaceStatement([$triple]);
+        $statement->with([$triple]);
         try {
             $statement->toQuery();
+        } catch (SparQlException) {
+            $threwException = true;
+        }
+        $this->assertTrue($threwException);
+        // Test statement with wrong triple class.
+        $threwException = false;
+        try {
+            new ReplaceStatement([$subject]);
+        } catch (SparQlException) {
+            $threwException = true;
+        }
+        $this->assertTrue($threwException);
+        // Test statement with wrong replacement triple class.
+        $triple = new Triple($subject, $predicate, $object);
+        $threwException = false;
+        $statement = new ReplaceStatement([$triple]);
+        try {
+            $statement->with([$subject]);
         } catch (SparQlException) {
             $threwException = true;
         }

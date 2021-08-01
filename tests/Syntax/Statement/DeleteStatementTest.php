@@ -25,7 +25,7 @@ class DeleteStatementTest extends KernelTestCase
         $predicate = new Iri('http://schema.org/headline');
         $object = new PlainLiteral("Lorem Ipsum");
         $triple = new Triple($subject, $predicate, $object);
-        $statement = new DeleteStatement($triple);
+        $statement = new DeleteStatement([$triple]);
         $statement->where([$triple]);
         $this->assertEquals(self::DELETE_STATEMENT, $statement->toQuery());
     }
@@ -40,7 +40,7 @@ class DeleteStatementTest extends KernelTestCase
         $triple = new Triple($subject, $unknownPredicate, $object);
         $threwException = false;
         try {
-            new DeleteStatement($triple);
+            new DeleteStatement([$triple]);
         } catch (SparQlException) {
             $threwException = true;
         }
@@ -50,7 +50,7 @@ class DeleteStatementTest extends KernelTestCase
         $triple = new Triple($unknownSubjectVariable, $predicate, $object);
         $triple2 = new Triple($subject, $predicate, $object);
         $threwException = false;
-        $statement = new DeleteStatement($triple);
+        $statement = new DeleteStatement([$triple]);
         $statement->where([$triple2]);
         try {
             $statement->toQuery();
@@ -61,9 +61,17 @@ class DeleteStatementTest extends KernelTestCase
         // Test statement with variable without where clause.
         $triple = new Triple($unknownSubjectVariable, $predicate, $object);
         $threwException = false;
-        $statement = new DeleteStatement($triple);
+        $statement = new DeleteStatement([$triple]);
         try {
             $statement->toQuery();
+        } catch (SparQlException) {
+            $threwException = true;
+        }
+        $this->assertTrue($threwException);
+        // Test statement with wrong triple class.
+        $threwException = false;
+        try {
+            new DeleteStatement([$subject]);
         } catch (SparQlException) {
             $threwException = true;
         }

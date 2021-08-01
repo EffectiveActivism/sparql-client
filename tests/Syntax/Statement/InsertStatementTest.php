@@ -28,12 +28,12 @@ class InsertStatementTest extends KernelTestCase
         $object = new PlainLiteral("Lorem Ipsum");
         $objectVariable = new Variable('object');
         $triple = new Triple($subject, $predicate, $object);
-        $statement = new InsertStatement($triple);
+        $statement = new InsertStatement([$triple]);
         $statement->where([$triple]);
         $this->assertEquals(self::INSERT_STATEMENT, $statement->toQuery());
-        $this->assertEquals($triple, $statement->getTripleToInsert());
+        $this->assertEquals([$triple], $statement->getTriplesToInsert());
         $triple = new Triple($subject, $predicate, $objectVariable);
-        $statement = new InsertStatement($triple);
+        $statement = new InsertStatement([$triple]);
         $statement->where([$triple]);
         $this->assertEquals(self::INSERT_STATEMENT_VARIABLE, $statement->toQuery());
     }
@@ -48,7 +48,7 @@ class InsertStatementTest extends KernelTestCase
         $triple = new Triple($subject, $unknownPredicate, $object);
         $threwException = false;
         try {
-            new InsertStatement($triple);
+            new InsertStatement([$triple]);
         } catch (SparQlException) {
             $threwException = true;
         }
@@ -58,7 +58,7 @@ class InsertStatementTest extends KernelTestCase
         $triple = new Triple($unknownSubjectVariable, $predicate, $object);
         $triple2 = new Triple($subject, $predicate, $object);
         $threwException = false;
-        $statement = new InsertStatement($triple);
+        $statement = new InsertStatement([$triple]);
         $statement->where([$triple2]);
         try {
             $statement->toQuery();
@@ -69,9 +69,17 @@ class InsertStatementTest extends KernelTestCase
         // Test statement with variable without where clause.
         $triple = new Triple($unknownSubjectVariable, $predicate, $object);
         $threwException = false;
-        $statement = new InsertStatement($triple);
+        $statement = new InsertStatement([$triple]);
         try {
             $statement->toQuery();
+        } catch (SparQlException) {
+            $threwException = true;
+        }
+        $this->assertTrue($threwException);
+        // Test statement with wrong triple class.
+        $threwException = false;
+        try {
+            new InsertStatement([$subject]);
         } catch (SparQlException) {
             $threwException = true;
         }
