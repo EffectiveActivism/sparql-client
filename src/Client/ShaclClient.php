@@ -68,10 +68,13 @@ class ShaclClient implements ShaclClientInterface
             $query = $constructStatement->toQuery();
             $this->logger->debug($query);
             $data = [
-                'contentToValidate' => $query,
-                'reportSyntax' => 'application/rdf+xml',
+                'contentQuery' => $query,
+                'reportSyntax' => 'application/n-triples',
             ];
             $responseContent = $this->httpClient->request('POST', $this->shaclEndpoint, [
+                'headers' => [
+                    'Content-Type' => 'application/json',
+                ],
                 'body' => json_encode($data),
             ])->getContent();
             $sets = $this->serializer->decode($responseContent, NTripleDecoder::FORMAT);
