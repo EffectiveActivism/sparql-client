@@ -17,6 +17,7 @@ use EffectiveActivism\SparQlClient\Syntax\Statement\ReplaceStatementInterface;
 use EffectiveActivism\SparQlClient\Serializer\Encoder\NTripleDecoder;
 use EffectiveActivism\SparQlClient\Syntax\Term\Literal\TypedLiteral;
 use InvalidArgumentException;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
@@ -28,15 +29,18 @@ class ShaclClient implements ShaclClientInterface
 
     protected array $extraNamespaces = [];
 
+    protected LoggerInterface $logger;
+
     protected array $namespaces = [];
 
     protected SerializerInterface $serializer;
 
     protected string $shaclEndpoint;
 
-    public function __construct(array $configuration, HttpClientInterface $httpClient)
+    public function __construct(array $configuration, HttpClientInterface $httpClient, LoggerInterface $logger)
     {
         $this->httpClient = $httpClient;
+        $this->logger = $logger;
         $this->namespaces = $configuration['namespaces'];
         $this->shaclEndpoint = $configuration['shacl_endpoint'];
         $encoders = [new NTripleDecoder()];
@@ -61,8 +65,10 @@ class ShaclClient implements ShaclClientInterface
                 $constructStatement = new ConstructStatement($triples, $this->getNamespaces());
                 $constructStatement->where($statement->getConditions());
             }
+            $query = $constructStatement->toQuery();
+            $this->logger->debug($query);
             $data = [
-                'contentToValidate' => $constructStatement->toQuery(),
+                'contentToValidate' => $query,
                 'reportSyntax' => 'application/rdf+xml',
             ];
             $responseContent = $this->httpClient->request('POST', $this->shaclEndpoint, [
@@ -77,13 +83,16 @@ class ShaclClient implements ShaclClientInterface
                     $triple->getObject()->getType() === 'xsd:boolean' &&
                     in_array($triple->getObject()->serialize(), ['"true"^^<http://www.w3.org/2001/XMLSchema#boolean>', '"true"^xsd:boolean'])
                 ) {
+                    $this->logger->debug('Validation succeeded');
                     return true;
                 }
             }
         }
         catch (InvalidArgumentException|SparQlException|ExceptionInterface $exception) {
+            $this->logger->debug('Validation errored: ' . $exception->getMessage());
             throw new ShaclException($exception->getMessage());
         }
+        $this->logger->debug('Validation failed');
         return false;
     }
 
