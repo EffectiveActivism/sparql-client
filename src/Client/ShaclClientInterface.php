@@ -9,7 +9,9 @@ use EffectiveActivism\SparQlClient\Syntax\Statement\ReplaceStatementInterface;
 
 interface ShaclClientInterface
 {
-    public function validate(ConstructStatementInterface|DeleteStatementInterface|InsertStatementInterface|ReplaceStatementInterface $statement);
+    public function convertToConstructStatement(ConstructStatementInterface|DeleteStatementInterface|InsertStatementInterface|ReplaceStatementInterface $statement): ConstructStatementInterface;
+
+    public function validate(ConstructStatementInterface $statement);
 
     /**
      * Getters.

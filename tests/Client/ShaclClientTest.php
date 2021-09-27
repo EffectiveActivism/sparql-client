@@ -31,7 +31,6 @@ class ShaclClientTest extends KernelTestCase
     public function testValidation()
     {
         $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
-        $receivedQuery = null;
         $httpClient = new MockHttpClient(function ($method, $url, $options) {
             return new MockResponse(file_get_contents(__DIR__ . '/../fixtures/shacl-validation-request.ntriple'));
         });
@@ -45,33 +44,36 @@ class ShaclClientTest extends KernelTestCase
         $subject = new Iri('urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece');
         $predicate = new PrefixedIri('schema', 'headline');
         $object = new PlainLiteral('Lorem Ipsum');
-        $statement = new InsertStatement([new Triple($subject, $predicate, $object)], ['schema' => 'http://schema.org/']);
-        $statement->where([
+        $insertStatement = new InsertStatement([new Triple($subject, $predicate, $object)], ['schema' => 'http://schema.org/']);
+        $insertStatement->where([
             new Triple($subject, $predicate, new Variable('object')),
         ]);
+        $statement = $shaclClient->convertToConstructStatement($insertStatement);
         $this->assertTrue($shaclClient->validate($statement));
-        $statement = new DeleteStatement([new Triple($subject, $predicate, $object)], ['schema' => 'http://schema.org/']);
-        $statement->where([
+        $deleteStatement = new DeleteStatement([new Triple($subject, $predicate, $object)], ['schema' => 'http://schema.org/']);
+        $deleteStatement->where([
             new Triple($subject, $predicate, new Variable('object')),
         ]);
+        $statement = $shaclClient->convertToConstructStatement($deleteStatement);
         $this->assertTrue($shaclClient->validate($statement));
-        $statement = new ReplaceStatement([new Triple($subject, $predicate, $object)], ['schema' => 'http://schema.org/']);
-        $statement->with([new Triple($subject, $predicate, $object)]);
-        $statement->where([
+        $replaceStatement = new ReplaceStatement([new Triple($subject, $predicate, $object)], ['schema' => 'http://schema.org/']);
+        $replaceStatement->with([new Triple($subject, $predicate, $object)]);
+        $replaceStatement->where([
             new Triple($subject, $predicate, new Variable('object')),
         ]);
+        $statement = $shaclClient->convertToConstructStatement($replaceStatement);
         $this->assertTrue($shaclClient->validate($statement));
-        $statement = new ConstructStatement([new Triple($subject, $predicate, $object)], ['schema' => 'http://schema.org/']);
-        $statement->where([
+        $constructStatement = new ConstructStatement([new Triple($subject, $predicate, $object)], ['schema' => 'http://schema.org/']);
+        $constructStatement->where([
             new Triple($subject, $predicate, new Variable('object')),
         ]);
+        $statement = $shaclClient->convertToConstructStatement($constructStatement);
         $this->assertTrue($shaclClient->validate($statement));
     }
 
     public function testFailedValidation()
     {
         $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
-        $receivedQuery = null;
         $httpClient = new MockHttpClient(function ($method, $url, $options) {
             return new MockResponse(file_get_contents(__DIR__ . '/../fixtures/shacl-validation-request-failed.ntriple'));
         });
@@ -89,13 +91,12 @@ class ShaclClientTest extends KernelTestCase
         $statement->where([
             new Triple($subject, $predicate, new Variable('object')),
         ]);
-        $this->assertFalse($shaclClient->validate($statement));
+        $this->assertFalse($shaclClient->validate($shaclClient->convertToConstructStatement($statement)));
     }
 
     public function testValidationException()
     {
         $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
-        $receivedQuery = null;
         $httpClient = new MockHttpClient(function ($method, $url, $options) {
             return new MockResponse(file_get_contents(__DIR__ . '/../fixtures/shacl-validation-request-failed.ntriple'));
         });
@@ -114,6 +115,6 @@ class ShaclClientTest extends KernelTestCase
             new Triple($subject, $predicate, new Variable('object')),
         ]);
         $this->expectException(ShaclException::class);
-        $shaclClient->validate($statement);
+        $shaclClient->validate($shaclClient->convertToConstructStatement($statement));
     }
 }
