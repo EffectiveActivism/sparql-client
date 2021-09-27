@@ -48,24 +48,32 @@ class ShaclClient implements ShaclClientInterface
     }
 
     /**
+     * @throws SparQlException
+     */
+    public function convertToConstructStatement(ConstructStatementInterface|DeleteStatementInterface|InsertStatementInterface|ReplaceStatementInterface $statement): ConstructStatementInterface
+    {
+        if ($statement instanceof ConstructStatementInterface) {
+            $constructStatement = $statement;
+        }
+        else {
+            $triples = match (get_class($statement)) {
+                DeleteStatement::class => $statement->getTriplesToDelete(),
+                InsertStatement::class => $statement->getTriplesToInsert(),
+                ReplaceStatement::class => $statement->getReplacements(),
+            };
+            $constructStatement = new ConstructStatement($triples, $this->getNamespaces());
+            $constructStatement->where($statement->getConditions());
+        }
+        return $constructStatement;
+    }
+
+    /**
      * @throws ShaclException
      */
-    public function validate(ConstructStatementInterface|DeleteStatementInterface|InsertStatementInterface|ReplaceStatementInterface $statement): bool
+    public function validate(ConstructStatementInterface $statement): bool
     {
         try {
-            if ($statement instanceof ConstructStatementInterface) {
-                $constructStatement = $statement;
-            }
-            else {
-                $triples = match (get_class($statement)) {
-                    DeleteStatement::class => $statement->getTriplesToDelete(),
-                    InsertStatement::class => $statement->getTriplesToInsert(),
-                    ReplaceStatement::class => $statement->getReplacements(),
-                };
-                $constructStatement = new ConstructStatement($triples, $this->getNamespaces());
-                $constructStatement->where($statement->getConditions());
-            }
-            $query = $constructStatement->toQuery();
+            $query = $statement->toQuery();
             $this->logger->debug($query);
             $data = [
                 'contentQuery' => $query,
