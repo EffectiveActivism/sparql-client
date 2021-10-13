@@ -2,6 +2,7 @@
 
 namespace EffectiveActivism\SparQlClient\Serializer\Encoder;
 
+use EffectiveActivism\SparQlClient\Exception\SparQlException;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\Triple;
 use EffectiveActivism\SparQlClient\Syntax\Term\BlankNode\BlankNode;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\Iri;
@@ -17,13 +18,14 @@ class NTripleDecoder implements DecoderInterface
 
     /**
      * @throws InvalidArgumentException
+     * @throws SparQlException
      */
     public function decode(string $data, string $format, array $context = []): array
     {
         $triples = [];
         foreach(preg_split("/((\r?\n)|(\r\n?))/", $data) as $line) {
             $line = trim($line, '. ');
-            if (preg_match('/^((?:<.*>)|(?:_:.*)|(?:".*"(?:(?:\^\^<.*>)|(?:@.*))?)) ((?:<.*>)|(?:_:.*)|(?:".*"(?:(?:\^\^<.*>)|(?:@.*))?)) ((?:<.*>)|(?:_:.*)|(?:".*"(?:(?:\^\^<.*>)|(?:@.*))?))$/m', $line, $matches)) {
+            if (preg_match('/^(.*) (.*) (.*)$/mU', $line, $matches)) {
                 if (count($matches) === 4) {
                     $subject = $this->extractTerm($matches[1]);
                     $predicate = $this->extractTerm($matches[2]);
@@ -43,6 +45,9 @@ class NTripleDecoder implements DecoderInterface
         return self::FORMAT === $format;
     }
 
+    /**
+     * @throws SparQlException
+     */
     protected function extractTerm(string $data): TermInterface
     {
         // Check for blank nodes.

@@ -15,7 +15,9 @@ use EffectiveActivism\SparQlClient\Syntax\Statement\InsertStatementInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\ReplaceStatement;
 use EffectiveActivism\SparQlClient\Syntax\Statement\ReplaceStatementInterface;
 use EffectiveActivism\SparQlClient\Serializer\Encoder\NTripleDecoder;
-use EffectiveActivism\SparQlClient\Syntax\Term\Literal\TypedLiteral;
+use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
+use EffectiveActivism\SparQlClient\Validation\ValidationResult;
+use EffectiveActivism\SparQlClient\Validation\ValidationResultInterface;
 use InvalidArgumentException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Serializer\Serializer;
@@ -70,7 +72,7 @@ class ShaclClient implements ShaclClientInterface
     /**
      * @throws ShaclException
      */
-    public function validate(ConstructStatementInterface $statement): bool
+    public function validate(ConstructStatementInterface $statement): ValidationResultInterface
     {
         try {
             $query = $statement->toQuery();
@@ -86,25 +88,39 @@ class ShaclClient implements ShaclClientInterface
                 'body' => json_encode($data),
             ])->getContent();
             $sets = $this->serializer->decode($responseContent, NTripleDecoder::FORMAT);
+            $status = false;
+            $messages = [];
             /** @var TripleInterface $triple */
             foreach ($sets as $triple) {
                 if (
-                    $triple->getPredicate()->serialize() === '<http://www.w3.org/ns/shacl#conforms>' &&
-                    $triple->getObject() instanceof TypedLiteral &&
-                    $triple->getObject()->getType() === 'xsd:boolean' &&
-                    in_array($triple->getObject()->serialize(), ['"true"^^<http://www.w3.org/2001/XMLSchema#boolean>', '"true"^xsd:boolean'])
+                    $triple->getPredicate()->serialize() === '<http://www.w3.org/ns/shacl#conforms>' ||
+                    $triple->getPredicate()->serialize() === 'sh:conforms'
                 ) {
-                    $this->logger->debug('Validation succeeded');
-                    return true;
+                   if ($triple->getObject()->serialize() === '"true"^^<http://www.w3.org/2001/XMLSchema#boolean>') {
+                       $status = true;
+                   }
+                }
+                elseif (
+                    $triple->getPredicate()->serialize() === '<http://www.w3.org/ns/shacl#resultMessage>' ||
+                    $triple->getPredicate()->serialize() === 'sh:resultMessage'
+                ) {
+                    if ($triple->getObject() instanceof PlainLiteral) {
+                        $messages[] = $triple->getObject()->getRawValue();
+                    }
                 }
             }
+            if ($status) {
+                $this->logger->notice('Validation succeeded');
+            }
+            else {
+                $this->logger->notice('Validation failed');
+            }
+            return new ValidationResult($status, $messages);
         }
         catch (InvalidArgumentException|SparQlException|ExceptionInterface $exception) {
             $this->logger->debug('Validation errored: ' . $exception->getMessage());
             throw new ShaclException($exception->getMessage());
         }
-        $this->logger->debug('Validation failed');
-        return false;
     }
 
     /**
