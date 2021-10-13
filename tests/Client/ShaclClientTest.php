@@ -49,26 +49,30 @@ class ShaclClientTest extends KernelTestCase
             new Triple($subject, $predicate, new Variable('object')),
         ]);
         $statement = $shaclClient->convertToConstructStatement($insertStatement);
-        $this->assertTrue($shaclClient->validate($statement));
+        $result = $shaclClient->validate($statement);
+        $this->assertTrue($result->getStatus());
         $deleteStatement = new DeleteStatement([new Triple($subject, $predicate, $object)], ['schema' => 'http://schema.org/']);
         $deleteStatement->where([
             new Triple($subject, $predicate, new Variable('object')),
         ]);
         $statement = $shaclClient->convertToConstructStatement($deleteStatement);
-        $this->assertTrue($shaclClient->validate($statement));
+        $result = $shaclClient->validate($statement);
+        $this->assertTrue($result->getStatus());
         $replaceStatement = new ReplaceStatement([new Triple($subject, $predicate, $object)], ['schema' => 'http://schema.org/']);
         $replaceStatement->with([new Triple($subject, $predicate, $object)]);
         $replaceStatement->where([
             new Triple($subject, $predicate, new Variable('object')),
         ]);
         $statement = $shaclClient->convertToConstructStatement($replaceStatement);
-        $this->assertTrue($shaclClient->validate($statement));
+        $result = $shaclClient->validate($statement);
+        $this->assertTrue($result->getStatus());
         $constructStatement = new ConstructStatement([new Triple($subject, $predicate, $object)], ['schema' => 'http://schema.org/']);
         $constructStatement->where([
             new Triple($subject, $predicate, new Variable('object')),
         ]);
         $statement = $shaclClient->convertToConstructStatement($constructStatement);
-        $this->assertTrue($shaclClient->validate($statement));
+        $result = $shaclClient->validate($statement);
+        $this->assertTrue($result->getStatus());
     }
 
     public function testFailedValidation()
@@ -91,7 +95,11 @@ class ShaclClientTest extends KernelTestCase
         $statement->where([
             new Triple($subject, $predicate, new Variable('object')),
         ]);
-        $this->assertFalse($shaclClient->validate($shaclClient->convertToConstructStatement($statement)));
+        $result = $shaclClient->validate($shaclClient->convertToConstructStatement($statement));
+        $this->assertFalse($result->getStatus());
+        $this->assertEquals([
+            'Sample validation failure message.'
+        ], $result->getMessages());
     }
 
     public function testValidationException()
