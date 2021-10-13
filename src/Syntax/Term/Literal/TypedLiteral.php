@@ -33,7 +33,7 @@ class TypedLiteral extends AbstractLiteral implements TermInterface
                 default => throw new SparQlException(sprintf('Typed literal "%s" has unknown type "%s"', $this->getRawValue(), gettype($this->value))),
             };
         }
-        elseif (in_array($this->dataType->serialize(), ['xsd:boolean', 'http://www.w3.org/2001/XMLSchema#boolean'])) {
+        elseif (in_array($this->dataType->serialize(), ['xsd:boolean', '<http://www.w3.org/2001/XMLSchema#boolean>'])) {
             $value = 'true';
             if (is_string($this->value) && ($this->value === 'false' || $this->value === '0')) {
                 $value = 'false';
@@ -70,8 +70,8 @@ class TypedLiteral extends AbstractLiteral implements TermInterface
             };
         }
         elseif (in_array($this->dataType->getRawValue(), [
+            'http://www.w3.org/2001/XMLSchema#boolean',
             'xsd:boolean',
-            'http://www.w3.org/2001/XMLSchema#boolean'
         ])) {
             return 'xsd:boolean';
         }
