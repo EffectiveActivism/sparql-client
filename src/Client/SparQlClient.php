@@ -5,6 +5,8 @@ namespace EffectiveActivism\SparQlClient\Client;
 use EffectiveActivism\SparQlClient\Constant;
 use EffectiveActivism\SparQlClient\Exception\SparQlException;
 use EffectiveActivism\SparQlClient\Serializer\Normalizer\SparQlAskDenormalizer;
+use EffectiveActivism\SparQlClient\Serializer\Normalizer\SparQlConstructDenormalizer;
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\Triple;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\TripleInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\AskStatement;
 use EffectiveActivism\SparQlClient\Syntax\Statement\AskStatementInterface;
@@ -61,8 +63,9 @@ class SparQlClient implements SparQlClientInterface
         $this->logger = $logger;
         $this->namespaces = $configuration['namespaces'];
         $normalizers = [
-            new SparQlResultDenormalizer(),
             new SparQlAskDenormalizer(),
+            new SparQlConstructDenormalizer(),
+            new SparQlResultDenormalizer(),
         ];
         $encoders = [new XmlEncoder()];
         $this->serializer = new Serializer($normalizers, $encoders);
@@ -75,7 +78,7 @@ class SparQlClient implements SparQlClientInterface
     {
         return match (get_class($statement)) {
             AskStatement::class => $this->handleAskStatement($statement),
-            ConstructStatement::class => $this->handleQueryStatment($statement, $toTriples),
+            ConstructStatement::class => $this->handleConstructStatement($statement, $toTriples),
             DeleteStatement::class => $this->handleDeleteStatement($statement),
             InsertStatement::class => $this->handleInsertStatement($statement),
             ReplaceStatement::class => $this->handleReplaceStatement($statement),
@@ -186,6 +189,52 @@ class SparQlClient implements SparQlClientInterface
             }
         }
         return $this->serializer->deserialize($responseContent, SparQlAskDenormalizer::TYPE, 'xml');
+    }
+
+    protected function handleConstructStatement(ConstructStatementInterface $statement, bool $toTriples): array
+    {
+        $query = $statement->toQuery();
+        $this->logger->debug($query);
+        $parameters = ['body' => ['query' => $query]];
+        $cacheHit = true;
+        $responseContent = null;
+        $queryKey = $this->getKey($query);
+        try {
+            $responseContent = $this->cacheAdapter->get($queryKey, function (ItemInterface $item) use ($parameters, &$cacheHit) {
+                $responseContent = null;
+                try {
+                    $responseContent = $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent();
+                    $cacheHit = false;
+                } catch (HttpClientExceptionInterface $exception) {
+                    throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
+                }
+                return $responseContent;
+            });
+        } catch (InvalidArgumentException $exception) {
+            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
+        }
+        // Update cache for successful select statement requests, if uncached.
+        if (!$cacheHit) {
+            $tags = $this->extractTags($statement->getConditions());
+            try {
+                $cacheItem = $this->cacheAdapter->getItem($queryKey);
+                $cacheItem->set($responseContent);
+                $cacheItem->tag($tags);
+                $this->cacheAdapter->save($cacheItem);
+            } catch (CacheException|InvalidArgumentException $exception) {
+                throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
+            }
+        }
+        // Return response as either a set of terms or a set of triples.
+        $result = $sets = $this->serializer->deserialize($responseContent, SparQlConstructDenormalizer::TYPE, 'xml');
+        if ($toTriples === true) {
+            $triples = [];
+            foreach ($sets as $set) {
+                $triples[] = new Triple($set[0], $set[1], $set[2]);
+            }
+            $result = $triples;
+        }
+        return $result;
     }
 
     /**
