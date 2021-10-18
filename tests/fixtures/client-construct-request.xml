@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rdf:RDF
+        xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+        xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+        xmlns:owl="http://www.w3.org/2002/07/owl#"
+        xmlns:skos="http://www.w3.org/2004/02/skos/core#"
+        xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+        xmlns:effectiveactivism="https://effectiveactivism.com/ontology/"
+        xmlns:schema="https://schema.org/"
+        xmlns:bds="http://www.bigdata.com/rdf/search#"
+        xmlns:sesame="http://www.openrdf.org/schema/sesame#"
+        xmlns:fn="http://www.w3.org/2005/xpath-functions#"
+        xmlns:foaf="http://xmlns.com/foaf/0.1/"
+        xmlns:dc="http://purl.org/dc/elements/1.1/"
+        xmlns:hint="http://www.bigdata.com/queryHints#"
+        xmlns:bd="http://www.bigdata.com/rdf#"
+>
+    <rdf:Description rdf:about="urn:uuid:d8c0c240-17a2-421e-8c24-49e75a1bddf0">
+        <schema:knows rdf:resource="urn:uuid:3850ff8f-dbaa-4b11-80d4-43b22fd18855"/>
+        <schema:alternateName>Lorem</schema:alternateName>
+    </rdf:Description>
+</rdf:RDF>
