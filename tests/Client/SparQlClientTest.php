@@ -10,6 +10,7 @@ use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\TripleInterface;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\Iri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
+use EffectiveActivism\SparQlClient\Syntax\Term\TermInterface;
 use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
 use EffectiveActivism\SparQlClient\Tests\Environment\TestKernel;
 use Exception;
@@ -119,6 +120,7 @@ class SparQlClientTest extends KernelTestCase
     /**
      * @covers \EffectiveActivism\SparQlClient\Client\SparQlClient
      * @covers \EffectiveActivism\SparQlClient\Syntax\Statement\ConstructStatement
+     * @covers \EffectiveActivism\SparQlClient\Serializer\Normalizer\SparQlConstructDenormalizer
      */
     public function testConstructStatementRequest()
     {
@@ -126,7 +128,7 @@ class SparQlClientTest extends KernelTestCase
         $receivedQuery = null;
         $httpClient = new MockHttpClient(function ($method, $url, $options) use (&$receivedQuery) {
             $receivedQuery = $options['body'];
-            return new MockResponse(file_get_contents(__DIR__ . '/../fixtures/client-select-request.xml'));
+            return new MockResponse(file_get_contents(__DIR__ . '/../fixtures/client-construct-request.xml'));
         });
         $kernel = new TestKernel('test', true);
         $kernel->boot();
@@ -136,15 +138,53 @@ class SparQlClientTest extends KernelTestCase
         $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
         $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
         $subject = new Variable('subject');
-        $predicate = new PrefixedIri('schema', 'headline');
+        $predicate = new PrefixedIri('schema', 'identifier');
         $object = new Variable('object');
         $statement = $sparQlClient
-            ->construct([new Triple($subject, $predicate, $object),])
+            ->construct([new Triple($subject, new PrefixedIri('rdf', 'type'), new PrefixedIri('schema', 'Person'))])
             ->where([
                 new Triple($subject, $predicate, $object),
             ]);
-        $resultSet = $sparQlClient->execute($statement);
+        /** @var TripleInterface[] $resultSet */
+        $resultSet = $sparQlClient->execute($statement, true);
         $this->assertCount(2, $resultSet);
+        $this->assertEquals('urn:uuid:d8c0c240-17a2-421e-8c24-49e75a1bddf0', $resultSet[0]->getSubject()->getRawValue());
+    }
+
+    /**
+     * @covers \EffectiveActivism\SparQlClient\Client\SparQlClient
+     * @covers \EffectiveActivism\SparQlClient\Syntax\Statement\ConstructStatement
+     * @covers \EffectiveActivism\SparQlClient\Serializer\Normalizer\SparQlConstructDenormalizer
+     */
+    public function testConstructStatementRequestMultiple()
+    {
+        $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
+        $receivedQuery = null;
+        $httpClient = new MockHttpClient(function ($method, $url, $options) use (&$receivedQuery) {
+            $receivedQuery = $options['body'];
+            return new MockResponse(file_get_contents(__DIR__ . '/../fixtures/client-construct-request-multiple.xml'));
+        });
+        $kernel = new TestKernel('test', true);
+        $kernel->boot();
+        $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
+        $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
+        /** @var SparQlClientInterface $sparQlClient */
+        $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
+        $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
+        $subject = new Variable('subject');
+        $predicate = new PrefixedIri('schema', 'identifier');
+        $object = new Variable('object');
+        $statement = $sparQlClient
+            ->construct([new Triple($subject, new PrefixedIri('rdf', 'type'), new PrefixedIri('schema', 'Person'))])
+            ->where([
+                new Triple($subject, $predicate, $object),
+            ]);
+        /** @var TermInterface[][] $resultSet */
+        $resultSet = $sparQlClient->execute($statement);
+        $this->assertCount(4, $resultSet);
+        $this->assertEquals('urn:uuid:d8c0c240-17a2-421e-8c24-49e75a1bddf0', $resultSet[0][0]->getRawValue());
+        $this->assertEquals('schema:alternateName', $resultSet[1][1]->getRawValue());
+        $this->assertEquals('Ipsum', $resultSet[3][2]->getRawValue());
     }
 
     /**
@@ -271,6 +311,7 @@ class SparQlClientTest extends KernelTestCase
         $statement
             ->where([new Triple($subject, $predicate, $object)]);
         $resultTripleSet = $sparQlClient->execute($statement, true);
+        dump($resultTripleSet);
         $this->assertCount(1, $resultTripleSet);
         /** @var TripleInterface $triple */
         $triple = $resultTripleSet[0];
@@ -544,6 +585,83 @@ class SparQlClientTest extends KernelTestCase
         $triple = new Triple($subject, $predicate, $object);
         $this->expectException(SparQlException::class);
         $sparQlClient->execute($sparQlClient->ask()->where([$triple]));
+    }
+
+    public function testClientConstructStatementException()
+    {
+        $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
+        $httpClient = new MockHttpClient([new MockResponse(null, ['http_code' => 500])]);
+        $kernel = new TestKernel('test', true);
+        $kernel->boot();
+        $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
+        $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
+        /** @var SparQlClientInterface $sparQlClient */
+        $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
+        $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
+        $subject = new Variable('subject');
+        $predicate = new PrefixedIri('schema', 'headline');
+        $object = new PrefixedIri('schema', 'Article');
+        $triple = new Triple($subject, $predicate, $object);
+        $statement = $sparQlClient->construct([$triple])->where([$triple]);
+        $threwException = false;
+        try {
+            $sparQlClient->execute($statement);
+        } catch (SparQlException) {
+            $threwException = true;
+        }
+        $this->assertTrue($threwException);
+    }
+
+    public function testClientConstructStatementCacheException()
+    {
+        $cacheAdapterStub = $this->createMock(TagAwareAdapter::class);
+        $exceptionStub = new class extends Exception implements CacheInvalidArgumentException {};
+        $cacheAdapterStub->method('get')->willThrowException($exceptionStub);
+        $httpClient = new MockHttpClient([new MockResponse(null)]);
+        $kernel = new TestKernel('test', true);
+        $kernel->boot();
+        $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapterStub);
+        $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
+        /** @var SparQlClientInterface $sparQlClient */
+        $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
+        $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
+        $subject = new Variable('subject');
+        $predicate = new PrefixedIri('schema', 'headline');
+        $object = new PrefixedIri('schema', 'Article');
+        $triple = new Triple($subject, $predicate, $object);
+        $this->expectException(SparQlException::class);
+        $sparQlClient->execute($sparQlClient->construct([$triple])->where([$triple]));
+    }
+
+    public function testClientConstructStatementCacheSaveException()
+    {
+        $cacheAdapterStub = $this->getMockBuilder(TagAwareAdapter::class)
+            ->setConstructorArgs([new ArrayAdapter()])
+            ->onlyMethods(['getItem'])
+            ->getMock();
+        $cacheItem = new CacheItem();
+        $reflectedCacheItem = new \ReflectionObject($cacheItem);
+        $reflectedProperty = $reflectedCacheItem->getProperty('key');
+        $reflectedProperty->setAccessible(true);
+        $reflectedProperty->setValue($cacheItem, 'foo');
+        $exceptionStub = new class extends Exception implements CacheInvalidArgumentException {};
+        $cacheAdapterStub->expects($this->at(0))->method('getItem')->willReturn($cacheItem);
+        $cacheAdapterStub->expects($this->at(1))->method('getItem')->willThrowException($exceptionStub);
+        $selectResponseContent = file_get_contents(__DIR__ . '/../fixtures/client-select-request.xml');
+        $httpClient = new MockHttpClient([new MockResponse($selectResponseContent)]);
+        $kernel = new TestKernel('test', true);
+        $kernel->boot();
+        $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapterStub);
+        $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
+        /** @var SparQlClientInterface $sparQlClient */
+        $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
+        $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
+        $subject = new Variable('subject');
+        $predicate = new PrefixedIri('schema', 'headline');
+        $object = new PrefixedIri('schema', 'Article');
+        $triple = new Triple($subject, $predicate, $object);
+        $this->expectException(SparQlException::class);
+        $sparQlClient->execute($sparQlClient->construct([$triple])->where([$triple]));
     }
 
     public function testClientDeleteStatementException()
