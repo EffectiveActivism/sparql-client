@@ -311,7 +311,6 @@ class SparQlClientTest extends KernelTestCase
         $statement
             ->where([new Triple($subject, $predicate, $object)]);
         $resultTripleSet = $sparQlClient->execute($statement, true);
-        dump($resultTripleSet);
         $this->assertCount(1, $resultTripleSet);
         /** @var TripleInterface $triple */
         $triple = $resultTripleSet[0];
@@ -377,7 +376,7 @@ class SparQlClientTest extends KernelTestCase
         }));
     }
 
-    public function testCachingInvalidationForDeleteStatment()
+    public function testCachingInvalidationForDeleteStatement()
     {
         $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
         $selectResponseContent = file_get_contents(__DIR__ . '/../fixtures/client-select-request.xml');
@@ -402,7 +401,7 @@ class SparQlClientTest extends KernelTestCase
         }));
     }
 
-    public function testCachingInvalidationForReplaceStatment()
+    public function testCachingInvalidationForReplaceStatement()
     {
         $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
         $selectResponseContent = file_get_contents(__DIR__ . '/../fixtures/client-select-request.xml');
