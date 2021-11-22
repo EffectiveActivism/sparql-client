@@ -82,14 +82,14 @@ class SparQlClient implements SparQlClientInterface
             DeleteStatement::class => $this->handleDeleteStatement($statement),
             InsertStatement::class => $this->handleInsertStatement($statement),
             ReplaceStatement::class => $this->handleReplaceStatement($statement),
-            SelectStatement::class => $this->handleQueryStatment($statement, $toTriples)
+            SelectStatement::class => $this->handleQueryStatement($statement, $toTriples)
         };
     }
 
     /**
      * @throws SparQlException
      */
-    protected function handleQueryStatment(ConstructStatementInterface|SelectStatementInterface $statement, bool $toTriples): array
+    protected function handleQueryStatement(ConstructStatementInterface|SelectStatementInterface $statement, bool $toTriples): array
     {
         $query = $statement->toQuery();
         $this->logger->debug($query);
@@ -111,9 +111,15 @@ class SparQlClient implements SparQlClientInterface
         } catch (InvalidArgumentException $exception) {
             throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
         }
+        // Return response as either a set of terms or a set of triples.
+        $result = $sets = $this->serializer->deserialize($responseContent, SparQlResultDenormalizer::TYPE, 'xml');
         // Update cache for successful select statement requests, if uncached.
         if (!$cacheHit) {
             $tags = $this->extractTags($statement->getConditions());
+            // Include result iris and literals.
+            foreach ($result as $resultSet) {
+                $tags = $this->extractTags($resultSet, $tags);
+            }
             try {
                 $cacheItem = $this->cacheAdapter->getItem($queryKey);
                 $cacheItem->set($responseContent);
@@ -123,8 +129,6 @@ class SparQlClient implements SparQlClientInterface
                 throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
             }
         }
-        // Return response as either a set of terms or a set of triples.
-        $result = $sets = $this->serializer->deserialize($responseContent, SparQlResultDenormalizer::TYPE, 'xml');
         if ($toTriples === true) {
             $conditions = $statement->getConditions();
             foreach ($sets as $set) {
@@ -191,6 +195,9 @@ class SparQlClient implements SparQlClientInterface
         return $this->serializer->deserialize($responseContent, SparQlAskDenormalizer::TYPE, 'xml');
     }
 
+    /**
+     * @throws SparQlException
+     */
     protected function handleConstructStatement(ConstructStatementInterface $statement, bool $toTriples): array
     {
         $query = $statement->toQuery();
@@ -213,9 +220,15 @@ class SparQlClient implements SparQlClientInterface
         } catch (InvalidArgumentException $exception) {
             throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
         }
+        // Return response as either a set of terms or a set of triples.
+        $result = $sets = $this->serializer->deserialize($responseContent, SparQlConstructDenormalizer::TYPE, 'xml');
         // Update cache for successful select statement requests, if uncached.
         if (!$cacheHit) {
             $tags = $this->extractTags($statement->getConditions());
+            // Include result iris and literals.
+            foreach ($result as $resultSet) {
+                $tags = $this->extractTags($resultSet, $tags);
+            }
             try {
                 $cacheItem = $this->cacheAdapter->getItem($queryKey);
                 $cacheItem->set($responseContent);
@@ -225,8 +238,6 @@ class SparQlClient implements SparQlClientInterface
                 throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
             }
         }
-        // Return response as either a set of terms or a set of triples.
-        $result = $sets = $this->serializer->deserialize($responseContent, SparQlConstructDenormalizer::TYPE, 'xml');
         if ($toTriples === true) {
             $triples = [];
             foreach ($sets as $set) {
