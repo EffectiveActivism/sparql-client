@@ -16,3 +16,6 @@ services:
 
   Symfony\Contracts\Cache\TagAwareCacheInterface:
     class: Symfony\Component\Cache\Adapter\TagAwareAdapter
+
+  Symfony\Component\Cache\Adapter\AdapterInterface:
+    class: Symfony\Component\Cache\Adapter\ArrayAdapter
