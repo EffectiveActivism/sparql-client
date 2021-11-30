@@ -197,7 +197,7 @@ class SparQlClientTest extends KernelTestCase
         $receivedQuery = null;
         $httpClient = new MockHttpClient(function ($method, $url, $options) use (&$receivedQuery) {
             $receivedQuery = $options['body'];
-            return new MockResponse(null);
+            return new MockResponse('');
         });
         $kernel = new TestKernel('test', true);
         $kernel->boot();
@@ -231,7 +231,7 @@ class SparQlClientTest extends KernelTestCase
         $receivedQuery = null;
         $httpClient = new MockHttpClient(function ($method, $url, $options) use (&$receivedQuery) {
             $receivedQuery = $options['body'];
-            return new MockResponse(null);
+            return new MockResponse('');
         });
         $kernel = new TestKernel('test', true);
         $kernel->boot();
@@ -262,7 +262,7 @@ class SparQlClientTest extends KernelTestCase
         $receivedQuery = null;
         $httpClient = new MockHttpClient(function ($method, $url, $options) use (&$receivedQuery) {
             $receivedQuery = $options['body'];
-            return new MockResponse(null);
+            return new MockResponse('');
         });
         $kernel = new TestKernel('test', true);
         $kernel->boot();
@@ -358,7 +358,7 @@ class SparQlClientTest extends KernelTestCase
     {
         $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
         $selectResponseContent = file_get_contents(__DIR__ . '/../fixtures/client-select-request.xml');
-        $httpClient = new MockHttpClient([new MockResponse($selectResponseContent), new MockResponse(null), new MockResponse(null)]);
+        $httpClient = new MockHttpClient([new MockResponse($selectResponseContent), new MockResponse(''), new MockResponse('')]);
         $kernel = new TestKernel('test', true);
         $kernel->boot();
         $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
@@ -380,7 +380,7 @@ class SparQlClientTest extends KernelTestCase
     {
         $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
         $selectResponseContent = file_get_contents(__DIR__ . '/../fixtures/client-select-request.xml');
-        $httpClient = new MockHttpClient([new MockResponse($selectResponseContent), new MockResponse(null)]);
+        $httpClient = new MockHttpClient([new MockResponse($selectResponseContent), new MockResponse('')]);
         $kernel = new TestKernel('test', true);
         $kernel->boot();
         $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
@@ -405,7 +405,7 @@ class SparQlClientTest extends KernelTestCase
     {
         $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
         $selectResponseContent = file_get_contents(__DIR__ . '/../fixtures/client-select-request.xml');
-        $httpClient = new MockHttpClient([new MockResponse($selectResponseContent), new MockResponse(null)]);
+        $httpClient = new MockHttpClient([new MockResponse($selectResponseContent), new MockResponse('')]);
         $kernel = new TestKernel('test', true);
         $kernel->boot();
         $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
@@ -427,7 +427,7 @@ class SparQlClientTest extends KernelTestCase
     public function testClientSelectStatementException()
     {
         $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
-        $httpClient = new MockHttpClient([new MockResponse(null, ['http_code' => 500])]);
+        $httpClient = new MockHttpClient([new MockResponse('', ['http_code' => 500])]);
         $kernel = new TestKernel('test', true);
         $kernel->boot();
         $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
@@ -468,7 +468,7 @@ class SparQlClientTest extends KernelTestCase
         $cacheAdapterStub = $this->createMock(TagAwareAdapter::class);
         $exceptionStub = new class extends Exception implements CacheInvalidArgumentException {};
         $cacheAdapterStub->method('get')->willThrowException($exceptionStub);
-        $httpClient = new MockHttpClient([new MockResponse(null)]);
+        $httpClient = new MockHttpClient([new MockResponse('')]);
         $kernel = new TestKernel('test', true);
         $kernel->boot();
         $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapterStub);
@@ -518,7 +518,7 @@ class SparQlClientTest extends KernelTestCase
     public function testClientAskStatementException()
     {
         $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
-        $httpClient = new MockHttpClient([new MockResponse(null, ['http_code' => 500])]);
+        $httpClient = new MockHttpClient([new MockResponse('', ['http_code' => 500])]);
         $kernel = new TestKernel('test', true);
         $kernel->boot();
         $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
@@ -539,7 +539,7 @@ class SparQlClientTest extends KernelTestCase
         $cacheAdapterStub = $this->createMock(TagAwareAdapter::class);
         $exceptionStub = new class extends Exception implements CacheInvalidArgumentException {};
         $cacheAdapterStub->method('get')->willThrowException($exceptionStub);
-        $httpClient = new MockHttpClient([new MockResponse(null)]);
+        $httpClient = new MockHttpClient([new MockResponse('')]);
         $kernel = new TestKernel('test', true);
         $kernel->boot();
         $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapterStub);
@@ -589,7 +589,7 @@ class SparQlClientTest extends KernelTestCase
     public function testClientConstructStatementException()
     {
         $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
-        $httpClient = new MockHttpClient([new MockResponse(null, ['http_code' => 500])]);
+        $httpClient = new MockHttpClient([new MockResponse('', ['http_code' => 500])]);
         $kernel = new TestKernel('test', true);
         $kernel->boot();
         $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
@@ -616,7 +616,7 @@ class SparQlClientTest extends KernelTestCase
         $cacheAdapterStub = $this->createMock(TagAwareAdapter::class);
         $exceptionStub = new class extends Exception implements CacheInvalidArgumentException {};
         $cacheAdapterStub->method('get')->willThrowException($exceptionStub);
-        $httpClient = new MockHttpClient([new MockResponse(null)]);
+        $httpClient = new MockHttpClient([new MockResponse('')]);
         $kernel = new TestKernel('test', true);
         $kernel->boot();
         $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapterStub);
@@ -666,7 +666,7 @@ class SparQlClientTest extends KernelTestCase
     public function testClientDeleteStatementException()
     {
         $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
-        $httpClient = new MockHttpClient([new MockResponse(null, ['http_code' => 500])]);
+        $httpClient = new MockHttpClient([new MockResponse('', ['http_code' => 500])]);
         $kernel = new TestKernel('test', true);
         $kernel->boot();
         $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
@@ -687,7 +687,7 @@ class SparQlClientTest extends KernelTestCase
         $cacheAdapterStub = $this->createMock(TagAwareAdapter::class);
         $exceptionStub = new class extends Exception implements CacheInvalidArgumentException {};
         $cacheAdapterStub->method('invalidateTags')->willThrowException($exceptionStub);
-        $httpClient = new MockHttpClient([new MockResponse(null)]);
+        $httpClient = new MockHttpClient([new MockResponse('')]);
         $kernel = new TestKernel('test', true);
         $kernel->boot();
         $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapterStub);
@@ -706,7 +706,7 @@ class SparQlClientTest extends KernelTestCase
     public function testClientReplaceStatementException()
     {
         $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
-        $httpClient = new MockHttpClient([new MockResponse(null, ['http_code' => 500])]);
+        $httpClient = new MockHttpClient([new MockResponse('', ['http_code' => 500])]);
         $kernel = new TestKernel('test', true);
         $kernel->boot();
         $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
@@ -727,7 +727,7 @@ class SparQlClientTest extends KernelTestCase
         $cacheAdapterStub = $this->createMock(TagAwareAdapter::class);
         $exceptionStub = new class extends Exception implements CacheInvalidArgumentException {};
         $cacheAdapterStub->method('invalidateTags')->willThrowException($exceptionStub);
-        $httpClient = new MockHttpClient([new MockResponse(null)]);
+        $httpClient = new MockHttpClient([new MockResponse('')]);
         $kernel = new TestKernel('test', true);
         $kernel->boot();
         $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapterStub);
@@ -746,7 +746,7 @@ class SparQlClientTest extends KernelTestCase
     public function testClientInsertStatementException()
     {
         $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
-        $httpClient = new MockHttpClient([new MockResponse(null, ['http_code' => 500])]);
+        $httpClient = new MockHttpClient([new MockResponse('', ['http_code' => 500])]);
         $kernel = new TestKernel('test', true);
         $kernel->boot();
         $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
@@ -766,7 +766,7 @@ class SparQlClientTest extends KernelTestCase
     {
         $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
         $selectResponseContent = file_get_contents(__DIR__ . '/../fixtures/client-upload-request.xml');
-        $httpClient = new MockHttpClient([new MockResponse($selectResponseContent), new MockResponse(null)]);
+        $httpClient = new MockHttpClient([new MockResponse($selectResponseContent), new MockResponse('')]);
         $kernel = new TestKernel('test', true);
         $kernel->boot();
         $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
@@ -780,7 +780,7 @@ class SparQlClientTest extends KernelTestCase
     public function testUploadException()
     {
         $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
-        $httpClient = new MockHttpClient([new MockResponse(null, ['http_code' => 500])]);
+        $httpClient = new MockHttpClient([new MockResponse('', ['http_code' => 500])]);
         $kernel = new TestKernel('test', true);
         $kernel->boot();
         $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);

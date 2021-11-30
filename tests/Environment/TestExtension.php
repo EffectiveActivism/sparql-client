@@ -28,7 +28,7 @@ class TestExtension extends Extension
         $definition->addArgument($config);
     }
 
-    public function getAlias()
+    public function getAlias(): string
     {
         return 'sparql_client';
     }
