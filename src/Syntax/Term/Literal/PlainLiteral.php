@@ -35,12 +35,8 @@ class PlainLiteral extends AbstractLiteral implements TermInterface
             'double' => sprintf('"%s"^^xsd:decimal', $this->value),
             'integer' => sprintf('"%s"^^xsd:integer', $this->value),
             'string' => sprintf(
-                '"""%s"""%s',
-                str_replace(
-                    ['\\', '"', '\''],
-                    ['\\\\', '\"', '\\\''],
-                    $this->value
-                ),
+                '%s%s',
+                $this->sanitizeString(),
                 empty($this->languageTag) ? '' : sprintf('@%s', $this->languageTag)
             ),
             default => null,

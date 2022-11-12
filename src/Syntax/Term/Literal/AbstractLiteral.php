@@ -36,6 +36,20 @@ abstract class AbstractLiteral extends AbstractTerm implements TermInterface
         }
     }
 
+    protected function sanitizeString(): string
+    {
+        $value = sprintf(
+            '"""%s"""',
+            str_replace(
+                ['\\', '"', '\'', "\n", "\r", "\t"],
+                ['\\\\', '\"', '\\\'', '\n', '\r', '\t'],
+                (string) $this->value
+            )
+        );
+        $value = preg_replace('/[\pZ\pC]/u', ' ', $value);
+        return $value;
+    }
+
     /**
      * Getters.
      */

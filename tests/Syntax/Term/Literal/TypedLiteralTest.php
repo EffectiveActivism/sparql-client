@@ -44,19 +44,22 @@ class TypedLiteralTest extends KernelTestCase
         $typedLiteral = new TypedLiteral(true);
         $this->assertEquals('"true"^^xsd:boolean', $typedLiteral->serialize());
         $this->assertEquals('xsd:boolean', $typedLiteral->getType());
+        $typedLiteral = new TypedLiteral('True', new PrefixedIri('xsd', 'boolean'));
+        $this->assertEquals('"true"^^xsd:boolean', $typedLiteral->serialize());
         $typedLiteral = new TypedLiteral(true, new PrefixedIri('xsd', 'boolean'));
         $this->assertEquals('"true"^^xsd:boolean', $typedLiteral->serialize());
         $this->assertEquals('xsd:boolean', $typedLiteral->getType());
         $typedLiteral = new TypedLiteral('false', new PrefixedIri('xsd', 'boolean'));
         $this->assertEquals('"false"^^xsd:boolean', $typedLiteral->serialize());
         $this->assertEquals('xsd:boolean', $typedLiteral->getType());
+        $typedLiteral = new TypedLiteral(1, new PrefixedIri('xsd', 'boolean'));
+        $this->assertEquals('"true"^^xsd:boolean', $typedLiteral->serialize());
         $typedLiteral = new TypedLiteral(0, new PrefixedIri('xsd', 'boolean'));
         $this->assertEquals('"false"^^xsd:boolean', $typedLiteral->serialize());
         $this->assertEquals('xsd:boolean', $typedLiteral->getType());
         $typedLiteral = new TypedLiteral(22, new PrefixedIri('xsd', 'boolean'));
         $this->expectException(SparQlException::class);
         $typedLiteral->serialize();
-
     }
 
     public function testDateTypedLiteral()

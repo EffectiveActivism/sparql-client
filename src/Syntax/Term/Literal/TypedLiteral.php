@@ -29,14 +29,7 @@ class TypedLiteral extends AbstractLiteral implements TermInterface
                 'boolean' => sprintf('"%s"^^xsd:boolean', $this->value ? 'true' : 'false'),
                 'double' => sprintf('"%s"^^xsd:decimal', $this->value),
                 'integer' => sprintf('"%s"^^xsd:integer', $this->value),
-                'string' => sprintf(
-                    '"""%s"""',
-                    str_replace(
-                        ['\\', '"', '\''],
-                        ['\\\\', '\"', '\\\''],
-                        $this->value
-                    )
-                ),
+                'string' => $this->sanitizeString(),
                 default => throw new SparQlException(sprintf('Typed literal "%s" has unknown type "%s"', $this->getRawValue(), gettype($this->value))),
             };
         }
@@ -62,7 +55,7 @@ class TypedLiteral extends AbstractLiteral implements TermInterface
             return sprintf('"%s"^^%s', $value, $this->dataType->serialize());
         }
         else {
-            return sprintf('"""%s"""^^%s', $this->value, $this->dataType->serialize());
+            return sprintf('%s^^%s', $this->sanitizeString(), $this->dataType->serialize());
         }
     }
 
