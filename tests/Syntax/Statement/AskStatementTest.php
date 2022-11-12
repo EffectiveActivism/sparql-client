@@ -12,7 +12,7 @@ class AskStatementTest extends KernelTestCase
 {
     const SUBJECT_URI = 'urn:uuid:606d5596-a8ec-11eb-8430-bb55757c9ada';
 
-    const ASK_STATEMENT = 'ASK { <urn:uuid:606d5596-a8ec-11eb-8430-bb55757c9ada> <http://schema.org/headline> "Lorem Ipsum" . }';
+    const ASK_STATEMENT = 'ASK { <urn:uuid:606d5596-a8ec-11eb-8430-bb55757c9ada> <http://schema.org/headline> """Lorem Ipsum""" . }';
 
     public function testAskStatement()
     {

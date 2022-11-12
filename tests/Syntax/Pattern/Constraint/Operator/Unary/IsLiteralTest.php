@@ -8,7 +8,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 class IsLiteralTest extends KernelTestCase
 {
-    const SERIALIZED_OPERATOR = 'IsLITERAL("lorem")';
+    const SERIALIZED_OPERATOR = 'IsLITERAL("""lorem""")';
 
     public function testOperator()
     {

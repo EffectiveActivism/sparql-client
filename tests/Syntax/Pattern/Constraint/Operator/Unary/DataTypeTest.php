@@ -8,7 +8,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 class DataTypeTest extends KernelTestCase
 {
-    const SERIALIZED_OPERATOR = 'DATATYPE("lorem")';
+    const SERIALIZED_OPERATOR = 'DATATYPE("""lorem""")';
 
     public function testOperator()
     {

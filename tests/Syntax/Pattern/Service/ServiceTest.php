@@ -12,7 +12,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 class ServiceTest extends KernelTestCase
 {
-    const SERIALIZED_VALUE = 'SERVICE bds:search { ?object bds:search "Lorem" . }';
+    const SERIALIZED_VALUE = 'SERVICE bds:search { ?object bds:search """Lorem""" . }';
 
     public function testService()
     {

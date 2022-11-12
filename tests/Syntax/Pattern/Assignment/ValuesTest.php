@@ -16,7 +16,7 @@ class ValuesTest extends KernelTestCase
 {
     const NAMESPACES = 'PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX owl: <http://www.w3.org/2002/07/owl#> PREFIX skos: <http://www.w3.org/2004/02/skos/core#> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> PREFIX schema: <http://schema.org/>';
 
-    const SERIALIZED_VALUES = self::NAMESPACES . ' SELECT ?headline ?commentCount WHERE { VALUES ( ?headline ?commentCount ) { ( "Lorem" "2"^^xsd:integer ) ( "Ipsum" UNDEF ) } . }';
+    const SERIALIZED_VALUES = self::NAMESPACES . ' SELECT ?headline ?commentCount WHERE { VALUES ( ?headline ?commentCount ) { ( """Lorem""" "2"^^xsd:integer ) ( """Ipsum""" UNDEF ) } . }';
 
     public function testValues()
     {

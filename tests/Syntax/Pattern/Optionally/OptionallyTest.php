@@ -14,7 +14,7 @@ class OptionallyTest extends KernelTestCase
 {
     const IRI = 'urn:uuid:b40fe72e-95f8-11eb-bca8-5ffd58524f9a';
 
-    const SERIALIZED_VALUE = 'OPTIONAL { <urn:uuid:b40fe72e-95f8-11eb-bca8-5ffd58524f9a> schema:headline "Lorem" . }';
+    const SERIALIZED_VALUE = 'OPTIONAL { <urn:uuid:b40fe72e-95f8-11eb-bca8-5ffd58524f9a> schema:headline """Lorem""" . }';
 
     public function testOptionally()
     {

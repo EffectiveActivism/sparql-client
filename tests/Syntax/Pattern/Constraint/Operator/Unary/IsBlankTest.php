@@ -8,7 +8,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 class IsBlankTest extends KernelTestCase
 {
-    const SERIALIZED_OPERATOR = 'IsBLANK("lorem")';
+    const SERIALIZED_OPERATOR = 'IsBLANK("""lorem""")';
 
     public function testOperator()
     {

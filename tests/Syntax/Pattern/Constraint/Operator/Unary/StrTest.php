@@ -8,7 +8,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 class StrTest extends KernelTestCase
 {
-    const SERIALIZED_OPERATOR = 'STR("lorem")';
+    const SERIALIZED_OPERATOR = 'STR("""lorem""")';
 
     public function testOperator()
     {

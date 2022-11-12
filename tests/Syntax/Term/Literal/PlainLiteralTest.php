@@ -9,7 +9,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 class PlainLiteralTest extends KernelTestCase
 {
     const VALID_LITERALS = [
-        '"lorem"' => 'lorem',
+        '"""lorem"""' => 'lorem',
         '"4"^^xsd:integer' => 4,
         '"-4"^^xsd:integer' => -4,
         '"0"^^xsd:integer' => 0,
@@ -49,20 +49,15 @@ class PlainLiteralTest extends KernelTestCase
     public function testLiteralWrappers()
     {
         $literal = new PlainLiteral('"lorem"');
-        $this->assertEquals('\'"lorem"\'', $literal->serialize());
+        $this->assertEquals('"""\"lorem\""""', $literal->serialize());
         $literal = new PlainLiteral('\'"lorem"\'');
-        $this->assertEquals('"""\'"lorem"\'"""', $literal->serialize());
+        $this->assertEquals('"""\\\'\"lorem\"\\\'"""', $literal->serialize());
         $literal = new PlainLiteral('\'"""lorem"""\'');
-        $this->assertEquals('\'\'\'\'"""lorem"""\'\'\'\'', $literal->serialize());
+        $this->assertEquals('"""\\\'\"\"\"lorem\"\"\"\\\'"""', $literal->serialize());
         $literal = new PlainLiteral('\'"lorem"\'');
-        $this->assertEquals('"""\'"lorem"\'"""', $literal->serialize());
-    }
-
-    public function testLiteralInvalidWrappers()
-    {
-        $this->expectException(SparQlException::class);
+        $this->assertEquals('"""\\\'\"lorem\"\\\'"""', $literal->serialize());
         $literal = new PlainLiteral('"""\'\'\'lorem');
-        $literal->serialize();
+        $this->assertEquals('"""\"\"\"\\\'\\\'\\\'lorem"""', $literal->serialize());
     }
 
     public function testType()

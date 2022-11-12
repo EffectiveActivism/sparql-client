@@ -15,7 +15,7 @@ class SelectStatementTest extends KernelTestCase
 {
     const SUBJECT_URI = 'urn:uuid:89e2f582-918d-11eb-b6ff-1f71a7aa4639';
 
-    const SELECT_STATEMENT = 'SELECT ?subject WHERE { ?subject <http://schema.org/headline> "Lorem Ipsum" . } ORDER BY ASC( ?subject )';
+    const SELECT_STATEMENT = 'SELECT ?subject WHERE { ?subject <http://schema.org/headline> """Lorem Ipsum""" . } ORDER BY ASC( ?subject )';
 
     public function testSelectStatement()
     {

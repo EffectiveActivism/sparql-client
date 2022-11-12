@@ -34,15 +34,15 @@ class SparQlClientTest extends KernelTestCase
 
     const SELECT_STATEMENT_LIMIT_OFFSET_EXPECTED_QUERY = 'query=' . self::NAMESPACES . ' SELECT ?subject ?object WHERE { ?subject schema:headline ?object . } LIMIT 1 OFFSET 2';
 
-    const INSERT_STATEMENT_EXPECTED_QUERY = 'update=' . self::NAMESPACES . ' INSERT { <urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece> schema:headline "Lorem Ipsum" } WHERE { <urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece> schema:headline ?object . }';
+    const INSERT_STATEMENT_EXPECTED_QUERY = 'update=' . self::NAMESPACES . ' INSERT { <urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece> schema:headline """Lorem Ipsum""" } WHERE { <urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece> schema:headline ?object . }';
 
-    const INSERT_STATEMENT_WITHOUT_CONDITION_EXPECTED_QUERY = 'update=' . self::NAMESPACES . ' INSERT DATA { <urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece> schema:headline "Lorem Ipsum" . <urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece> schema:headline "Lorem Ipsum" }';
+    const INSERT_STATEMENT_WITHOUT_CONDITION_EXPECTED_QUERY = 'update=' . self::NAMESPACES . ' INSERT DATA { <urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece> schema:headline """Lorem Ipsum""" . <urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece> schema:headline """Lorem Ipsum""" }';
 
     const DELETE_STATEMENT_EXPECTED_QUERY = 'update=' . self::NAMESPACES . ' DELETE { ?subject schema:headline ?object } WHERE { ?subject rdf:type schema:Article . }';
 
-    const DELETE_STATEMENT_WITHOUT_CONDITION_EXPECTED_QUERY = 'update=' . self::NAMESPACES . ' DELETE DATA { <urn:uuid:e998469e-831e-11eb-95f2-a32290c912e6> schema:headline "Lorem"@la . <urn:uuid:e998469e-831e-11eb-95f2-a32290c912e6> schema:headline "Lorem"@la }';
+    const DELETE_STATEMENT_WITHOUT_CONDITION_EXPECTED_QUERY = 'update=' . self::NAMESPACES . ' DELETE DATA { <urn:uuid:e998469e-831e-11eb-95f2-a32290c912e6> schema:headline """Lorem"""@la . <urn:uuid:e998469e-831e-11eb-95f2-a32290c912e6> schema:headline """Lorem"""@la }';
 
-    const REPLACE_STATEMENT_EXPECTED_QUERY = 'update=' . self::NAMESPACES . ' DELETE { ?subject schema:headline ?object . ?subject schema:headline ?object } INSERT { ?subject schema:headline "Lorem Ipsum" . ?subject schema:headline "Lorem Ipsum" } WHERE { ?subject rdf:type schema:Article . }';
+    const REPLACE_STATEMENT_EXPECTED_QUERY = 'update=' . self::NAMESPACES . ' DELETE { ?subject schema:headline ?object . ?subject schema:headline ?object } INSERT { ?subject schema:headline """Lorem Ipsum""" . ?subject schema:headline """Lorem Ipsum""" } WHERE { ?subject rdf:type schema:Article . }';
 
     const HASHED_QUERY_UUID = '3959149f-83a7-53a6-82c8-7ca190789516';
 
@@ -319,7 +319,7 @@ class SparQlClientTest extends KernelTestCase
         $this->assertEquals('subject', $triple->getSubject()->getVariableName());
         $this->assertEquals('<http://schema.org/headline>', $triple->getPredicate()->serialize());
         $this->assertEquals('predicate', $triple->getPredicate()->getVariableName());
-        $this->assertEquals('"Lorem"', $triple->getObject()->serialize());
+        $this->assertEquals('"""Lorem"""', $triple->getObject()->serialize());
         $this->assertEquals('object', $triple->getObject()->getVariableName());
     }
 
