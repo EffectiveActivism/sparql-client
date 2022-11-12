@@ -15,7 +15,7 @@ class ConstructStatementTest extends KernelTestCase
 {
     const SUBJECT_URI = 'urn:uuid:89e2f582-918d-11eb-b6ff-1f71a7aa4639';
 
-    const CONSTRUCT_STATEMENT = 'CONSTRUCT { ?subject <http://schema.org/headline> "Lorem Ipsum" .  } WHERE { ?subject <http://schema.org/headline> "Lorem Ipsum" . }';
+    const CONSTRUCT_STATEMENT = 'CONSTRUCT { ?subject <http://schema.org/headline> """Lorem Ipsum""" .  } WHERE { ?subject <http://schema.org/headline> """Lorem Ipsum""" . }';
 
     public function testConstructStatement()
     {

@@ -8,7 +8,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 class LangMatchesTest extends KernelTestCase
 {
-    const SERIALIZED_OPERATOR = 'langMATCHES("lorem","ipsum")';
+    const SERIALIZED_OPERATOR = 'langMATCHES("""lorem""","""ipsum""")';
 
     public function testOperator()
     {

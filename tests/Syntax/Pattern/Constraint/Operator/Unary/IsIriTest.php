@@ -8,7 +8,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 class IsIriTest extends KernelTestCase
 {
-    const SERIALIZED_OPERATOR = 'IsIRI("lorem")';
+    const SERIALIZED_OPERATOR = 'IsIRI("""lorem""")';
 
     public function testOperator()
     {

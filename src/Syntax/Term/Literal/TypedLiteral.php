@@ -29,25 +29,33 @@ class TypedLiteral extends AbstractLiteral implements TermInterface
                 'boolean' => sprintf('"%s"^^xsd:boolean', $this->value ? 'true' : 'false'),
                 'double' => sprintf('"%s"^^xsd:decimal', $this->value),
                 'integer' => sprintf('"%s"^^xsd:integer', $this->value),
-                'string' => sprintf('%s%s%s', $this->serializeLiteralWrapper(), $this->value, $this->serializeLiteralWrapper()),
+                'string' => $this->sanitizeString(),
                 default => throw new SparQlException(sprintf('Typed literal "%s" has unknown type "%s"', $this->getRawValue(), gettype($this->value))),
             };
         }
         elseif (in_array($this->dataType->serialize(), ['xsd:boolean', '<http://www.w3.org/2001/XMLSchema#boolean>'])) {
-            $value = 'true';
-            if (is_string($this->value) && ($this->value === 'false' || $this->value === '0')) {
+            if (is_string($this->value) && (mb_strtolower($this->value) === 'true' || $this->value === '1')) {
+                $value = 'true';
+            }
+            elseif (is_string($this->value) && (mb_strtolower($this->value) === 'false' || $this->value === '0')) {
                 $value = 'false';
             }
-            if (is_bool($this->value)) {
+            elseif (is_bool($this->value)) {
                 $value = $this->value ? 'true' : 'false';
             }
-            if (is_integer($this->value)) {
-                $value = $this->value > 0 ? 'true' : 'false';
+            elseif (is_integer($this->value) && $this->value === 1) {
+                $value = 'true';
+            }
+            elseif (is_integer($this->value) && $this->value === 0) {
+                $value = 'false';
+            }
+            else {
+                throw new SparQlException(sprintf('Typed literal "%s" has invalid value for type "%s"', $this->getRawValue(), $this->dataType->serialize()));
             }
             return sprintf('"%s"^^%s', $value, $this->dataType->serialize());
         }
         else {
-            return sprintf('"%s"^^%s', $this->value, $this->dataType->serialize());
+            return sprintf('%s^^%s', $this->sanitizeString(), $this->dataType->serialize());
         }
     }
 

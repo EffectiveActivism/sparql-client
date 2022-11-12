@@ -53,7 +53,7 @@ class SparQlResultDenormalizerTest extends KernelTestCase
         /** @var TermInterface $term */
         $term = array_pop($set);
         $this->assertInstanceOf(PlainLiteral::class, $term);
-        $this->assertEquals('"lorem"@la', $term->serialize());
+        $this->assertEquals('"""lorem"""@la', $term->serialize());
     }
 
     /**
@@ -73,7 +73,7 @@ class SparQlResultDenormalizerTest extends KernelTestCase
         /** @var TermInterface $term */
         $term = array_pop($set);
         $this->assertInstanceOf(TypedLiteral::class, $term);
-        $this->assertEquals('"2"^^<http://www.w3.org/2001/XMLSchema#integer>', $term->serialize());
+        $this->assertEquals('"""2"""^^<http://www.w3.org/2001/XMLSchema#integer>', $term->serialize());
     }
 
     /**
@@ -92,7 +92,7 @@ class SparQlResultDenormalizerTest extends KernelTestCase
         $this->assertEquals('<urn:uuid:99548ea0-7e86-11eb-8087-dbe515dec0d2>', $term->serialize());
         $term = array_shift($set);
         $this->assertInstanceOf(PlainLiteral::class, $term);
-        $this->assertEquals('"Lorem"', $term->serialize());
+        $this->assertEquals('"""Lorem"""', $term->serialize());
     }
 
     /**
@@ -111,7 +111,7 @@ class SparQlResultDenormalizerTest extends KernelTestCase
         $this->assertEquals('<urn:uuid:fcf19bc4-7e81-11eb-a169-175604c7c7bc>', $term->serialize());
         $term = array_shift($set);
         $this->assertInstanceOf(PlainLiteral::class, $term);
-        $this->assertEquals('"Lorem"', $term->serialize());
+        $this->assertEquals('"""Lorem"""', $term->serialize());
         $set = array_shift($denormalizedData);
         $this->assertCount(2, $set);
         $term = array_shift($set);
@@ -119,7 +119,7 @@ class SparQlResultDenormalizerTest extends KernelTestCase
         $this->assertEquals('<urn:uuid:02aa87b0-7e82-11eb-9e68-bb0651b281cc>', $term->serialize());
         $term = array_shift($set);
         $this->assertInstanceOf(PlainLiteral::class, $term);
-        $this->assertEquals('"Ipsum"', $term->serialize());
+        $this->assertEquals('"""Ipsum"""', $term->serialize());
     }
 
     public function testNormalizerExceptions()

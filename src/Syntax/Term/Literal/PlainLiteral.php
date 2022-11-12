@@ -25,14 +25,20 @@ class PlainLiteral extends AbstractLiteral implements TermInterface
         $this->languageTag = $optionalLanguageTag;
     }
 
+    /**
+     * @throws SparQlException
+     */
     public function serialize(): string
     {
-        $wrapper = $this->serializeLiteralWrapper();
         return match (gettype($this->value)) {
-            'string' => sprintf('%s%s%s%s', $wrapper, $this->value, $wrapper, empty($this->languageTag) ? '' : sprintf('@%s', $this->languageTag)),
-            'integer' => sprintf('"%s"^^xsd:integer', $this->value),
-            'double' => sprintf('"%s"^^xsd:decimal', $this->value),
             'boolean' => sprintf('"%s"^^xsd:boolean', $this->value ? 'true' : 'false'),
+            'double' => sprintf('"%s"^^xsd:decimal', $this->value),
+            'integer' => sprintf('"%s"^^xsd:integer', $this->value),
+            'string' => sprintf(
+                '%s%s',
+                $this->sanitizeString(),
+                empty($this->languageTag) ? '' : sprintf('@%s', $this->languageTag)
+            ),
             default => null,
         };
     }

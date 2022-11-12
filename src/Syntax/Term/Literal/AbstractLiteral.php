@@ -36,29 +36,18 @@ abstract class AbstractLiteral extends AbstractTerm implements TermInterface
         }
     }
 
-    /**
-     * @throws SparQlException
-     */
-    protected function serializeLiteralWrapper(): string
+    protected function sanitizeString(): string
     {
-        if (!is_string($this->value)) {
-            return '"';
-        }
-        elseif (!str_contains($this->value, '"') && !preg_match('/\R/', $this->value)) {
-            return '"';
-        }
-        elseif (!str_contains($this->value, '\'') && !preg_match('/\R/', $this->value)) {
-            return '\'';
-        }
-        elseif (!str_contains($this->value, '"""')) {
-            return '"""';
-        }
-        elseif (!str_contains($this->value, '\'\'\'')) {
-            return '\'\'\'';
-        }
-        else {
-            throw new SparQlException(sprintf('Literal value "%s" cannot be parsed', $this->value));
-        }
+        $value = sprintf(
+            '"""%s"""',
+            str_replace(
+                ['\\', '"', '\'', "\n", "\r", "\t"],
+                ['\\\\', '\"', '\\\'', '\n', '\r', '\t'],
+                (string) $this->value
+            )
+        );
+        $value = preg_replace('/[\pZ\pC]/u', ' ', $value);
+        return $value;
     }
 
     /**

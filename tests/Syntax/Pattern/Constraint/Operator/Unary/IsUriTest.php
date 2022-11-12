@@ -8,7 +8,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 class IsUriTest extends KernelTestCase
 {
-    const SERIALIZED_OPERATOR = 'IsURI("lorem")';
+    const SERIALIZED_OPERATOR = 'IsURI("""lorem""")';
 
     public function testOperator()
     {

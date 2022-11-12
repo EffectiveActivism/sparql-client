@@ -8,9 +8,9 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 class RegexTest extends KernelTestCase
 {
-    const SERIALIZED_OPERATOR = 'REGEX("lorem","/ipsum/")';
+    const SERIALIZED_OPERATOR = 'REGEX("""lorem""","""/ipsum/""")';
 
-    const SERIALIZED_OPERATOR_WITH_FLAGS = 'REGEX("lorem","/ipsum/","foo")';
+    const SERIALIZED_OPERATOR_WITH_FLAGS = 'REGEX("""lorem""","""/ipsum/""","""foo""")';
 
     public function testOperator()
     {

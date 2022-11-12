@@ -8,7 +8,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 class SameTermTest extends KernelTestCase
 {
-    const SERIALIZED_OPERATOR = 'sameTERM("lorem","ipsum")';
+    const SERIALIZED_OPERATOR = 'sameTERM("""lorem""","""ipsum""")';
 
     public function testOperator()
     {

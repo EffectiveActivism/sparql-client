@@ -8,7 +8,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 class NotTest extends KernelTestCase
 {
-    const SERIALIZED_OPERATOR = '! "lorem"';
+    const SERIALIZED_OPERATOR = '! """lorem"""';
 
     public function testOperator()
     {
