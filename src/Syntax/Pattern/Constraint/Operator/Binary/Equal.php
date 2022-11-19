@@ -3,6 +3,7 @@
 namespace EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\Operator\Binary;
 
 use EffectiveActivism\SparQlClient\Exception\SparQlException;
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\Operator\OperatorInterface;
 use EffectiveActivism\SparQlClient\Syntax\Term\Literal\AbstractLiteral;
 use EffectiveActivism\SparQlClient\Syntax\Term\TermInterface;
 
@@ -11,7 +12,7 @@ class Equal extends AbstractBinaryOperator implements BinaryOperatorInterface
     /**
      * @see http://www.w3.org/TR/xpath-functions/#func-numeric-equal.
      */
-    public function __construct(TermInterface $leftExpression, TermInterface $rightExpression)
+    public function __construct(OperatorInterface|TermInterface $leftExpression, OperatorInterface|TermInterface $rightExpression)
     {
         if (
             $leftExpression instanceof AbstractLiteral &&

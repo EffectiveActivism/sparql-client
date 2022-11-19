@@ -7,7 +7,7 @@ use EffectiveActivism\SparQlClient\Syntax\Term\TermInterface;
 
 interface BinaryOperatorInterface extends OperatorInterface
 {
-    public function getLeftExpression(): TermInterface;
+    public function getLeftExpression(): OperatorInterface|TermInterface;
 
-    public function getRightExpression(): TermInterface;
+    public function getRightExpression(): OperatorInterface|TermInterface;
 }

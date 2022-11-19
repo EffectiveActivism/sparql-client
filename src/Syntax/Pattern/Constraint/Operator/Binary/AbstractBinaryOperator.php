@@ -2,20 +2,21 @@
 
 namespace EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\Operator\Binary;
 
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\Operator\OperatorInterface;
 use EffectiveActivism\SparQlClient\Syntax\Term\TermInterface;
 
 abstract class AbstractBinaryOperator implements BinaryOperatorInterface
 {
-    protected TermInterface $leftExpression;
+    protected OperatorInterface|TermInterface $leftExpression;
 
-    protected TermInterface $rightExpression;
+    protected OperatorInterface|TermInterface $rightExpression;
 
-    public function getLeftExpression(): TermInterface
+    public function getLeftExpression(): OperatorInterface|TermInterface
     {
         return $this->leftExpression;
     }
 
-    public function getRightExpression(): TermInterface
+    public function getRightExpression(): OperatorInterface|TermInterface
     {
         return $this->rightExpression;
     }
