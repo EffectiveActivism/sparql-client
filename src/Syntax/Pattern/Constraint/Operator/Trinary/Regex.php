@@ -2,14 +2,16 @@
 
 namespace EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\Operator\Trinary;
 
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\Operator\OperatorInterface;
 use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
+use EffectiveActivism\SparQlClient\Syntax\Term\TermInterface;
 
 class Regex extends AbstractTrinaryOperator implements TrinaryOperatorInterface
 {
     /**
      * @see https://www.w3.org/TR/xpath-functions/#func-matches.
      */
-    public function __construct(PlainLiteral $string, PlainLiteral $pattern, PlainLiteral $flags = null)
+    public function __construct(OperatorInterface|TermInterface $string, OperatorInterface|TermInterface $pattern, OperatorInterface|TermInterface $flags = null)
     {
         $this->leftExpression = $string;
         $this->middleExpression = $pattern;

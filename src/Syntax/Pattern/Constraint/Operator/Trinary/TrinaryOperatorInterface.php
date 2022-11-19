@@ -11,9 +11,9 @@ interface TrinaryOperatorInterface extends OperatorInterface
      * Getters.
      */
 
-    public function getLeftExpression(): TermInterface;
+    public function getLeftExpression(): OperatorInterface|TermInterface;
 
-    public function getMiddleExpression(): TermInterface;
+    public function getMiddleExpression(): OperatorInterface|TermInterface;
 
-    public function getRightExpression(): TermInterface|null;
+    public function getRightExpression(): OperatorInterface|TermInterface|null;
 }

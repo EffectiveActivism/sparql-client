@@ -7,5 +7,5 @@ use EffectiveActivism\SparQlClient\Syntax\Term\TermInterface;
 
 interface UnaryOperatorInterface extends OperatorInterface
 {
-    public function getExpression(): TermInterface;
+    public function getExpression(): OperatorInterface|TermInterface;
 }
