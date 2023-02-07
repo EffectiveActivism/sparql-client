@@ -9,14 +9,14 @@ use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
 
 class Bind implements BindInterface
 {
-    protected PatternInterface|OperatorInterface $value;
+    protected TermInterface|PatternInterface|OperatorInterface $value;
 
     protected Variable $variable;
 
     /**
      * @see https://www.w3.org/TR/sparql11-query/#bind.
      */
-    public function __construct(PatternInterface|OperatorInterface $value, Variable $variable)
+    public function __construct(TermInterface|PatternInterface|OperatorInterface $value, Variable $variable)
     {
         $this->value = $value;
         $this->variable = $variable;
