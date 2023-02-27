@@ -57,7 +57,7 @@ class SparQlResultDenormalizer implements DenormalizerInterface
         elseif (isset($binding[0]['@name'])) {
             foreach ($binding as $termData) {
                 $term = $this->getTerm($termData);
-                $term->setVariableName($termData['@name']);
+                $term->setVariableName((string) $termData['@name']);
                 $terms[$termData['@name']] = $term;
             }
         }
