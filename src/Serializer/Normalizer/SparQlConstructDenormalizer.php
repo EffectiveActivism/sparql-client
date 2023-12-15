@@ -11,6 +11,7 @@ use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 class SparQlConstructDenormalizer implements DenormalizerInterface
 {
     const TYPE = 'sparql-construct';
+    const SUPPORTED_FORMATS = ['xml'];
 
     public function supportsDenormalization($data, string $type, string $format = null): bool
     {
@@ -64,5 +65,15 @@ class SparQlConstructDenormalizer implements DenormalizerInterface
             $terms[] = $triple;
         }
         return $terms;
+    }
+
+    public function getSupportedTypes(?string $format = null): array
+    {
+        if (in_array($format, self::SUPPORTED_FORMATS)) {
+            return ['*' => true];
+        }
+        else {
+            return ['object' => null];
+        }
     }
 }

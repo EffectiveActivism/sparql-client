@@ -14,6 +14,7 @@ use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 class SparQlResultDenormalizer implements DenormalizerInterface
 {
     const TYPE = 'sparql-result';
+    const SUPPORTED_FORMATS = ['xml'];
 
     public function supportsDenormalization($data, string $type, string $format = null): bool
     {
@@ -100,5 +101,15 @@ class SparQlResultDenormalizer implements DenormalizerInterface
             }
         }
         throw new InvalidResultException(sprintf('Result type "%s" is not a valid type', key($termData)));
+    }
+
+    public function getSupportedTypes(?string $format): array
+    {
+        if (in_array($format, self::SUPPORTED_FORMATS)) {
+            return ['*' => true];
+        }
+        else {
+            return ['object' => null];
+        }
     }
 }
