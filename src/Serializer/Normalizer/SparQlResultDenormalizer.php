@@ -101,4 +101,11 @@ class SparQlResultDenormalizer implements DenormalizerInterface
         }
         throw new InvalidResultException(sprintf('Result type "%s" is not a valid type', key($termData)));
     }
+
+    public function getSupportedTypes(?string $format): array
+    {
+        return [
+            self::TYPE => true,
+        ];
+    }
 }

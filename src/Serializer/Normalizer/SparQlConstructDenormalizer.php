@@ -65,4 +65,11 @@ class SparQlConstructDenormalizer implements DenormalizerInterface
         }
         return $terms;
     }
+
+    public function getSupportedTypes(?string $format = null): array
+    {
+        return [
+            self::TYPE => true,
+        ];
+    }
 }

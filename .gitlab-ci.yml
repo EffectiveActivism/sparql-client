@@ -1,4 +1,4 @@
-image: php:8.0.2
+image: php:8.2
 
 # Composer stores all downloaded packages in the vendor/ directory.
 # Do not use the following if the vendor/ directory is committed to
@@ -10,11 +10,14 @@ cache:
 before_script:
   # Install git (the php image doesn't have it) which is required by composer
   - apt-get update -yqq
-  - apt-get install git wget -yqq
+  - apt-get install git wget libzip-dev -yqq
   # Install xdebug to enable code coverage
   - pecl install xdebug
   - docker-php-ext-enable xdebug
   - echo "xdebug.mode=coverage" > /usr/local/etc/php/conf.d/xdebug.ini
+  # Install required php extensions
+  - pecl install zip
+  - echo "extension=zip.so" > /usr/local/etc/php/conf.d/zip.ini
   # Install composer dependencies
   - wget https://composer.github.io/installer.sig -O - -q | tr -d '\n' > installer.sig
   - php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"

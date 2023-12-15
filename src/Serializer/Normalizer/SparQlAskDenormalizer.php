@@ -24,4 +24,11 @@ class SparQlAskDenormalizer implements DenormalizerInterface
         }
         throw new InvalidResultException('ASK query did not give expected response');
     }
+
+    public function getSupportedTypes(?string $format): array
+    {
+        return [
+            self::TYPE => true,
+        ];
+    }
 }
