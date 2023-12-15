@@ -15,6 +15,8 @@ before_script:
   - pecl install xdebug
   - docker-php-ext-enable xdebug
   - echo "xdebug.mode=coverage" > /usr/local/etc/php/conf.d/xdebug.ini
+  # Install required php extensions
+  - pecl install zip
   # Install composer dependencies
   - wget https://composer.github.io/installer.sig -O - -q | tr -d '\n' > installer.sig
   - php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
