@@ -17,6 +17,7 @@ before_script:
   - echo "xdebug.mode=coverage" > /usr/local/etc/php/conf.d/xdebug.ini
   # Install required php extensions
   - pecl install zip
+  - echo "extension=zip.so" > /usr/local/etc/php/conf.d/zip.ini
   # Install composer dependencies
   - wget https://composer.github.io/installer.sig -O - -q | tr -d '\n' > installer.sig
   - php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
