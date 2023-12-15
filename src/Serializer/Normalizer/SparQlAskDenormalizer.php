@@ -8,7 +8,6 @@ use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 class SparQlAskDenormalizer implements DenormalizerInterface
 {
     const TYPE = 'sparql-ask';
-    const SUPPORTED_FORMATS = ['xml'];
 
     public function supportsDenormalization($data, string $type, string $format = null): bool
     {

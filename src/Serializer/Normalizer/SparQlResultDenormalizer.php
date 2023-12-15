@@ -14,7 +14,6 @@ use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 class SparQlResultDenormalizer implements DenormalizerInterface
 {
     const TYPE = 'sparql-result';
-    const SUPPORTED_FORMATS = ['xml'];
 
     public function supportsDenormalization($data, string $type, string $format = null): bool
     {
