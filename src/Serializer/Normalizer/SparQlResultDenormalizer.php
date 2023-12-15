@@ -105,11 +105,8 @@ class SparQlResultDenormalizer implements DenormalizerInterface
 
     public function getSupportedTypes(?string $format): array
     {
-        if (in_array($format, self::SUPPORTED_FORMATS)) {
-            return ['*' => true];
-        }
-        else {
-            return ['object' => null];
-        }
+        return [
+            self::TYPE => true,
+        ];
     }
 }
