@@ -10,7 +10,7 @@ cache:
 before_script:
   # Install git (the php image doesn't have it) which is required by composer
   - apt-get update -yqq
-  - apt-get install git wget -yqq
+  - apt-get install git wget libzip-dev -yqq
   # Install xdebug to enable code coverage
   - pecl install xdebug
   - docker-php-ext-enable xdebug
