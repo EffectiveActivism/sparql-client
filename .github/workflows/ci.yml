@@ -17,15 +17,12 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install git wget libzip-dev -yqq
-      - name: Install xdebug via pecl
-        run: |
-          pecl install xdebug
-          docker-php-ext-enable xdebug
-          echo "xdebug.mode=coverage" > /usr/local/etc/php/conf.d/xdebug.ini
-      - name: Install zip extension via pecl
-        run: |
-          pecl install zip
-          echo "extension=zip.so" > /usr/local/etc/php/conf.d/zip.ini
+      - name: Setup PHP with Xdebug
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: xdebug
+          extensions: zip
       - name: Install composer
         run: |
           wget https://composer.github.io/installer.sig -O - -q | tr -d '\n' > installer.sig
