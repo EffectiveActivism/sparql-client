@@ -12,7 +12,7 @@ class SparQlConstructDenormalizer implements DenormalizerInterface
 {
     const TYPE = 'sparql-construct';
 
-    public function supportsDenormalization($data, string $type, string $format = null): bool
+    public function supportsDenormalization($data, string $type, string $format = null, array $context = []): bool
     {
         return $type === self::TYPE;
     }
