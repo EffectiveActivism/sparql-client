@@ -1,0 +1,41 @@
+name: Run tests
+
+on:
+  pull_request:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install git wget libzip-dev -yqq
+      - name: Setup PHP with Xdebug
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: xdebug
+          extensions: zip
+      - name: Install composer
+        run: |
+          wget https://composer.github.io/installer.sig -O - -q | tr -d '\n' > installer.sig
+          php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+          php -r "if (hash_file('SHA384', 'composer-setup.php') === file_get_contents('installer.sig')) { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
+          php composer-setup.php
+          php -r "unlink('composer-setup.php'); unlink('installer.sig');"
+      - name: Install composer dependencies
+        run: |
+          php composer.phar install
+      - name: Run tests
+        run: |
+          ./vendor/bin/phpunit --coverage-text --coverage-xml coverage/
+      - name: Check coverage
+        run: |
+          php .github/phpunit-threshold.php ./coverage/index.xml 100
