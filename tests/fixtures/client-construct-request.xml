@@ -16,7 +16,7 @@
         xmlns:bd="http://www.bigdata.com/rdf#"
 >
     <rdf:Description rdf:about="urn:uuid:d8c0c240-17a2-421e-8c24-49e75a1bddf0">
-        <schema:knows rdf:resource="urn:uuid:3850ff8f-dbaa-4b11-80d4-43b22fd18855"/>
-        <schema:alternateName>Lorem</schema:alternateName>
+        <knows rdf:resource="urn:uuid:3850ff8f-dbaa-4b11-80d4-43b22fd18855"/>
+        <alternateName>Lorem</alternateName>
     </rdf:Description>
 </rdf:RDF>

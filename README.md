@@ -15,6 +15,7 @@ statement validation.
     - [Insert statement](#insert-statement)
     - [Delete statement](#delete-statement)
     - [Replace statement](#replace-statement)
+    - [Describe statement](#describe-statement)
     - [Property paths and sets](#property-paths-and-sets)
         - [Inverse path example](#inverse-path-example)
         - [Sequence path example](#sequence-path-example)
@@ -339,6 +340,49 @@ class MyController extends AbstractController
             ->where([$tripleToReplace]);
         // Perform the update.
         $sparQlClient->execute($replaceStatement);
+    }
+}
+```
+
+### Describe statement
+
+Describe one or more variables or IRIs.
+
+```php
+<?php
+
+namespace App\Controller;
+
+use EffectiveActivism\SparQlClient\Client\SparQlClientInterface;
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\Triple;
+use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
+use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
+use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+
+class MyController extends AbstractController
+{
+    public function view(SparQlClientInterface $sparQlClient)
+    {
+        // Add the 'schema' namespace.
+        $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
+        // Add a subject as a variable '_subject'.
+        $subject = new Variable('subject');
+        // Add a prefixed IRI of the form 'schema:headline'.
+        $predicate = new PrefixedIri('schema', 'headline');
+        // Add a plain literal of the form 'Lorem@la'.
+        $object = new PlainLiteral('Lorem', 'la');
+        // Add a triple that contains all the above terms.
+        $triple = new Triple($subject, $predicate, $object);
+        // Create a describe statement.
+        $describeStatement = $sparQlClient->describe([$subject])->where([$triple]);
+        // Perform the query.
+        $sets = $sparQlClient->execute($describeStatement);
+        // The result will contain the resource description.
+        /** @var TermInterface[] $set */
+        foreach ($sets as $set) {
+            dump($set);
+        }
     }
 }
 ```
@@ -763,7 +807,6 @@ services:
 # Planned features
 
 - Support for graphs, including named graphs and management operations.
-- Support for DESCRIBE statements.
 - Support for UNION.
 - Support for empty prefixes.
 - Validation of typed literals using their datatype.

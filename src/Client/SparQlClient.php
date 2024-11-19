@@ -14,6 +14,7 @@ use EffectiveActivism\SparQlClient\Syntax\Statement\ConstructStatement;
 use EffectiveActivism\SparQlClient\Syntax\Statement\ConstructStatementInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\DeleteStatement;
 use EffectiveActivism\SparQlClient\Syntax\Statement\DeleteStatementInterface;
+use EffectiveActivism\SparQlClient\Syntax\Statement\DescribeStatement;
 use EffectiveActivism\SparQlClient\Syntax\Statement\InsertStatementInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\ReplaceStatement;
 use EffectiveActivism\SparQlClient\Syntax\Statement\ReplaceStatementInterface;
@@ -80,6 +81,7 @@ class SparQlClient implements SparQlClientInterface
             AskStatement::class => $this->handleAskStatement($statement),
             ConstructStatement::class => $this->handleConstructStatement($statement, $toTriples),
             DeleteStatement::class => $this->handleDeleteStatement($statement),
+            DescribeStatement::class => $this->handleDescribeStatement($statement),
             InsertStatement::class => $this->handleInsertStatement($statement),
             ReplaceStatement::class => $this->handleReplaceStatement($statement),
             SelectStatement::class => $this->handleQueryStatement($statement, $toTriples)
@@ -270,6 +272,51 @@ class SparQlClient implements SparQlClientInterface
     /**
      * @throws SparQlException
      */
+    protected function handleDescribeStatement(DescribeStatement $statement): array
+    {
+        $query = $statement->toQuery();
+        $this->logger->debug($query);
+        $parameters = ['body' => ['query' => $query]];
+        $cacheHit = true;
+        $responseContent = null;
+        $queryKey = $this->getKey($query);
+        try {
+            $responseContent = $this->cacheAdapter->get($queryKey, function (ItemInterface $item) use ($parameters, &$cacheHit) {
+                $responseContent = null;
+                try {
+                    $responseContent = $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent();
+                    $cacheHit = false;
+                } catch (HttpClientExceptionInterface $exception) {
+                    throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
+                }
+                return $responseContent;
+            });
+        } catch (InvalidArgumentException $exception) {
+            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
+        }
+        $result = $this->serializer->deserialize($responseContent, SparQlConstructDenormalizer::TYPE, 'xml');
+        // Update cache for successful select statement requests, if uncached.
+        if (!$cacheHit) {
+            $tags = $this->extractTags(array_merge($statement->getResources(), $statement->getConditions()));
+            // Include result iris and literals.
+            foreach ($result as $resultSet) {
+                $tags = $this->extractTags($resultSet, $tags);
+            }
+            try {
+                $cacheItem = $this->cacheAdapter->getItem($queryKey);
+                $cacheItem->set($responseContent);
+                $cacheItem->tag($tags);
+                $this->cacheAdapter->save($cacheItem);
+            } catch (CacheException|InvalidArgumentException $exception) {
+                throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * @throws SparQlException
+     */
     protected function handleInsertStatement(InsertStatementInterface $statement): array
     {
         $query = $statement->toQuery();
@@ -327,6 +374,14 @@ class SparQlClient implements SparQlClientInterface
     public function delete(array $triples): DeleteStatement
     {
         return new DeleteStatement($triples, $this->getNamespaces());
+    }
+
+    /**
+     * @throws SparQlException
+     */
+    public function describe(array $resources): DescribeStatement
+    {
+        return new DescribeStatement($resources, $this->getNamespaces());
     }
 
     /**
