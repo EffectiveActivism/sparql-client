@@ -354,6 +354,11 @@ Describe one or more variables or IRIs.
 namespace App\Controller;
 
 use EffectiveActivism\SparQlClient\Client\SparQlClientInterface;
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\Triple;
+use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
+use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
+use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
 class MyController extends AbstractController
 {
@@ -369,14 +374,14 @@ class MyController extends AbstractController
         $object = new PlainLiteral('Lorem', 'la');
         // Add a triple that contains all the above terms.
         $triple = new Triple($subject, $predicate, $object);
-        // Create a select statement.
+        // Create a describe statement.
         $describeStatement = $sparQlClient->describe([$subject])->where([$triple]);
         // Perform the query.
         $sets = $sparQlClient->execute($describeStatement);
-        // The result will contain each 'subject' found.
+        // The result will contain the resource description.
         /** @var TermInterface[] $set */
         foreach ($sets as $set) {
-            dump($set[$subject->getVariableName()]);
+            dump($set);
         }
     }
 }
