@@ -15,7 +15,7 @@ class DescribeStatementTest extends KernelTestCase
 {
     const SUBJECT_URI = 'urn:uuid:89e2f582-918d-11eb-b6ff-1f71a7aa4639';
 
-    const DESCRIBE_STATEMENT1 = 'DESCRIBE ?subject WHERE { ?subject <http://schema.org/headline> """Lorem Ipsum""" . } ORDER BY ASC( ?subject )';
+    const DESCRIBE_STATEMENT1 = 'DESCRIBE ?subject WHERE { ?subject <http://schema.org/headline> """Lorem Ipsum""" . } ORDER BY ASC( ?subject ) LIMIT 1 OFFSET 1';
 
     const DESCRIBE_STATEMENT2 = 'DESCRIBE <http://schema.org/headline>';
 
@@ -27,6 +27,8 @@ class DescribeStatementTest extends KernelTestCase
         $triple = new Triple($subjectVariable, $predicate, $object);
         $statement1 = new DescribeStatement([$subjectVariable]);
         $statement1->where([$triple]);
+        $statement1->limit(1);
+        $statement1->offset(1);
         $statement1->orderBy([new Asc($subjectVariable)]);
         $this->assertEquals(self::DESCRIBE_STATEMENT1, $statement1->toQuery());
         $this->assertEquals([$subjectVariable], $statement1->getResources());

@@ -216,7 +216,6 @@ class SparQlClientTest extends KernelTestCase
             ->where([new Triple($subject, $predicate, $object)]);
         $resultSet = $sparQlClient->execute($statement);
         $this->assertCount(1, $resultSet);
-        dump($resultSet);
         $this->assertEquals('urn:uuid:89e2f582-918d-11eb-b6ff-1f71a7aa4639', $resultSet[0][0]->getRawValue());
         $this->assertEquals('Lorem', $resultSet[0][2]->getRawValue());
         $this->assertEquals(self::DESCRIBE_STATEMENT_EXPECTED_QUERY, urldecode($receivedQuery));
@@ -795,6 +794,68 @@ class SparQlClientTest extends KernelTestCase
         $triple = new Triple($subject, $predicate, $object);
         $this->expectException(SparQlException::class);
         $sparQlClient->execute($sparQlClient->insert([$triple])->where([$triple]));
+    }
+
+    public function testClientDescribeStatementException()
+    {
+        $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
+        $httpClient = new MockHttpClient([new MockResponse('', ['http_code' => 500])]);
+        $kernel = new TestKernel('test', true);
+        $kernel->boot();
+        $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
+        $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
+        /** @var SparQlClientInterface $sparQlClient */
+        $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
+        $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
+        $resource = new Iri('urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece');
+        $this->expectException(SparQlException::class);
+        $sparQlClient->execute($sparQlClient->describe([$resource]));
+    }
+
+    public function testClientDescribeStatementCacheException()
+    {
+        $cacheAdapterStub = $this->createMock(TagAwareAdapter::class);
+        $exceptionStub = new class extends Exception implements CacheInvalidArgumentException {};
+        $cacheAdapterStub->method('get')->willThrowException($exceptionStub);
+        $httpClient = new MockHttpClient([new MockResponse('')]);
+        $kernel = new TestKernel('test', true);
+        $kernel->boot();
+        $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapterStub);
+        $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
+        /** @var SparQlClientInterface $sparQlClient */
+        $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
+        $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
+        $resource = new Iri('urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece');
+        $this->expectException(SparQlException::class);
+        $sparQlClient->execute($sparQlClient->describe([$resource]));
+    }
+
+    public function testClientDescribeStatementCacheSaveException()
+    {
+        $cacheAdapterStub = $this->getMockBuilder(TagAwareAdapter::class)
+            ->setConstructorArgs([new ArrayAdapter()])
+            ->onlyMethods(['getItem'])
+            ->getMock();
+        $cacheItem = new CacheItem();
+        $reflectedCacheItem = new \ReflectionObject($cacheItem);
+        $reflectedProperty = $reflectedCacheItem->getProperty('key');
+        $reflectedProperty->setAccessible(true);
+        $reflectedProperty->setValue($cacheItem, 'foo');
+        $exceptionStub = new class extends Exception implements CacheInvalidArgumentException {};
+        $cacheAdapterStub->expects($this->at(0))->method('getItem')->willReturn($cacheItem);
+        $cacheAdapterStub->expects($this->at(1))->method('getItem')->willThrowException($exceptionStub);
+        $selectResponseContent = file_get_contents(__DIR__ . '/../fixtures/client-select-request.xml');
+        $httpClient = new MockHttpClient([new MockResponse($selectResponseContent)]);
+        $kernel = new TestKernel('test', true);
+        $kernel->boot();
+        $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapterStub);
+        $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
+        /** @var SparQlClientInterface $sparQlClient */
+        $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
+        $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
+        $resource = new Iri('urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece');
+        $this->expectException(SparQlException::class);
+        $sparQlClient->execute($sparQlClient->describe([$resource]));
     }
 
     public function testUpload()
