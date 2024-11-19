@@ -23,13 +23,14 @@ class SparQlConstructDenormalizer implements DenormalizerInterface
     public function denormalize($data, string $type, string $format = null, array $context = []): array
     {
         $sets = [];
+        $defaultSchema = $data['@xmlns:schema'] ?? '';
         if (isset($data['rdf:Description']) && is_array($data['rdf:Description'])) {
             if (isset($data['rdf:Description']['@rdf:about'])) {
-                $sets = array_merge($sets, $this->getTerms($data['rdf:Description']));
+                $sets = array_merge($sets, $this->getTerms($data['rdf:Description'], $defaultSchema));
             }
             elseif (isset($data['rdf:Description'][0]['@rdf:about'])) {
                 foreach ($data['rdf:Description'] as $result) {
-                    $sets = array_merge($sets, $this->getTerms($result));
+                    $sets = array_merge($sets, $this->getTerms($result, $defaultSchema));
                 }
             }
         }
@@ -39,15 +40,20 @@ class SparQlConstructDenormalizer implements DenormalizerInterface
     /**
      * @throws SparQlException
      */
-    protected function getTerms(array $set): array
+    protected function getTerms(array $set, string $defaultSchema): array
     {
         $terms = [];
         $subject = new Iri($set['@rdf:about']);
         unset($set['@rdf:about']);
         foreach ($set as $type => $value) {
             $triple = [];
-            list($prefix, $localPart) = explode(':', $type);
-            $predicate = new PrefixedIri($prefix, $localPart);
+            if (str_contains($type, ':')) {
+                list($prefix, $localPart) = explode(':', $type);
+                $predicate = new PrefixedIri($prefix, $localPart);
+            }
+            else {
+                $predicate = new Iri($defaultSchema . $type);
+            }
             if (is_string($value)) {
                 $triple[] = $subject;
                 $triple[] = $predicate;

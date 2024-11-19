@@ -46,6 +46,8 @@ class SparQlClientTest extends KernelTestCase
 
     const HASHED_QUERY_UUID = '3959149f-83a7-53a6-82c8-7ca190789516';
 
+    const DESCRIBE_STATEMENT_EXPECTED_QUERY = 'query=' . self::NAMESPACES . ' DESCRIBE ?subject WHERE { ?subject schema:alternateName """Lorem""" . }';
+
     /**
      * @covers \EffectiveActivism\SparQlClient\Client\SparQlClient
      * @covers \EffectiveActivism\SparQlClient\Syntax\Statement\SelectStatement
@@ -183,8 +185,41 @@ class SparQlClientTest extends KernelTestCase
         $resultSet = $sparQlClient->execute($statement);
         $this->assertCount(4, $resultSet);
         $this->assertEquals('urn:uuid:d8c0c240-17a2-421e-8c24-49e75a1bddf0', $resultSet[0][0]->getRawValue());
-        $this->assertEquals('schema:alternateName', $resultSet[1][1]->getRawValue());
+        $this->assertEquals('https://schema.org/alternateName', $resultSet[1][1]->getRawValue());
         $this->assertEquals('Ipsum', $resultSet[3][2]->getRawValue());
+    }
+
+    /**
+     * @covers \EffectiveActivism\SparQlClient\Client\SparQlClient
+     * @covers \EffectiveActivism\SparQlClient\Syntax\Statement\DescribeStatement
+     */
+    public function testDescribeStatementRequest()
+    {
+        $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
+        $receivedQuery = null;
+        $httpClient = new MockHttpClient(function ($method, $url, $options) use (&$receivedQuery) {
+            $receivedQuery = $options['body'];
+            return new MockResponse(file_get_contents(__DIR__ . '/../fixtures/client-describe-request.xml'));
+        });
+        $kernel = new TestKernel('test', true);
+        $kernel->boot();
+        $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
+        $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
+        /** @var SparQlClientInterface $sparQlClient */
+        $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
+        $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
+        $subject = new Variable('subject');
+        $predicate = new PrefixedIri('schema', 'alternateName');
+        $object = new PlainLiteral('Lorem');
+        $statement = $sparQlClient
+            ->describe([$subject])
+            ->where([new Triple($subject, $predicate, $object)]);
+        $resultSet = $sparQlClient->execute($statement);
+        $this->assertCount(1, $resultSet);
+        dump($resultSet);
+        $this->assertEquals('urn:uuid:89e2f582-918d-11eb-b6ff-1f71a7aa4639', $resultSet[0][0]->getRawValue());
+        $this->assertEquals('Lorem', $resultSet[0][2]->getRawValue());
+        $this->assertEquals(self::DESCRIBE_STATEMENT_EXPECTED_QUERY, urldecode($receivedQuery));
     }
 
     /**
