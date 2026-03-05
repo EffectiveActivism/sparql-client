@@ -3,9 +3,11 @@
 namespace EffectiveActivism\SparQlClient\Serializer\Normalizer;
 
 use EffectiveActivism\SparQlClient\Exception\SparQlException;
+use EffectiveActivism\SparQlClient\Syntax\Term\BlankNode\BlankNode;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\Iri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
+use EffectiveActivism\SparQlClient\Syntax\Term\Literal\TypedLiteral;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 
 class SparQlConstructDenormalizer implements DenormalizerInterface
@@ -59,13 +61,32 @@ class SparQlConstructDenormalizer implements DenormalizerInterface
                 $triple[] = $predicate;
                 $triple[] = new PlainLiteral($value);
             }
-            if (
-                is_array($value) &&
-                isset($value['@rdf:resource'])
-            ) {
+            elseif (is_array($value) && isset($value['@rdf:resource'])) {
                 $triple[] = $subject;
                 $triple[] = $predicate;
                 $triple[] = new Iri($value['@rdf:resource']);
+            }
+            elseif (is_array($value) && isset($value['@rdf:datatype'])) {
+                $dataType = $value['@rdf:datatype'];
+                $literalValue = $value['#'] ?? '';
+                if (filter_var($dataType, FILTER_VALIDATE_URL)) {
+                    $dataTypeIri = new Iri($dataType);
+                }
+                else {
+                    list($dtPrefix, $dtLocal) = explode(':', $dataType, 2);
+                    $dataTypeIri = new PrefixedIri($dtPrefix, $dtLocal);
+                }
+                $triple[] = $subject;
+                $triple[] = $predicate;
+                $triple[] = new TypedLiteral($literalValue, $dataTypeIri);
+            }
+            elseif (is_array($value) && isset($value['@rdf:nodeID'])) {
+                $triple[] = $subject;
+                $triple[] = $predicate;
+                $triple[] = new BlankNode($value['@rdf:nodeID']);
+            }
+            else {
+                continue;
             }
             $terms[] = $triple;
         }

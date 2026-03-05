@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:schema="https://schema.org/">
+    <rdf:Description rdf:about="urn:uuid:d8c0c240-17a2-421e-8c24-49e75a1bddf0">
+        <schema:age rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">42</schema:age>
+    </rdf:Description>
+</rdf:RDF>
