@@ -23,7 +23,7 @@ class Constant
     /**
      * @see https://www.w3.org/TR/rdf-sparql-query/#rPN_CHARS.
      */
-    const PN_CHARS = self::PN_CHARS_U . '|-|[0-9]|\x{00B7}|[\x{0300}-\x{036F}|[\x{203F}-\x{2040}]';
+    const PN_CHARS = self::PN_CHARS_U . '|-|[0-9]|\x{00B7}|[\x{0300}-\x{036F}]|[\x{203F}-\x{2040}]';
 
     /**
      * @see https://www.w3.org/TR/sparql11-query/#rVARNAME.
