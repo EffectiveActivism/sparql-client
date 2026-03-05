@@ -12,6 +12,7 @@
     <ini name="memory_limit" value="-1"/>
     <server name="SYMFONY_PHPUNIT_VERSION" value="7.4"/>
     <env name="APP_ENV" value="test"/>
+    <env name="SYMFONY_DEPRECATIONS_HELPER" value="disabled=true"/>
   </php>
   <testsuites>
     <testsuite name="Test suite">

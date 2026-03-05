@@ -39,7 +39,7 @@ class PlainLiteral extends AbstractLiteral implements TermInterface
                 $this->sanitizeString(),
                 empty($this->languageTag) ? '' : sprintf('@%s', $this->languageTag)
             ),
-            default => null,
+            default => throw new SparQlException(sprintf('Plain literal "%s" has unknown type "%s"', $this->getRawValue(), gettype($this->value))),
         };
     }
 
