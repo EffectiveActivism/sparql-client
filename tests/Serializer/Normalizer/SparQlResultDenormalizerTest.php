@@ -4,6 +4,7 @@ namespace EffectiveActivism\SparQlClient\Tests\Serializer\Normalizer;
 
 use EffectiveActivism\SparQlClient\Exception\InvalidResultException;
 use EffectiveActivism\SparQlClient\Serializer\Normalizer\SparQlResultDenormalizer;
+use EffectiveActivism\SparQlClient\Syntax\Term\BlankNode\BlankNode;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\Iri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
 use EffectiveActivism\SparQlClient\Syntax\Term\Literal\TypedLiteral;
@@ -120,6 +121,22 @@ class SparQlResultDenormalizerTest extends KernelTestCase
         $term = array_shift($set);
         $this->assertInstanceOf(PlainLiteral::class, $term);
         $this->assertEquals('"""Ipsum"""', $term->serialize());
+    }
+
+    /**
+     * @covers \EffectiveActivism\SparQlClient\Serializer\Normalizer\SparQlResultDenormalizer
+     */
+    public function testBlankNode()
+    {
+        $data = file_get_contents(__DIR__ . '/../../fixtures/normalizer-blank-node.xml');
+        $denormalizedData = $this->serializer->deserialize($data, SparQlResultDenormalizer::TYPE, 'xml');
+        $this->assertCount(1, $denormalizedData);
+        $set = array_shift($denormalizedData);
+        $this->assertCount(1, $set);
+        /** @var TermInterface $term */
+        $term = array_pop($set);
+        $this->assertInstanceOf(BlankNode::class, $term);
+        $this->assertEquals('_:b1', $term->serialize());
     }
 
     public function testNormalizerExceptions()

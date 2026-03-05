@@ -6,6 +6,7 @@ use EffectiveActivism\SparQlClient\Constant;
 use EffectiveActivism\SparQlClient\Exception\InvalidResultException;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\Iri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
+use EffectiveActivism\SparQlClient\Syntax\Term\BlankNode\BlankNode;
 use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
 use EffectiveActivism\SparQlClient\Syntax\Term\Literal\TypedLiteral;
 use EffectiveActivism\SparQlClient\Syntax\Term\TermInterface;
@@ -98,6 +99,9 @@ class SparQlResultDenormalizer implements DenormalizerInterface
             else {
                 throw new InvalidResultException(sprintf('Result "%s" is not a valid uri', $termData['uri']));
             }
+        }
+        elseif (isset($termData['bnode'])) {
+            return new BlankNode($termData['bnode']);
         }
         throw new InvalidResultException(sprintf('Result type "%s" is not a valid type', key($termData)));
     }
