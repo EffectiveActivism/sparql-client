@@ -16,7 +16,7 @@ abstract class AbstractStatement implements StatementInterface
     {
         // Validate extra namespaces.
         foreach ($namespaces as $prefix => $url) {
-            if (!is_string($prefix) || !preg_match(sprintf('/%s/u', Constant::PN_LOCAL), $prefix)) {
+            if (!is_string($prefix) || !preg_match(sprintf('/%s/u', Constant::PN_PREFIX), $prefix)) {
                 throw new SparQlException(sprintf('Value "%s" is not a valid prefix', $prefix));
             }
             if (!filter_var($url, FILTER_VALIDATE_URL)) {
