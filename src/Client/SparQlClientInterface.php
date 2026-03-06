@@ -5,6 +5,7 @@ namespace EffectiveActivism\SparQlClient\Client;
 use EffectiveActivism\SparQlClient\Syntax\Statement\AskStatementInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\ConstructStatementInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\DeleteStatementInterface;
+use EffectiveActivism\SparQlClient\Syntax\Statement\DescribeStatementInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\InsertStatementInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\ReplaceStatementInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\SelectStatementInterface;
@@ -24,6 +25,8 @@ interface SparQlClientInterface
     public function insert(array $triples): InsertStatementInterface;
 
     public function replace(array $triples): ReplaceStatementInterface;
+
+    public function describe(array $resources): DescribeStatementInterface;
 
     public function select(array $variables): SelectStatementInterface;
 

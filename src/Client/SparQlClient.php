@@ -15,6 +15,7 @@ use EffectiveActivism\SparQlClient\Syntax\Statement\ConstructStatementInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\DeleteStatement;
 use EffectiveActivism\SparQlClient\Syntax\Statement\DeleteStatementInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\DescribeStatement;
+use EffectiveActivism\SparQlClient\Syntax\Statement\DescribeStatementInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\InsertStatementInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\ReplaceStatement;
 use EffectiveActivism\SparQlClient\Syntax\Statement\ReplaceStatementInterface;
@@ -272,7 +273,7 @@ class SparQlClient implements SparQlClientInterface
     /**
      * @throws SparQlException
      */
-    protected function handleDescribeStatement(DescribeStatement $statement): array
+    protected function handleDescribeStatement(DescribeStatementInterface $statement): array
     {
         $query = $statement->toQuery();
         $this->logger->debug($query);
