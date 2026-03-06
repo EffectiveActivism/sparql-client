@@ -116,6 +116,47 @@ class SparQlConstructDenormalizerTest extends KernelTestCase
     /**
      * @covers \EffectiveActivism\SparQlClient\Serializer\Normalizer\SparQlConstructDenormalizer
      */
+    public function testBlankNodeSubject()
+    {
+        $data = file_get_contents(__DIR__ . '/../../fixtures/normalizer-construct-blank-node-subject.xml');
+        $result = $this->serializer->deserialize($data, SparQlConstructDenormalizer::TYPE, 'xml');
+        $this->assertCount(1, $result);
+        [$subject, $predicate, $object] = $result[0];
+        $this->assertInstanceOf(BlankNode::class, $subject);
+        $this->assertEquals('_:b1', $subject->serialize());
+        $this->assertInstanceOf(PrefixedIri::class, $predicate);
+        $this->assertEquals('schema:name', $predicate->serialize());
+        $this->assertInstanceOf(PlainLiteral::class, $object);
+        $this->assertEquals('"""Hello"""', $object->serialize());
+    }
+
+    /**
+     * @covers \EffectiveActivism\SparQlClient\Serializer\Normalizer\SparQlConstructDenormalizer
+     */
+    public function testRepeatedPredicate()
+    {
+        $data = file_get_contents(__DIR__ . '/../../fixtures/normalizer-construct-repeated-predicate.xml');
+        $result = $this->serializer->deserialize($data, SparQlConstructDenormalizer::TYPE, 'xml');
+        $this->assertCount(2, $result);
+        [$subject, $predicate, $object] = $result[0];
+        $this->assertInstanceOf(Iri::class, $subject);
+        $this->assertEquals('<urn:uuid:d8c0c240-17a2-421e-8c24-49e75a1bddf0>', $subject->serialize());
+        $this->assertInstanceOf(PrefixedIri::class, $predicate);
+        $this->assertEquals('schema:knows', $predicate->serialize());
+        $this->assertInstanceOf(Iri::class, $object);
+        $this->assertEquals('<urn:uuid:3850ff8f-dbaa-4b11-80d4-43b22fd18855>', $object->serialize());
+        [$subject, $predicate, $object] = $result[1];
+        $this->assertInstanceOf(Iri::class, $subject);
+        $this->assertEquals('<urn:uuid:d8c0c240-17a2-421e-8c24-49e75a1bddf0>', $subject->serialize());
+        $this->assertInstanceOf(PrefixedIri::class, $predicate);
+        $this->assertEquals('schema:knows', $predicate->serialize());
+        $this->assertInstanceOf(Iri::class, $object);
+        $this->assertEquals('<urn:uuid:9f4b2c11-e8a3-4d70-b1c0-4a6e3f2d9c87>', $object->serialize());
+    }
+
+    /**
+     * @covers \EffectiveActivism\SparQlClient\Serializer\Normalizer\SparQlConstructDenormalizer
+     */
     public function testUnhandledValueTypeIsSkipped()
     {
         $normalizer = new SparQlConstructDenormalizer();
