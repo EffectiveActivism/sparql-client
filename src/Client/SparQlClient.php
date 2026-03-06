@@ -26,7 +26,6 @@ use EffectiveActivism\SparQlClient\Syntax\Statement\InsertStatement;
 use EffectiveActivism\SparQlClient\Serializer\Normalizer\SparQlResultDenormalizer;
 use EffectiveActivism\SparQlClient\Syntax\Term\TermInterface;
 use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
-use Psr\Cache\CacheException;
 use Psr\Cache\InvalidArgumentException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\File\File;
@@ -98,41 +97,28 @@ class SparQlClient implements SparQlClientInterface
         $query = $statement->toQuery();
         $this->logger->debug($query);
         $parameters = ['body' => ['query' => $query]];
-        $cacheHit = true;
-        $responseContent = null;
         $queryKey = $this->getKey($query);
+        $sets = null;
         try {
-            $responseContent = $this->cacheAdapter->get($queryKey, function (ItemInterface $item) use ($parameters, &$cacheHit) {
-                $responseContent = null;
+            $responseContent = $this->cacheAdapter->get($queryKey, function (ItemInterface $item) use ($parameters, $statement, &$sets) {
                 try {
                     $responseContent = $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent();
-                    $cacheHit = false;
                 } catch (HttpClientExceptionInterface $exception) {
                     throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
                 }
+                $sets = $this->serializer->deserialize($responseContent, SparQlResultDenormalizer::TYPE, 'xml');
+                $tags = $this->extractTags($statement->getConditions());
+                foreach ($sets as $resultSet) {
+                    $tags = $this->extractTags($resultSet, $tags);
+                }
+                $item->tag($tags);
                 return $responseContent;
             });
-        } catch (InvalidArgumentException $exception) {
+        } catch (InvalidArgumentException|\LogicException $exception) {
             throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
         }
         // Return response as either a set of terms or a set of triples.
-        $result = $sets = $this->serializer->deserialize($responseContent, SparQlResultDenormalizer::TYPE, 'xml');
-        // Update cache for successful select statement requests, if uncached.
-        if (!$cacheHit) {
-            $tags = $this->extractTags($statement->getConditions());
-            // Include result iris and literals.
-            foreach ($result as $resultSet) {
-                $tags = $this->extractTags($resultSet, $tags);
-            }
-            try {
-                $cacheItem = $this->cacheAdapter->getItem($queryKey);
-                $cacheItem->set($responseContent);
-                $cacheItem->tag($tags);
-                $this->cacheAdapter->save($cacheItem);
-            } catch (CacheException|InvalidArgumentException $exception) {
-                throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
-            }
-        }
+        $result = $sets = $sets ?? $this->serializer->deserialize($responseContent, SparQlResultDenormalizer::TYPE, 'xml');
         if ($toTriples === true) {
             $conditions = $statement->getConditions();
             foreach ($sets as $set) {
@@ -167,34 +153,19 @@ class SparQlClient implements SparQlClientInterface
         $query = $statement->toQuery();
         $this->logger->debug($query);
         $parameters = ['body' => ['query' => $query]];
-        $cacheHit = true;
-        $responseContent = null;
         $queryKey = $this->getKey($query);
         try {
-            $responseContent = $this->cacheAdapter->get($queryKey, function (ItemInterface $item) use ($parameters, &$cacheHit) {
-                $responseContent = null;
+            $responseContent = $this->cacheAdapter->get($queryKey, function (ItemInterface $item) use ($parameters, $statement) {
                 try {
                     $responseContent = $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent();
-                    $cacheHit = false;
                 } catch (HttpClientExceptionInterface $exception) {
                     throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
                 }
+                $item->tag($this->extractTags($statement->getConditions()));
                 return $responseContent;
             });
-        } catch (InvalidArgumentException $exception) {
+        } catch (InvalidArgumentException|\LogicException $exception) {
             throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
-        }
-        // Update cache for successful ask statement requests, if uncached.
-        if (!$cacheHit) {
-            $tags = $this->extractTags($statement->getConditions());
-            try {
-                $cacheItem = $this->cacheAdapter->getItem($queryKey);
-                $cacheItem->set($responseContent);
-                $cacheItem->tag($tags);
-                $this->cacheAdapter->save($cacheItem);
-            } catch (CacheException|InvalidArgumentException $exception) {
-                throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
-            }
         }
         return $this->serializer->deserialize($responseContent, SparQlAskDenormalizer::TYPE, 'xml');
     }
@@ -207,41 +178,28 @@ class SparQlClient implements SparQlClientInterface
         $query = $statement->toQuery();
         $this->logger->debug($query);
         $parameters = ['body' => ['query' => $query]];
-        $cacheHit = true;
-        $responseContent = null;
         $queryKey = $this->getKey($query);
+        $sets = null;
         try {
-            $responseContent = $this->cacheAdapter->get($queryKey, function (ItemInterface $item) use ($parameters, &$cacheHit) {
-                $responseContent = null;
+            $responseContent = $this->cacheAdapter->get($queryKey, function (ItemInterface $item) use ($parameters, $statement, &$sets) {
                 try {
                     $responseContent = $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent();
-                    $cacheHit = false;
                 } catch (HttpClientExceptionInterface $exception) {
                     throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
                 }
+                $sets = $this->serializer->deserialize($responseContent, SparQlConstructDenormalizer::TYPE, 'xml');
+                $tags = $this->extractTags($statement->getConditions());
+                foreach ($sets as $resultSet) {
+                    $tags = $this->extractTags($resultSet, $tags);
+                }
+                $item->tag($tags);
                 return $responseContent;
             });
-        } catch (InvalidArgumentException $exception) {
+        } catch (InvalidArgumentException|\LogicException $exception) {
             throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
         }
         // Return response as either a set of terms or a set of triples.
-        $result = $sets = $this->serializer->deserialize($responseContent, SparQlConstructDenormalizer::TYPE, 'xml');
-        // Update cache for successful select statement requests, if uncached.
-        if (!$cacheHit) {
-            $tags = $this->extractTags($statement->getConditions());
-            // Include result iris and literals.
-            foreach ($result as $resultSet) {
-                $tags = $this->extractTags($resultSet, $tags);
-            }
-            try {
-                $cacheItem = $this->cacheAdapter->getItem($queryKey);
-                $cacheItem->set($responseContent);
-                $cacheItem->tag($tags);
-                $this->cacheAdapter->save($cacheItem);
-            } catch (CacheException|InvalidArgumentException $exception) {
-                throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
-            }
-        }
+        $result = $sets = $sets ?? $this->serializer->deserialize($responseContent, SparQlConstructDenormalizer::TYPE, 'xml');
         if ($toTriples === true) {
             $triples = [];
             foreach ($sets as $set) {
@@ -279,41 +237,27 @@ class SparQlClient implements SparQlClientInterface
         $query = $statement->toQuery();
         $this->logger->debug($query);
         $parameters = ['body' => ['query' => $query]];
-        $cacheHit = true;
-        $responseContent = null;
         $queryKey = $this->getKey($query);
+        $result = null;
         try {
-            $responseContent = $this->cacheAdapter->get($queryKey, function (ItemInterface $item) use ($parameters, &$cacheHit) {
-                $responseContent = null;
+            $responseContent = $this->cacheAdapter->get($queryKey, function (ItemInterface $item) use ($parameters, $statement, &$result) {
                 try {
                     $responseContent = $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent();
-                    $cacheHit = false;
                 } catch (HttpClientExceptionInterface $exception) {
                     throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
                 }
+                $result = $this->serializer->deserialize($responseContent, SparQlConstructDenormalizer::TYPE, 'xml');
+                $tags = $this->extractTags(array_merge($statement->getResources(), $statement->getConditions()));
+                foreach ($result as $resultSet) {
+                    $tags = $this->extractTags($resultSet, $tags);
+                }
+                $item->tag($tags);
                 return $responseContent;
             });
-        } catch (InvalidArgumentException $exception) {
+        } catch (InvalidArgumentException|\LogicException $exception) {
             throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
         }
-        $result = $this->serializer->deserialize($responseContent, SparQlConstructDenormalizer::TYPE, 'xml');
-        // Update cache for successful select statement requests, if uncached.
-        if (!$cacheHit) {
-            $tags = $this->extractTags(array_merge($statement->getResources(), $statement->getConditions()));
-            // Include result iris and literals.
-            foreach ($result as $resultSet) {
-                $tags = $this->extractTags($resultSet, $tags);
-            }
-            try {
-                $cacheItem = $this->cacheAdapter->getItem($queryKey);
-                $cacheItem->set($responseContent);
-                $cacheItem->tag($tags);
-                $this->cacheAdapter->save($cacheItem);
-            } catch (CacheException|InvalidArgumentException $exception) {
-                throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
-            }
-        }
-        return $result;
+        return $result ?? $this->serializer->deserialize($responseContent, SparQlConstructDenormalizer::TYPE, 'xml');
     }
 
     /**
