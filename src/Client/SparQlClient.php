@@ -140,13 +140,13 @@ class SparQlClient implements SparQlClientInterface
                     if ($condition instanceof TripleInterface) {
                         /** @var TermInterface $term */
                         foreach ($set as $term) {
-                            if (get_class($condition->getSubject()) === Variable::class && $condition->getSubject()->getVariableName() === $term->getVariableName()) {
+                            if ($condition->getSubject() instanceof Variable && $condition->getSubject()->getVariableName() === $term->getVariableName()) {
                                 $condition->setSubject($term);
                             }
-                            if (get_class($condition->getPredicate()) === Variable::class && $condition->getPredicate()->getVariableName() === $term->getVariableName()) {
+                            if ($condition->getPredicate() instanceof Variable && $condition->getPredicate()->getVariableName() === $term->getVariableName()) {
                                 $condition->setPredicate($term);
                             }
-                            if (get_class($condition->getObject()) === Variable::class && $condition->getObject()->getVariableName() === $term->getVariableName()) {
+                            if ($condition->getObject() instanceof Variable && $condition->getObject()->getVariableName() === $term->getVariableName()) {
                                 $condition->setObject($term);
                             }
                         }

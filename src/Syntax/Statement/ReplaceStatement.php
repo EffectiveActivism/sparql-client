@@ -77,11 +77,11 @@ class ReplaceStatement extends AbstractConditionalStatement implements ReplaceSt
         $hasVariables = false;
         foreach (array_merge($this->originals, $this->replacements) as $triple) {
             foreach ($triple->getTerms() as $term) {
-                if (get_class($term) === Variable::class) {
+                if ($term instanceof Variable) {
                     $hasVariables = true;
                     foreach ($this->conditions as $condition) {
                         foreach ($condition->getTerms() as $clausedTerm) {
-                            if (get_class($clausedTerm) === Variable::class && $clausedTerm->getVariableName() === $term->getVariableName()) {
+                            if ($clausedTerm instanceof Variable && $clausedTerm->getVariableName() === $term->getVariableName()) {
                                 $unclausedVariables = false;
                                 break 4;
                             }

@@ -50,11 +50,11 @@ class InsertStatement extends AbstractConditionalStatement implements InsertStat
             $hasVariables = false;
             foreach ($this->triplesToInsert as $triple) {
                 foreach ($triple->getTerms() as $term) {
-                    if (get_class($term) === Variable::class) {
+                    if ($term instanceof Variable) {
                         $hasVariables = true;
                         foreach ($this->conditions as $condition) {
                             foreach ($condition->getTerms() as $clausedTerm) {
-                                if (get_class($clausedTerm) === Variable::class && $clausedTerm->getVariableName() === $term->getVariableName()) {
+                                if ($clausedTerm instanceof Variable && $clausedTerm->getVariableName() === $term->getVariableName()) {
                                     $unclausedVariables = false;
                                     break 4;
                                 }
@@ -75,7 +75,7 @@ class InsertStatement extends AbstractConditionalStatement implements InsertStat
             // Variables are not allowed when not using 'where' clauses.
             foreach ($this->triplesToInsert as $triple) {
                 foreach ($triple->getTerms() as $term) {
-                    if (get_class($term) === Variable::class) {
+                    if ($term instanceof Variable) {
                         throw new SparQlException(sprintf('Variable "%s" cannot be inserted without being referenced in a \'where\' clause', $term->getVariableName()));
                     }
                 }
