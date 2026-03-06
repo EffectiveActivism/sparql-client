@@ -78,14 +78,15 @@ class SparQlClient implements SparQlClientInterface
      */
     public function execute(StatementInterface $statement, bool $toTriples = false): array|bool
     {
-        return match (get_class($statement)) {
-            AskStatement::class => $this->handleAskStatement($statement),
-            ConstructStatement::class => $this->handleConstructStatement($statement, $toTriples),
-            DeleteStatement::class => $this->handleDeleteStatement($statement),
-            DescribeStatement::class => $this->handleDescribeStatement($statement),
-            InsertStatement::class => $this->handleInsertStatement($statement),
-            ReplaceStatement::class => $this->handleReplaceStatement($statement),
-            SelectStatement::class => $this->handleQueryStatement($statement, $toTriples)
+        return match (true) {
+            $statement instanceof AskStatementInterface => $this->handleAskStatement($statement),
+            $statement instanceof ConstructStatementInterface => $this->handleConstructStatement($statement, $toTriples),
+            $statement instanceof DeleteStatementInterface => $this->handleDeleteStatement($statement),
+            $statement instanceof DescribeStatementInterface => $this->handleDescribeStatement($statement),
+            $statement instanceof InsertStatementInterface => $this->handleInsertStatement($statement),
+            $statement instanceof ReplaceStatementInterface => $this->handleReplaceStatement($statement),
+            $statement instanceof SelectStatementInterface => $this->handleQueryStatement($statement, $toTriples),
+            default => throw new SparQlException(sprintf('Unsupported statement type: %s', get_class($statement))),
         };
     }
 
