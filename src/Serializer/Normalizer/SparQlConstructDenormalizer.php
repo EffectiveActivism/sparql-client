@@ -27,10 +27,10 @@ class SparQlConstructDenormalizer implements DenormalizerInterface
         $sets = [];
         $defaultSchema = $data['@xmlns:schema'] ?? '';
         if (isset($data['rdf:Description']) && is_array($data['rdf:Description'])) {
-            if (isset($data['rdf:Description']['@rdf:about'])) {
+            if (isset($data['rdf:Description']['@rdf:about']) || isset($data['rdf:Description']['@rdf:nodeID'])) {
                 $sets = array_merge($sets, $this->getTerms($data['rdf:Description'], $defaultSchema));
             }
-            elseif (isset($data['rdf:Description'][0]['@rdf:about'])) {
+            elseif (isset($data['rdf:Description'][0])) {
                 foreach ($data['rdf:Description'] as $result) {
                     $sets = array_merge($sets, $this->getTerms($result, $defaultSchema));
                 }
@@ -45,10 +45,15 @@ class SparQlConstructDenormalizer implements DenormalizerInterface
     protected function getTerms(array $set, string $defaultSchema): array
     {
         $terms = [];
-        $subject = new Iri($set['@rdf:about']);
-        unset($set['@rdf:about']);
-        foreach ($set as $type => $value) {
-            $triple = [];
+        if (isset($set['@rdf:about'])) {
+            $subject = new Iri($set['@rdf:about']);
+            unset($set['@rdf:about']);
+        }
+        else {
+            $subject = new BlankNode($set['@rdf:nodeID']);
+            unset($set['@rdf:nodeID']);
+        }
+        foreach ($set as $type => $values) {
             if (str_contains($type, ':')) {
                 list($prefix, $localPart) = explode(':', $type);
                 $predicate = new PrefixedIri($prefix, $localPart);
@@ -56,39 +61,36 @@ class SparQlConstructDenormalizer implements DenormalizerInterface
             else {
                 $predicate = new Iri($defaultSchema . $type);
             }
-            if (is_string($value)) {
-                $triple[] = $subject;
-                $triple[] = $predicate;
-                $triple[] = new PlainLiteral($value);
-            }
-            elseif (is_array($value) && isset($value['@rdf:resource'])) {
-                $triple[] = $subject;
-                $triple[] = $predicate;
-                $triple[] = new Iri($value['@rdf:resource']);
-            }
-            elseif (is_array($value) && isset($value['@rdf:datatype'])) {
-                $dataType = $value['@rdf:datatype'];
-                $literalValue = $value['#'] ?? '';
-                if (filter_var($dataType, FILTER_VALIDATE_URL)) {
-                    $dataTypeIri = new Iri($dataType);
-                }
-                else {
-                    list($dtPrefix, $dtLocal) = explode(':', $dataType, 2);
-                    $dataTypeIri = new PrefixedIri($dtPrefix, $dtLocal);
-                }
-                $triple[] = $subject;
-                $triple[] = $predicate;
-                $triple[] = new TypedLiteral($literalValue, $dataTypeIri);
-            }
-            elseif (is_array($value) && isset($value['@rdf:nodeID'])) {
-                $triple[] = $subject;
-                $triple[] = $predicate;
-                $triple[] = new BlankNode($value['@rdf:nodeID']);
+            // A repeated predicate is decoded by XmlEncoder as a numeric array of value arrays.
+            if (is_array($values) && array_key_exists(0, $values)) {
+                $valueList = $values;
             }
             else {
-                continue;
+                $valueList = [$values];
             }
-            $terms[] = $triple;
+            foreach ($valueList as $value) {
+                if (is_string($value)) {
+                    $terms[] = [$subject, $predicate, new PlainLiteral($value)];
+                }
+                elseif (is_array($value) && isset($value['@rdf:resource'])) {
+                    $terms[] = [$subject, $predicate, new Iri($value['@rdf:resource'])];
+                }
+                elseif (is_array($value) && isset($value['@rdf:datatype'])) {
+                    $dataType = $value['@rdf:datatype'];
+                    $literalValue = $value['#'] ?? '';
+                    if (filter_var($dataType, FILTER_VALIDATE_URL)) {
+                        $dataTypeIri = new Iri($dataType);
+                    }
+                    else {
+                        list($dtPrefix, $dtLocal) = explode(':', $dataType, 2);
+                        $dataTypeIri = new PrefixedIri($dtPrefix, $dtLocal);
+                    }
+                    $terms[] = [$subject, $predicate, new TypedLiteral($literalValue, $dataTypeIri)];
+                }
+                elseif (is_array($value) && isset($value['@rdf:nodeID'])) {
+                    $terms[] = [$subject, $predicate, new BlankNode($value['@rdf:nodeID'])];
+                }
+            }
         }
         return $terms;
     }
