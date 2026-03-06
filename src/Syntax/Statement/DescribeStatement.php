@@ -66,7 +66,7 @@ class DescribeStatement extends AbstractConditionalStatement implements Describe
                     $hasVariables = true;
                     foreach ($this->conditions as $condition) {
                         foreach ($condition->getTerms() as $clausedTerm) {
-                            if (get_class($clausedTerm) === Variable::class && $clausedTerm->getVariableName() === $term->getVariableName()) {
+                            if ($clausedTerm instanceof Variable && $clausedTerm->getVariableName() === $term->getVariableName()) {
                                 $unclausedVariables = false;
                                 break 3;
                             }
