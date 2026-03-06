@@ -529,17 +529,7 @@ class SparQlClientTest extends KernelTestCase
         $reflectedProperty = $reflectedCacheItem->getProperty('key');
         $reflectedProperty->setAccessible(true);
         $reflectedProperty->setValue($cacheItem, 'foo');
-        $exceptionStub = new class extends Exception implements CacheInvalidArgumentException {};
-        $cacheAdapterStub->expects($this->exactly(2))->method('getItem')->willReturnCallback(
-            function () use ($cacheItem, $exceptionStub) {
-                static $callCount = 0;
-                ++$callCount;
-                if ($callCount === 1) {
-                    return $cacheItem;
-                }
-                throw $exceptionStub;
-            }
-        );
+        $cacheAdapterStub->expects($this->exactly(1))->method('getItem')->willReturn($cacheItem);
         $selectResponseContent = file_get_contents(__DIR__ . '/../fixtures/client-select-request.xml');
         $httpClient = new MockHttpClient([new MockResponse($selectResponseContent)]);
         $kernel = new TestKernel('test', true);
@@ -608,17 +598,7 @@ class SparQlClientTest extends KernelTestCase
         $reflectedProperty = $reflectedCacheItem->getProperty('key');
         $reflectedProperty->setAccessible(true);
         $reflectedProperty->setValue($cacheItem, 'foo');
-        $exceptionStub = new class extends Exception implements CacheInvalidArgumentException {};
-        $cacheAdapterStub->expects($this->exactly(2))->method('getItem')->willReturnCallback(
-            function () use ($cacheItem, $exceptionStub) {
-                static $callCount = 0;
-                ++$callCount;
-                if ($callCount === 1) {
-                    return $cacheItem;
-                }
-                throw $exceptionStub;
-            }
-        );
+        $cacheAdapterStub->expects($this->exactly(1))->method('getItem')->willReturn($cacheItem);
         $askResponseContent = file_get_contents(__DIR__ . '/../fixtures/client-ask-request.xml');
         $httpClient = new MockHttpClient([new MockResponse($askResponseContent)]);
         $kernel = new TestKernel('test', true);
@@ -693,17 +673,7 @@ class SparQlClientTest extends KernelTestCase
         $reflectedProperty = $reflectedCacheItem->getProperty('key');
         $reflectedProperty->setAccessible(true);
         $reflectedProperty->setValue($cacheItem, 'foo');
-        $exceptionStub = new class extends Exception implements CacheInvalidArgumentException {};
-        $cacheAdapterStub->expects($this->exactly(2))->method('getItem')->willReturnCallback(
-            function () use ($cacheItem, $exceptionStub) {
-                static $callCount = 0;
-                ++$callCount;
-                if ($callCount === 1) {
-                    return $cacheItem;
-                }
-                throw $exceptionStub;
-            }
-        );
+        $cacheAdapterStub->expects($this->exactly(1))->method('getItem')->willReturn($cacheItem);
         $selectResponseContent = file_get_contents(__DIR__ . '/../fixtures/client-select-request.xml');
         $httpClient = new MockHttpClient([new MockResponse($selectResponseContent)]);
         $kernel = new TestKernel('test', true);
@@ -865,17 +835,7 @@ class SparQlClientTest extends KernelTestCase
         $reflectedProperty = $reflectedCacheItem->getProperty('key');
         $reflectedProperty->setAccessible(true);
         $reflectedProperty->setValue($cacheItem, 'foo');
-        $exceptionStub = new class extends Exception implements CacheInvalidArgumentException {};
-        $cacheAdapterStub->expects($this->exactly(2))->method('getItem')->willReturnCallback(
-            function () use ($cacheItem, $exceptionStub) {
-                static $callCount = 0;
-                ++$callCount;
-                if ($callCount === 1) {
-                    return $cacheItem;
-                }
-                throw $exceptionStub;
-            }
-        );
+        $cacheAdapterStub->expects($this->exactly(1))->method('getItem')->willReturn($cacheItem);
         $selectResponseContent = file_get_contents(__DIR__ . '/../fixtures/client-select-request.xml');
         $httpClient = new MockHttpClient([new MockResponse($selectResponseContent)]);
         $kernel = new TestKernel('test', true);
