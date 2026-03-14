@@ -5,6 +5,7 @@ namespace EffectiveActivism\SparQlClient\Syntax\Statement;
 use EffectiveActivism\SparQlClient\Exception\SparQlException;
 use EffectiveActivism\SparQlClient\Syntax\Order\OrderModifierInterface;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\AbstractIri;
+use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
 
 class DescribeStatement extends AbstractConditionalStatement implements DescribeStatementInterface
@@ -35,6 +36,12 @@ class DescribeStatement extends AbstractConditionalStatement implements Describe
      */
     public function toQuery(): string
     {
+        $this->validatePrefixes($this->conditions);
+        foreach ($this->resources as $resource) {
+            if ($resource instanceof PrefixedIri && !array_key_exists($resource->getPrefix(), $this->namespaces)) {
+                throw new SparQlException(sprintf('Prefix "%s" is not defined', $resource->getPrefix()));
+            }
+        }
         $preQuery = parent::toQuery();
         $resources = '';
         foreach ($this->resources as $resource) {

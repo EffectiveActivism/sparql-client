@@ -16,7 +16,7 @@ class BindTest extends KernelTestCase
 {
     const NAMESPACES = 'PREFIX schema: <http://schema.org/>';
 
-    const SERIALIZED_BIND = self::NAMESPACES . ' SELECT ?subject ?processedCommentCountVariable WHERE { ?subject schema:commentCount ?commentCount . BIND ("2"^^xsd:integer * ?commentCount AS ?processedCommentCountVariable ) . }';
+    const SERIALIZED_BIND = self::NAMESPACES . ' SELECT ?subject ?processedCommentCountVariable WHERE { ?subject schema:commentCount ?commentCount . BIND ("2"^^<http://www.w3.org/2001/XMLSchema#integer> * ?commentCount AS ?processedCommentCountVariable ) . }';
 
     public function testBind()
     {

@@ -14,7 +14,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 class ValuesTest extends KernelTestCase
 {
-    const SERIALIZED_VALUES = 'SELECT ?headline ?commentCount WHERE { VALUES ( ?headline ?commentCount ) { ( """Lorem""" "2"^^xsd:integer ) ( """Ipsum""" UNDEF ) } . }';
+    const SERIALIZED_VALUES = 'SELECT ?headline ?commentCount WHERE { VALUES ( ?headline ?commentCount ) { ( """Lorem""" "2"^^<http://www.w3.org/2001/XMLSchema#integer> ) ( """Ipsum""" UNDEF ) } . }';
 
     public function testValues()
     {

@@ -9,7 +9,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 class NotEqualTest extends KernelTestCase
 {
-    const SERIALIZED_OPERATOR = '"true"^^xsd:boolean != "false"^^xsd:boolean';
+    const SERIALIZED_OPERATOR = '"true"^^<http://www.w3.org/2001/XMLSchema#boolean> != "false"^^<http://www.w3.org/2001/XMLSchema#boolean>';
 
     public function testOperator()
     {

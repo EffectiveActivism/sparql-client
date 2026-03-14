@@ -6,6 +6,7 @@ class AskStatement extends AbstractConditionalStatement implements AskStatementI
 {
     public function toQuery(): string
     {
+        $this->validatePrefixes($this->conditions);
         $preQuery = parent::toQuery();
         $conditionsString = '';
         foreach ($this->conditions as $condition) {
