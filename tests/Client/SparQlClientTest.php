@@ -28,25 +28,27 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class SparQlClientTest extends KernelTestCase
 {
-    const NAMESPACES = 'PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX owl: <http://www.w3.org/2002/07/owl#> PREFIX skos: <http://www.w3.org/2004/02/skos/core#> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> PREFIX schema: <http://schema.org/>';
+    const SCHEMA_NAMESPACE = 'PREFIX schema: <http://schema.org/>';
 
-    const SELECT_STATEMENT_EXPECTED_QUERY = 'query=' . self::NAMESPACES . ' SELECT ?subject ?object WHERE { ?subject schema:headline ?object . OPTIONAL { ?subject schema:headline ?object . } . }';
+    const RDF_AND_SCHEMA_NAMESPACES = 'PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> PREFIX schema: <http://schema.org/>';
 
-    const SELECT_STATEMENT_LIMIT_OFFSET_EXPECTED_QUERY = 'query=' . self::NAMESPACES . ' SELECT ?subject ?object WHERE { ?subject schema:headline ?object . } LIMIT 1 OFFSET 2';
+    const SELECT_STATEMENT_EXPECTED_QUERY = 'query=' . self::SCHEMA_NAMESPACE . ' SELECT ?subject ?object WHERE { ?subject schema:headline ?object . OPTIONAL { ?subject schema:headline ?object . } . }';
 
-    const INSERT_STATEMENT_EXPECTED_QUERY = 'update=' . self::NAMESPACES . ' INSERT { <urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece> schema:headline """Lorem Ipsum""" } WHERE { <urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece> schema:headline ?object . }';
+    const SELECT_STATEMENT_LIMIT_OFFSET_EXPECTED_QUERY = 'query=' . self::SCHEMA_NAMESPACE . ' SELECT ?subject ?object WHERE { ?subject schema:headline ?object . } LIMIT 1 OFFSET 2';
 
-    const INSERT_STATEMENT_WITHOUT_CONDITION_EXPECTED_QUERY = 'update=' . self::NAMESPACES . ' INSERT DATA { <urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece> schema:headline """Lorem Ipsum""" . <urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece> schema:headline """Lorem Ipsum""" }';
+    const INSERT_STATEMENT_EXPECTED_QUERY = 'update=' . self::SCHEMA_NAMESPACE . ' INSERT { <urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece> schema:headline """Lorem Ipsum""" } WHERE { <urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece> schema:headline ?object . }';
 
-    const DELETE_STATEMENT_EXPECTED_QUERY = 'update=' . self::NAMESPACES . ' DELETE { ?subject schema:headline ?object } WHERE { ?subject rdf:type schema:Article . }';
+    const INSERT_STATEMENT_WITHOUT_CONDITION_EXPECTED_QUERY = 'update=' . self::SCHEMA_NAMESPACE . ' INSERT DATA { <urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece> schema:headline """Lorem Ipsum""" . <urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece> schema:headline """Lorem Ipsum""" }';
 
-    const DELETE_STATEMENT_WITHOUT_CONDITION_EXPECTED_QUERY = 'update=' . self::NAMESPACES . ' DELETE DATA { <urn:uuid:e998469e-831e-11eb-95f2-a32290c912e6> schema:headline """Lorem"""@la . <urn:uuid:e998469e-831e-11eb-95f2-a32290c912e6> schema:headline """Lorem"""@la }';
+    const DELETE_STATEMENT_EXPECTED_QUERY = 'update=' . self::RDF_AND_SCHEMA_NAMESPACES . ' DELETE { ?subject schema:headline ?object } WHERE { ?subject rdf:type schema:Article . }';
 
-    const REPLACE_STATEMENT_EXPECTED_QUERY = 'update=' . self::NAMESPACES . ' DELETE { ?subject schema:headline ?object . ?subject schema:headline ?object } INSERT { ?subject schema:headline """Lorem Ipsum""" . ?subject schema:headline """Lorem Ipsum""" } WHERE { ?subject rdf:type schema:Article . }';
+    const DELETE_STATEMENT_WITHOUT_CONDITION_EXPECTED_QUERY = 'update=' . self::SCHEMA_NAMESPACE . ' DELETE DATA { <urn:uuid:e998469e-831e-11eb-95f2-a32290c912e6> schema:headline """Lorem"""@la . <urn:uuid:e998469e-831e-11eb-95f2-a32290c912e6> schema:headline """Lorem"""@la }';
 
-    const HASHED_QUERY_UUID = '3959149f-83a7-53a6-82c8-7ca190789516';
+    const REPLACE_STATEMENT_EXPECTED_QUERY = 'update=' . self::RDF_AND_SCHEMA_NAMESPACES . ' DELETE { ?subject schema:headline ?object . ?subject schema:headline ?object } INSERT { ?subject schema:headline """Lorem Ipsum""" . ?subject schema:headline """Lorem Ipsum""" } WHERE { ?subject rdf:type schema:Article . }';
 
-    const DESCRIBE_STATEMENT_EXPECTED_QUERY = 'query=' . self::NAMESPACES . ' DESCRIBE ?subject WHERE { ?subject schema:alternateName """Lorem""" . }';
+    const HASHED_QUERY_UUID = '1632e8b0-0c0f-5832-8050-5392e2d3a43f';
+
+    const DESCRIBE_STATEMENT_EXPECTED_QUERY = 'query=' . self::SCHEMA_NAMESPACE . ' DESCRIBE ?subject WHERE { ?subject schema:alternateName """Lorem""" . }';
 
     /**
      * @covers \EffectiveActivism\SparQlClient\Client\SparQlClient
@@ -66,12 +68,12 @@ class SparQlClientTest extends KernelTestCase
         $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
         /** @var SparQlClientInterface $sparQlClient */
         $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
-        $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
         $subject = new Variable('subject');
         $predicate = new PrefixedIri('schema', 'headline');
         $object = new Variable('object');
         $statement = $sparQlClient
             ->select([$subject, $object])
+            ->withNamespaces(['schema' => 'http://schema.org/'])
             ->where([
                 new Triple($subject, $predicate, $object),
                 new Optionally([
@@ -106,12 +108,12 @@ class SparQlClientTest extends KernelTestCase
         $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
         /** @var SparQlClientInterface $sparQlClient */
         $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
-        $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
         $subject = new Variable('subject');
         $predicate = new PrefixedIri('schema', 'headline');
         $object = new Variable('object');
         $statement = $sparQlClient
             ->ask()
+            ->withNamespaces(['schema' => 'http://schema.org/'])
             ->where([
                 new Triple($subject, $predicate, $object),
             ]);
@@ -138,12 +140,12 @@ class SparQlClientTest extends KernelTestCase
         $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
         /** @var SparQlClientInterface $sparQlClient */
         $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
-        $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
         $subject = new Variable('subject');
         $predicate = new PrefixedIri('schema', 'identifier');
         $object = new Variable('object');
         $statement = $sparQlClient
             ->construct([new Triple($subject, new PrefixedIri('rdf', 'type'), new PrefixedIri('schema', 'Person'))])
+            ->withNamespaces(['rdf' => 'http://www.w3.org/1999/02/22-rdf-syntax-ns#', 'schema' => 'http://schema.org/'])
             ->where([
                 new Triple($subject, $predicate, $object),
             ]);
@@ -172,12 +174,12 @@ class SparQlClientTest extends KernelTestCase
         $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
         /** @var SparQlClientInterface $sparQlClient */
         $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
-        $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
         $subject = new Variable('subject');
         $predicate = new PrefixedIri('schema', 'identifier');
         $object = new Variable('object');
         $statement = $sparQlClient
             ->construct([new Triple($subject, new PrefixedIri('rdf', 'type'), new PrefixedIri('schema', 'Person'))])
+            ->withNamespaces(['rdf' => 'http://www.w3.org/1999/02/22-rdf-syntax-ns#', 'schema' => 'http://schema.org/'])
             ->where([
                 new Triple($subject, $predicate, $object),
             ]);
@@ -207,12 +209,12 @@ class SparQlClientTest extends KernelTestCase
         $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
         /** @var SparQlClientInterface $sparQlClient */
         $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
-        $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
         $subject = new Variable('subject');
         $predicate = new PrefixedIri('schema', 'alternateName');
         $object = new PlainLiteral('Lorem');
         $statement = $sparQlClient
             ->describe([$subject])
+            ->withNamespaces(['schema' => 'http://schema.org/'])
             ->where([new Triple($subject, $predicate, $object)]);
         $resultSet = $sparQlClient->execute($statement);
         $this->assertCount(1, $resultSet);
@@ -239,18 +241,19 @@ class SparQlClientTest extends KernelTestCase
         $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
         /** @var SparQlClientInterface $sparQlClient */
         $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
-        $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
         $subject = new Iri('urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece');
         $predicate = new PrefixedIri('schema', 'headline');
         $object = new PlainLiteral('Lorem Ipsum');
         $statement = $sparQlClient
             ->insert([new Triple($subject, $predicate, $object)])
+            ->withNamespaces(['schema' => 'http://schema.org/'])
             ->where([new Triple($subject, $predicate, new Variable('object'))]);
         $sparQlClient->execute($statement);
         $this->assertEquals(self::INSERT_STATEMENT_EXPECTED_QUERY, urldecode($receivedQuery));
         $triple = new Triple($subject, $predicate, $object);
         $statement = $sparQlClient
-            ->insert([$triple, $triple]);
+            ->insert([$triple, $triple])
+            ->withNamespaces(['schema' => 'http://schema.org/']);
         $sparQlClient->execute($statement);
         $this->assertEquals(self::INSERT_STATEMENT_WITHOUT_CONDITION_EXPECTED_QUERY, urldecode($receivedQuery));
     }
@@ -273,15 +276,16 @@ class SparQlClientTest extends KernelTestCase
         $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
         /** @var SparQlClientInterface $sparQlClient */
         $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
-        $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
         $statement = $sparQlClient
             ->delete([new Triple(new Variable('subject'), new PrefixedIri('schema', 'headline'), new Variable('object'))])
+            ->withNamespaces(['rdf' => 'http://www.w3.org/1999/02/22-rdf-syntax-ns#', 'schema' => 'http://schema.org/'])
             ->where([new Triple(new Variable('subject'), new PrefixedIri('rdf', 'type'), new PrefixedIri('schema', 'Article'))]);
         $sparQlClient->execute($statement);
         $this->assertEquals(self::DELETE_STATEMENT_EXPECTED_QUERY, urldecode($receivedQuery));
         $triple = new Triple(new Iri('urn:uuid:e998469e-831e-11eb-95f2-a32290c912e6'), new PrefixedIri('schema', 'headline'), new PlainLiteral('Lorem', 'la'));
         $statement = $sparQlClient
-            ->delete([$triple, $triple]);
+            ->delete([$triple, $triple])
+            ->withNamespaces(['schema' => 'http://schema.org/']);
         $sparQlClient->execute($statement);
         $this->assertEquals(self::DELETE_STATEMENT_WITHOUT_CONDITION_EXPECTED_QUERY, urldecode($receivedQuery));
     }
@@ -304,19 +308,20 @@ class SparQlClientTest extends KernelTestCase
         $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
         /** @var SparQlClientInterface $sparQlClient */
         $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
-        $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
         $tripleToReplace = new Triple(new Variable('subject'), new PrefixedIri('schema', 'headline'), new Variable('object'));
         $tripleToInsert = new Triple(new Variable('subject'), new PrefixedIri('schema', 'headline'), new PlainLiteral('Lorem Ipsum'));
         $statement = $sparQlClient
             ->replace([$tripleToReplace, $tripleToReplace])
             ->with([$tripleToInsert, $tripleToInsert])
+            ->withNamespaces(['rdf' => 'http://www.w3.org/1999/02/22-rdf-syntax-ns#', 'schema' => 'http://schema.org/'])
             ->where([new Triple(new Variable('subject'), new PrefixedIri('rdf', 'type'), new PrefixedIri('schema', 'Article'))]);
         $sparQlClient->execute($statement);
         $this->assertEquals(self::REPLACE_STATEMENT_EXPECTED_QUERY, urldecode($receivedQuery));
         $triple = new Triple(new Iri('urn:uuid:e998469e-831e-11eb-95f2-a32290c912e6'), new PrefixedIri('schema', 'headline'), new PlainLiteral('Lorem', 'la'));
         $statement = $sparQlClient
             ->replace([$triple])
-            ->with([$triple]);
+            ->with([$triple])
+            ->withNamespaces(['schema' => 'http://schema.org/']);
         $this->expectException(SparQlException::class);
         $sparQlClient->execute($statement);
     }
@@ -336,7 +341,6 @@ class SparQlClientTest extends KernelTestCase
         $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
         /** @var SparQlClientInterface $sparQlClient */
         $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
-        $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
         $subject = new Variable('subject');
         $predicate = new Variable('predicate');
         $object = new Variable('object');
@@ -375,12 +379,12 @@ class SparQlClientTest extends KernelTestCase
         $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
         /** @var SparQlClientInterface $sparQlClient */
         $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
-        $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
         $subject = new Variable('subject');
         $predicate = new PrefixedIri('schema', 'headline');
         $object = new Variable('object');
         $statement = $sparQlClient
             ->select([$subject, $object])
+            ->withNamespaces(['schema' => 'http://schema.org/'])
             ->where([new Triple($subject, $predicate, $object)])
             ->limit(1)
             ->offset(2);
@@ -399,12 +403,11 @@ class SparQlClientTest extends KernelTestCase
         $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
         /** @var SparQlClientInterface $sparQlClient */
         $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
-        $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
         $subject = new Variable('subject');
         $predicate = new PrefixedIri('schema', 'headline');
         $object = new PrefixedIri('schema', 'Article');
         $triple = new Triple($subject, $predicate, $object);
-        $sparQlClient->execute($sparQlClient->select([$subject])->where([$triple]));
+        $sparQlClient->execute($sparQlClient->select([$subject])->withNamespaces(['schema' => 'http://schema.org/'])->where([$triple]));
         $this->assertEquals($selectResponseContent, $cacheAdapter->get(self::HASHED_QUERY_UUID, function (ItemInterface $item) {
             return 'UNCACHED';
         }));
@@ -421,15 +424,14 @@ class SparQlClientTest extends KernelTestCase
         $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
         /** @var SparQlClientInterface $sparQlClient */
         $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
-        $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
         $subject = new Variable('subject');
         $predicate = new PrefixedIri('schema', 'headline');
         $object = new PrefixedIri('schema', 'Article');
         $triple = new Triple($subject, $predicate, $object);
         // Cache select query.
-        $sparQlClient->execute($sparQlClient->select([$subject])->where([$triple]));
+        $sparQlClient->execute($sparQlClient->select([$subject])->withNamespaces(['schema' => 'http://schema.org/'])->where([$triple]));
         // Invalidate select query by IRI cache tags.
-        $sparQlClient->execute($sparQlClient->delete([$triple])->where([$triple]));
+        $sparQlClient->execute($sparQlClient->delete([$triple])->withNamespaces(['schema' => 'http://schema.org/'])->where([$triple]));
         $this->assertEquals('UNCACHED', $cacheAdapter->get(self::HASHED_QUERY_UUID, function (ItemInterface $item) {
             return 'UNCACHED';
         }));
@@ -446,13 +448,12 @@ class SparQlClientTest extends KernelTestCase
         $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
         /** @var SparQlClientInterface $sparQlClient */
         $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
-        $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
         $subject = new Variable('subject');
         $predicate = new PrefixedIri('schema', 'headline');
         $object = new PrefixedIri('schema', 'Article');
         $triple = new Triple($subject, $predicate, $object);
-        $sparQlClient->execute($sparQlClient->select([$subject])->where([$triple]));
-        $sparQlClient->execute($sparQlClient->replace([$triple])->with([$triple])->where([$triple]));
+        $sparQlClient->execute($sparQlClient->select([$subject])->withNamespaces(['schema' => 'http://schema.org/'])->where([$triple]));
+        $sparQlClient->execute($sparQlClient->replace([$triple])->with([$triple])->withNamespaces(['schema' => 'http://schema.org/'])->where([$triple]));
         $this->assertEquals('UNCACHED', $cacheAdapter->get(self::HASHED_QUERY_UUID, function (ItemInterface $item) {
             return 'UNCACHED';
         }));
@@ -468,12 +469,11 @@ class SparQlClientTest extends KernelTestCase
         $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
         /** @var SparQlClientInterface $sparQlClient */
         $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
-        $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
         $subject = new Variable('subject');
         $predicate = new PrefixedIri('schema', 'headline');
         $object = new PrefixedIri('schema', 'Article');
         $triple = new Triple($subject, $predicate, $object);
-        $statement = $sparQlClient->select([$subject])->where([$triple]);
+        $statement = $sparQlClient->select([$subject])->withNamespaces(['schema' => 'http://schema.org/'])->where([$triple]);
         $threwException = false;
         try {
             $statement->limit(-1);
@@ -509,13 +509,12 @@ class SparQlClientTest extends KernelTestCase
         $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
         /** @var SparQlClientInterface $sparQlClient */
         $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
-        $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
         $subject = new Variable('subject');
         $predicate = new PrefixedIri('schema', 'headline');
         $object = new PrefixedIri('schema', 'Article');
         $triple = new Triple($subject, $predicate, $object);
         $this->expectException(SparQlException::class);
-        $sparQlClient->execute($sparQlClient->select([$subject])->where([$triple]));
+        $sparQlClient->execute($sparQlClient->select([$subject])->withNamespaces(['schema' => 'http://schema.org/'])->where([$triple]));
     }
 
     public function testClientSelectStatementCacheSaveException()
@@ -538,13 +537,12 @@ class SparQlClientTest extends KernelTestCase
         $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
         /** @var SparQlClientInterface $sparQlClient */
         $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
-        $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
         $subject = new Variable('subject');
         $predicate = new PrefixedIri('schema', 'headline');
         $object = new PrefixedIri('schema', 'Article');
         $triple = new Triple($subject, $predicate, $object);
         $this->expectException(SparQlException::class);
-        $sparQlClient->execute($sparQlClient->select([$subject])->where([$triple]));
+        $sparQlClient->execute($sparQlClient->select([$subject])->withNamespaces(['schema' => 'http://schema.org/'])->where([$triple]));
     }
 
     public function testClientAskStatementException()
@@ -557,13 +555,12 @@ class SparQlClientTest extends KernelTestCase
         $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
         /** @var SparQlClientInterface $sparQlClient */
         $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
-        $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
         $subject = new Variable('subject');
         $predicate = new PrefixedIri('schema', 'headline');
         $object = new PrefixedIri('schema', 'Article');
         $triple = new Triple($subject, $predicate, $object);
         $this->expectException(SparQlException::class);
-        $sparQlClient->execute($sparQlClient->ask()->where([$triple]));
+        $sparQlClient->execute($sparQlClient->ask()->withNamespaces(['schema' => 'http://schema.org/'])->where([$triple]));
     }
 
     public function testClientAskStatementCacheException()
@@ -578,13 +575,12 @@ class SparQlClientTest extends KernelTestCase
         $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
         /** @var SparQlClientInterface $sparQlClient */
         $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
-        $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
         $subject = new Variable('subject');
         $predicate = new PrefixedIri('schema', 'headline');
         $object = new PrefixedIri('schema', 'Article');
         $triple = new Triple($subject, $predicate, $object);
         $this->expectException(SparQlException::class);
-        $sparQlClient->execute($sparQlClient->ask()->where([$triple]));
+        $sparQlClient->execute($sparQlClient->ask()->withNamespaces(['schema' => 'http://schema.org/'])->where([$triple]));
     }
 
     public function testClientAskStatementCacheSaveException()
@@ -607,13 +603,12 @@ class SparQlClientTest extends KernelTestCase
         $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
         /** @var SparQlClientInterface $sparQlClient */
         $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
-        $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
         $subject = new Variable('subject');
         $predicate = new PrefixedIri('schema', 'headline');
         $object = new PrefixedIri('schema', 'Article');
         $triple = new Triple($subject, $predicate, $object);
         $this->expectException(SparQlException::class);
-        $sparQlClient->execute($sparQlClient->ask()->where([$triple]));
+        $sparQlClient->execute($sparQlClient->ask()->withNamespaces(['schema' => 'http://schema.org/'])->where([$triple]));
     }
 
     public function testClientConstructStatementException()
@@ -626,12 +621,11 @@ class SparQlClientTest extends KernelTestCase
         $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
         /** @var SparQlClientInterface $sparQlClient */
         $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
-        $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
         $subject = new Variable('subject');
         $predicate = new PrefixedIri('schema', 'headline');
         $object = new PrefixedIri('schema', 'Article');
         $triple = new Triple($subject, $predicate, $object);
-        $statement = $sparQlClient->construct([$triple])->where([$triple]);
+        $statement = $sparQlClient->construct([$triple])->withNamespaces(['schema' => 'http://schema.org/'])->where([$triple]);
         $threwException = false;
         try {
             $sparQlClient->execute($statement);
@@ -653,13 +647,12 @@ class SparQlClientTest extends KernelTestCase
         $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
         /** @var SparQlClientInterface $sparQlClient */
         $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
-        $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
         $subject = new Variable('subject');
         $predicate = new PrefixedIri('schema', 'headline');
         $object = new PrefixedIri('schema', 'Article');
         $triple = new Triple($subject, $predicate, $object);
         $this->expectException(SparQlException::class);
-        $sparQlClient->execute($sparQlClient->construct([$triple])->where([$triple]));
+        $sparQlClient->execute($sparQlClient->construct([$triple])->withNamespaces(['schema' => 'http://schema.org/'])->where([$triple]));
     }
 
     public function testClientConstructStatementCacheSaveException()
@@ -682,13 +675,12 @@ class SparQlClientTest extends KernelTestCase
         $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
         /** @var SparQlClientInterface $sparQlClient */
         $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
-        $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
         $subject = new Variable('subject');
         $predicate = new PrefixedIri('schema', 'headline');
         $object = new PrefixedIri('schema', 'Article');
         $triple = new Triple($subject, $predicate, $object);
         $this->expectException(SparQlException::class);
-        $sparQlClient->execute($sparQlClient->construct([$triple])->where([$triple]));
+        $sparQlClient->execute($sparQlClient->construct([$triple])->withNamespaces(['schema' => 'http://schema.org/'])->where([$triple]));
     }
 
     public function testClientDeleteStatementException()
@@ -701,13 +693,12 @@ class SparQlClientTest extends KernelTestCase
         $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
         /** @var SparQlClientInterface $sparQlClient */
         $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
-        $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
         $subject = new Variable('subject');
         $predicate = new PrefixedIri('schema', 'headline');
         $object = new PrefixedIri('schema', 'Article');
         $triple = new Triple($subject, $predicate, $object);
         $this->expectException(SparQlException::class);
-        $sparQlClient->execute($sparQlClient->delete([$triple])->where([$triple]));
+        $sparQlClient->execute($sparQlClient->delete([$triple])->withNamespaces(['schema' => 'http://schema.org/'])->where([$triple]));
     }
 
     public function testClientDeleteStatementCacheException()
@@ -722,13 +713,12 @@ class SparQlClientTest extends KernelTestCase
         $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
         /** @var SparQlClientInterface $sparQlClient */
         $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
-        $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
         $subject = new Variable('subject');
         $predicate = new PrefixedIri('schema', 'headline');
         $object = new PrefixedIri('schema', 'Article');
         $triple = new Triple($subject, $predicate, $object);
         $this->expectException(SparQlException::class);
-        $sparQlClient->execute($sparQlClient->delete([$triple])->where([$triple]));
+        $sparQlClient->execute($sparQlClient->delete([$triple])->withNamespaces(['schema' => 'http://schema.org/'])->where([$triple]));
     }
 
     public function testClientReplaceStatementException()
@@ -741,13 +731,12 @@ class SparQlClientTest extends KernelTestCase
         $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
         /** @var SparQlClientInterface $sparQlClient */
         $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
-        $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
         $subject = new Variable('subject');
         $predicate = new PrefixedIri('schema', 'headline');
         $object = new PrefixedIri('schema', 'Article');
         $triple = new Triple($subject, $predicate, $object);
         $this->expectException(SparQlException::class);
-        $sparQlClient->execute($sparQlClient->replace([$triple])->with([$triple])->where([$triple]));
+        $sparQlClient->execute($sparQlClient->replace([$triple])->with([$triple])->withNamespaces(['schema' => 'http://schema.org/'])->where([$triple]));
     }
 
     public function testClientReplaceStatementCacheException()
@@ -762,13 +751,12 @@ class SparQlClientTest extends KernelTestCase
         $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
         /** @var SparQlClientInterface $sparQlClient */
         $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
-        $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
         $subject = new Variable('subject');
         $predicate = new PrefixedIri('schema', 'headline');
         $object = new PrefixedIri('schema', 'Article');
         $triple = new Triple($subject, $predicate, $object);
         $this->expectException(SparQlException::class);
-        $sparQlClient->execute($sparQlClient->replace([$triple])->with([$triple])->where([$triple]));
+        $sparQlClient->execute($sparQlClient->replace([$triple])->with([$triple])->withNamespaces(['schema' => 'http://schema.org/'])->where([$triple]));
     }
 
     public function testClientInsertStatementException()
@@ -781,13 +769,12 @@ class SparQlClientTest extends KernelTestCase
         $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
         /** @var SparQlClientInterface $sparQlClient */
         $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
-        $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
         $subject = new Variable('subject');
         $predicate = new PrefixedIri('schema', 'headline');
         $object = new PrefixedIri('schema', 'Article');
         $triple = new Triple($subject, $predicate, $object);
         $this->expectException(SparQlException::class);
-        $sparQlClient->execute($sparQlClient->insert([$triple])->where([$triple]));
+        $sparQlClient->execute($sparQlClient->insert([$triple])->withNamespaces(['schema' => 'http://schema.org/'])->where([$triple]));
     }
 
     public function testClientDescribeStatementException()
@@ -800,7 +787,6 @@ class SparQlClientTest extends KernelTestCase
         $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
         /** @var SparQlClientInterface $sparQlClient */
         $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
-        $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
         $resource = new Iri('urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece');
         $this->expectException(SparQlException::class);
         $sparQlClient->execute($sparQlClient->describe([$resource]));
@@ -818,7 +804,6 @@ class SparQlClientTest extends KernelTestCase
         $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
         /** @var SparQlClientInterface $sparQlClient */
         $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
-        $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
         $resource = new Iri('urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece');
         $this->expectException(SparQlException::class);
         $sparQlClient->execute($sparQlClient->describe([$resource]));
@@ -844,7 +829,6 @@ class SparQlClientTest extends KernelTestCase
         $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
         /** @var SparQlClientInterface $sparQlClient */
         $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
-        $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
         $resource = new Iri('urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece');
         $this->expectException(SparQlException::class);
         $sparQlClient->execute($sparQlClient->describe([$resource]));

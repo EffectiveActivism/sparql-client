@@ -40,7 +40,7 @@ class InsertStatementTest extends KernelTestCase
 
     public function testInsertExceptions()
     {
-        // Test statement with unknown IRI prefix.
+        // Test statement with unknown IRI prefix (deferred to toQuery).
         $subject = new Iri(self::SUBJECT_URI);
         $predicate = new Iri('http://schema.org/headline');
         $unknownPredicate = new PrefixedIri('unknown', 'headline');
@@ -48,7 +48,7 @@ class InsertStatementTest extends KernelTestCase
         $triple = new Triple($subject, $unknownPredicate, $object);
         $threwException = false;
         try {
-            new InsertStatement([$triple]);
+            (new InsertStatement([$triple]))->toQuery();
         } catch (SparQlException) {
             $threwException = true;
         }

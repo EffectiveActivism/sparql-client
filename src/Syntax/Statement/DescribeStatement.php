@@ -19,9 +19,8 @@ class DescribeStatement extends AbstractConditionalStatement implements Describe
     /** @var (AbstractIri|Variable)[] */
     protected array $resources;
 
-    public function __construct(array $resources, array $extraNamespaces = [])
+    public function __construct(array $resources)
     {
-        parent::__construct($extraNamespaces);
         foreach ($resources as $resource) {
             if (!($resource instanceof AbstractIri) && !($resource instanceof Variable)) {
                 $class = is_object($resource) ? get_class($resource) : gettype($resource);

@@ -11,7 +11,6 @@ class Configuration implements ConfigurationInterface
     {
         $treeBuilder = new TreeBuilder('sparql_client');
         $treeBuilder->getRootNode()
-            ->fixXmlConfig('namespace')
             ->children()
                 ->scalarNode('sparql_endpoint')
                     ->info('Provide an endpoint for a SPARQL server.')
@@ -21,12 +20,6 @@ class Configuration implements ConfigurationInterface
                     ->info('Optionally provide an endpoint for a SHACL validation service.')
                     ->defaultValue('')
                 ->end() // shacl_endpoint
-                ->arrayNode('namespaces')
-                    ->info('Namespaces that are used in queries and updates.')
-                    ->useAttributeAsKey('name')
-                    ->scalarPrototype()->end()
-                    ->defaultValue([])
-                ->end() // namespaces
             ->end()
         ;
         return $treeBuilder;

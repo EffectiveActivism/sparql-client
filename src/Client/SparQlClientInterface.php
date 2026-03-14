@@ -31,16 +31,4 @@ interface SparQlClientInterface
     public function select(array $variables): SelectStatementInterface;
 
     public function upload(File $file, string $contentType = 'application/x-turtle'): bool;
-
-    /**
-     * Getters.
-     */
-
-    public function getNamespaces(): array;
-
-    /**
-     * Setters.
-     */
-
-    public function setExtraNamespaces(array $extraNamespaces): SparQlClientInterface;
 }

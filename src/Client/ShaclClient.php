@@ -2,7 +2,6 @@
 
 namespace EffectiveActivism\SparQlClient\Client;
 
-use EffectiveActivism\SparQlClient\Constant;
 use EffectiveActivism\SparQlClient\Exception\ShaclException;
 use EffectiveActivism\SparQlClient\Exception\SparQlException;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\TripleInterface;
@@ -29,11 +28,7 @@ class ShaclClient implements ShaclClientInterface
 {
     protected HttpClientInterface $httpClient;
 
-    protected array $extraNamespaces = [];
-
     protected LoggerInterface $logger;
-
-    protected array $namespaces = [];
 
     protected SerializerInterface $serializer;
 
@@ -43,7 +38,6 @@ class ShaclClient implements ShaclClientInterface
     {
         $this->httpClient = $httpClient;
         $this->logger = $logger;
-        $this->namespaces = $configuration['namespaces'];
         $this->shaclEndpoint = $configuration['shacl_endpoint'];
         $encoders = [new NTripleDecoder()];
         $this->serializer = new Serializer([], $encoders);
@@ -63,7 +57,8 @@ class ShaclClient implements ShaclClientInterface
                 InsertStatement::class => $statement->getTriplesToInsert(),
                 ReplaceStatement::class => $statement->getReplacements(),
             };
-            $constructStatement = new ConstructStatement($triples, $this->getNamespaces());
+            $constructStatement = new ConstructStatement($triples);
+            $constructStatement->withNamespaces($statement->getNamespaces());
             $constructStatement->where($statement->getConditions());
         }
         return $constructStatement;
@@ -123,22 +118,4 @@ class ShaclClient implements ShaclClientInterface
         }
     }
 
-    /**
-     * Getters.
-     */
-
-    public function getNamespaces(): array
-    {
-        return array_merge(Constant::W3C_NAMESPACES, $this->namespaces, $this->extraNamespaces);
-    }
-
-    /**
-     * Setters.
-     */
-
-    public function setExtraNamespaces(array $extraNamespaces): ShaclClientInterface
-    {
-        $this->extraNamespaces = $extraNamespaces;
-        return $this;
-    }
 }
