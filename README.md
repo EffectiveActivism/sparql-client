@@ -16,6 +16,7 @@ validation.
         - [Group by and having](#group-by-and-having)
         - [Expressions](#expressions)
         - [Dataset clauses](#dataset-clauses)
+    - [Ask statement](#ask-statement)
     - [Construct statement](#construct-statement)
     - [Insert statement](#insert-statement)
     - [Delete statement](#delete-statement)
@@ -37,9 +38,9 @@ validation.
     - [Constraints](#constraints)
         - [Filter examples](#filter-examples)
     - [Aggregates](#aggregates)
+    - [Error handling](#error-handling)
 - [SHACL validator](#shacl-validator)
 - [Example docker-compose setup](#example-docker-compose-setup)
-- [Planned features](#planned-features)
 
 ## Installation
 
@@ -95,11 +96,11 @@ class MyController extends AbstractController
         // Create a select statement.
         $selectStatement = $sparQlClient->select([$subject])->where([$triple]);
         // Perform the query.
-        $sets = $sparQlClient->execute($selectStatement);
+        $result = $sparQlClient->execute($selectStatement);
         // The result will contain each 'subject' found.
-        /** @var TermInterface[] $set */
-        foreach ($sets as $set) {
-            dump($set[$subject->getVariableName()]);
+        /** @var TermInterface[] $row */
+        foreach ($result->getRows() as $row) {
+            dump($row[$subject->getVariableName()]);
         }
     }
 }
@@ -221,7 +222,7 @@ class MyController extends AbstractController
         // Perform the query.
         $result = $sparQlClient->execute($askStatement);
         // The result will be a boolean value.
-        if ($result === true) {
+        if ($result->getAnswer() === true) {
             dump('yes');
         }
     }
@@ -241,7 +242,6 @@ use EffectiveActivism\SparQlClient\Client\SparQlClientInterface;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\Triple;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
-use EffectiveActivism\SparQlClient\Syntax\Term\TermInterface;
 use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
@@ -262,11 +262,10 @@ class MyController extends AbstractController
         // Create a construct statement.
         $constructStatement = $sparQlClient->construct([$triple])->where([$triple]);
         // Perform the query.
-        $sets = $sparQlClient->execute($constructStatement);
-        // The result will contain each 'subject' found.
-        /** @var TermInterface[] $set */
-        foreach ($sets as $set) {
-            dump($set[$subject->getVariableName()]);
+        $result = $sparQlClient->execute($constructStatement);
+        // The result will contain each constructed triple.
+        foreach ($result->getTriples() as $triple) {
+            dump($triple);
         }
     }
 }
@@ -308,7 +307,7 @@ class MyController extends AbstractController
         $triple = new Triple($subject, $predicate, $object);
         // Create an insert statement.
         $insertStatement = $sparQlClient->insert([$triple]);
-        // Perform the update.
+        // Perform the update. Returns an UpdateResultInterface with getStatusCode() and getBody().
         $sparQlClient->execute($insertStatement);
     }
 }
@@ -441,11 +440,10 @@ class MyController extends AbstractController
         // Create a describe statement.
         $describeStatement = $sparQlClient->describe([$subject])->where([$triple]);
         // Perform the query.
-        $sets = $sparQlClient->execute($describeStatement);
-        // The result will contain the resource description.
-        /** @var TermInterface[] $set */
-        foreach ($sets as $set) {
-            dump($set);
+        $result = $sparQlClient->execute($describeStatement);
+        // The result will contain the resource description as triples.
+        foreach ($result->getTriples() as $triple) {
+            dump($triple);
         }
     }
 }
@@ -863,6 +861,31 @@ $selectStatement = $sparQlClient
     ->select([$subject, $total, $unique, $sum])
     ->where([$triple])
     ->groupBy([$subject]);
+```
+
+### Error handling
+
+All methods on `SparQlClientInterface` throw `SparQlException` on failure. The exception exposes three additional accessors beyond the standard `getMessage()`:
+
+- `getStatusCode(): ?int` — HTTP status code from the triplestore response, if available.
+- `getResponseBody(): ?string` — raw response body, if available.
+- `getQuery(): ?string` — the serialized SPARQL query that caused the failure.
+
+```php
+<?php
+
+use EffectiveActivism\SparQlClient\Exception\SparQlException;
+
+try {
+    $result = $sparQlClient->execute($selectStatement);
+} catch (SparQlException $exception) {
+    // HTTP status code returned by the triplestore (null if the request never completed).
+    $exception->getStatusCode();
+    // Raw response body (null if unavailable).
+    $exception->getResponseBody();
+    // The SPARQL query string that triggered the failure.
+    $exception->getQuery();
+}
 ```
 
 # SHACL validator
