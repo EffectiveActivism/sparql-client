@@ -971,6 +971,5 @@ services:
 
 # Planned features
 
-- Support for named graph management operations.
 - Improve error reporting from triplestores.
 - Possibly return more meaningful data from INSERT and DELETE statement executions.

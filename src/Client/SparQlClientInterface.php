@@ -2,6 +2,7 @@
 
 namespace EffectiveActivism\SparQlClient\Client;
 
+use EffectiveActivism\SparQlClient\Result\StatementResultInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\AskStatementInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\ClearStatementInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\ConstructStatementInterface;
@@ -18,7 +19,7 @@ use Symfony\Component\HttpFoundation\File\File;
 
 interface SparQlClientInterface
 {
-    public function execute(StatementInterface $statement, bool $toTriples = false): array|bool;
+    public function execute(StatementInterface $statement): StatementResultInterface;
 
     public function ask(): AskStatementInterface;
 

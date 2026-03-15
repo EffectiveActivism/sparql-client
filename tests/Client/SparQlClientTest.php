@@ -4,14 +4,17 @@ namespace EffectiveActivism\SparQlClient\Tests\Client;
 
 use EffectiveActivism\SparQlClient\Client\SparQlClientInterface;
 use EffectiveActivism\SparQlClient\Exception\SparQlException;
+use EffectiveActivism\SparQlClient\Result\AskResultInterface;
+use EffectiveActivism\SparQlClient\Result\ConstructResultInterface;
+use EffectiveActivism\SparQlClient\Result\DescribeResultInterface;
+use EffectiveActivism\SparQlClient\Result\SelectResultInterface;
+use EffectiveActivism\SparQlClient\Result\UpdateResultInterface;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Graph\Graph;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Optionally\Optionally;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\Triple;
-use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\TripleInterface;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\Iri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
-use EffectiveActivism\SparQlClient\Syntax\Term\TermInterface;
 use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
 use EffectiveActivism\SparQlClient\Tests\Environment\TestKernel;
 use Exception;
@@ -81,7 +84,9 @@ class SparQlClientTest extends KernelTestCase
                     new Triple($subject, $predicate, $object),
                 ])
             ]);
-        $resultSet = $sparQlClient->execute($statement);
+        $result = $sparQlClient->execute($statement);
+        $this->assertInstanceOf(SelectResultInterface::class, $result);
+        $resultSet = $result->getRows();
         $this->assertCount(2, $resultSet);
         $firstSet = $resultSet[0];
         $this->assertCount(3, $firstSet);
@@ -119,7 +124,8 @@ class SparQlClientTest extends KernelTestCase
                 new Triple($subject, $predicate, $object),
             ]);
         $result = $sparQlClient->execute($statement);
-        $this->assertTrue($result);
+        $this->assertInstanceOf(AskResultInterface::class, $result);
+        $this->assertTrue($result->getAnswer());
     }
 
     /**
@@ -150,9 +156,11 @@ class SparQlClientTest extends KernelTestCase
             ->where([
                 new Triple($subject, $predicate, $object),
             ]);
-        /** @var TripleInterface[] $resultSet */
-        $resultSet = $sparQlClient->execute($statement, true);
+        $result = $sparQlClient->execute($statement);
+        $this->assertInstanceOf(ConstructResultInterface::class, $result);
+        $resultSet = $result->getTriples();
         $this->assertCount(2, $resultSet);
+        $this->assertInstanceOf(Triple::class, $resultSet[0]);
         $this->assertEquals('urn:uuid:d8c0c240-17a2-421e-8c24-49e75a1bddf0', $resultSet[0]->getSubject()->getRawValue());
     }
 
@@ -184,12 +192,13 @@ class SparQlClientTest extends KernelTestCase
             ->where([
                 new Triple($subject, $predicate, $object),
             ]);
-        /** @var TermInterface[][] $resultSet */
-        $resultSet = $sparQlClient->execute($statement);
+        $result = $sparQlClient->execute($statement);
+        $this->assertInstanceOf(ConstructResultInterface::class, $result);
+        $resultSet = $result->getTriples();
         $this->assertCount(4, $resultSet);
-        $this->assertEquals('urn:uuid:d8c0c240-17a2-421e-8c24-49e75a1bddf0', $resultSet[0][0]->getRawValue());
-        $this->assertEquals('https://schema.org/alternateName', $resultSet[1][1]->getRawValue());
-        $this->assertEquals('Ipsum', $resultSet[3][2]->getRawValue());
+        $this->assertEquals('urn:uuid:d8c0c240-17a2-421e-8c24-49e75a1bddf0', $resultSet[0]->getSubject()->getRawValue());
+        $this->assertEquals('https://schema.org/alternateName', $resultSet[1]->getPredicate()->getRawValue());
+        $this->assertEquals('Ipsum', $resultSet[3]->getObject()->getRawValue());
     }
 
     /**
@@ -217,10 +226,13 @@ class SparQlClientTest extends KernelTestCase
             ->describe([$subject])
             ->withNamespaces(['schema' => 'http://schema.org/'])
             ->where([new Triple($subject, $predicate, $object)]);
-        $resultSet = $sparQlClient->execute($statement);
+        $result = $sparQlClient->execute($statement);
+        $this->assertInstanceOf(DescribeResultInterface::class, $result);
+        $resultSet = $result->getTriples();
         $this->assertCount(1, $resultSet);
-        $this->assertEquals('urn:uuid:89e2f582-918d-11eb-b6ff-1f71a7aa4639', $resultSet[0][0]->getRawValue());
-        $this->assertEquals('Lorem', $resultSet[0][2]->getRawValue());
+        $this->assertInstanceOf(Triple::class, $resultSet[0]);
+        $this->assertEquals('urn:uuid:89e2f582-918d-11eb-b6ff-1f71a7aa4639', $resultSet[0]->getSubject()->getRawValue());
+        $this->assertEquals('Lorem', $resultSet[0]->getObject()->getRawValue());
         $this->assertEquals(self::DESCRIBE_STATEMENT_EXPECTED_QUERY, urldecode($receivedQuery));
     }
 
@@ -249,13 +261,16 @@ class SparQlClientTest extends KernelTestCase
             ->insert([new Triple($subject, $predicate, $object)])
             ->withNamespaces(['schema' => 'http://schema.org/'])
             ->where([new Triple($subject, $predicate, new Variable('object'))]);
-        $sparQlClient->execute($statement);
+        $result = $sparQlClient->execute($statement);
+        $this->assertInstanceOf(UpdateResultInterface::class, $result);
+        $this->assertSame(200, $result->getStatusCode());
         $this->assertEquals(self::INSERT_STATEMENT_EXPECTED_QUERY, urldecode($receivedQuery));
         $triple = new Triple($subject, $predicate, $object);
         $statement = $sparQlClient
             ->insert([$triple, $triple])
             ->withNamespaces(['schema' => 'http://schema.org/']);
-        $sparQlClient->execute($statement);
+        $result = $sparQlClient->execute($statement);
+        $this->assertInstanceOf(UpdateResultInterface::class, $result);
         $this->assertEquals(self::INSERT_STATEMENT_WITHOUT_CONDITION_EXPECTED_QUERY, urldecode($receivedQuery));
     }
 
@@ -281,13 +296,16 @@ class SparQlClientTest extends KernelTestCase
             ->delete([new Triple(new Variable('subject'), new PrefixedIri('schema', 'headline'), new Variable('object'))])
             ->withNamespaces(['rdf' => 'http://www.w3.org/1999/02/22-rdf-syntax-ns#', 'schema' => 'http://schema.org/'])
             ->where([new Triple(new Variable('subject'), new PrefixedIri('rdf', 'type'), new PrefixedIri('schema', 'Article'))]);
-        $sparQlClient->execute($statement);
+        $result = $sparQlClient->execute($statement);
+        $this->assertInstanceOf(UpdateResultInterface::class, $result);
+        $this->assertSame(200, $result->getStatusCode());
         $this->assertEquals(self::DELETE_STATEMENT_EXPECTED_QUERY, urldecode($receivedQuery));
         $triple = new Triple(new Iri('urn:uuid:e998469e-831e-11eb-95f2-a32290c912e6'), new PrefixedIri('schema', 'headline'), new PlainLiteral('Lorem', 'la'));
         $statement = $sparQlClient
             ->delete([$triple, $triple])
             ->withNamespaces(['schema' => 'http://schema.org/']);
-        $sparQlClient->execute($statement);
+        $result = $sparQlClient->execute($statement);
+        $this->assertInstanceOf(UpdateResultInterface::class, $result);
         $this->assertEquals(self::DELETE_STATEMENT_WITHOUT_CONDITION_EXPECTED_QUERY, urldecode($receivedQuery));
     }
 
@@ -316,7 +334,9 @@ class SparQlClientTest extends KernelTestCase
             ->with([$tripleToInsert, $tripleToInsert])
             ->withNamespaces(['rdf' => 'http://www.w3.org/1999/02/22-rdf-syntax-ns#', 'schema' => 'http://schema.org/'])
             ->where([new Triple(new Variable('subject'), new PrefixedIri('rdf', 'type'), new PrefixedIri('schema', 'Article'))]);
-        $sparQlClient->execute($statement);
+        $result = $sparQlClient->execute($statement);
+        $this->assertInstanceOf(UpdateResultInterface::class, $result);
+        $this->assertSame(200, $result->getStatusCode());
         $this->assertEquals(self::REPLACE_STATEMENT_EXPECTED_QUERY, urldecode($receivedQuery));
         $triple = new Triple(new Iri('urn:uuid:e998469e-831e-11eb-95f2-a32290c912e6'), new PrefixedIri('schema', 'headline'), new PlainLiteral('Lorem', 'la'));
         $statement = $sparQlClient
@@ -325,41 +345,6 @@ class SparQlClientTest extends KernelTestCase
             ->withNamespaces(['schema' => 'http://schema.org/']);
         $this->expectException(SparQlException::class);
         $sparQlClient->execute($statement);
-    }
-
-    /**
-     * @covers \EffectiveActivism\SparQlClient\Client\SparQlClient
-     */
-    public function testSelectStatementRequestToTriples()
-    {
-        $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
-        $httpClient = new MockHttpClient(function ($method, $url, $options) {
-            return new MockResponse(file_get_contents(__DIR__ . '/../fixtures/client-select-request.xml'));
-        });
-        $kernel = new TestKernel('test', true);
-        $kernel->boot();
-        $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
-        $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
-        /** @var SparQlClientInterface $sparQlClient */
-        $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
-        $subject = new Variable('subject');
-        $predicate = new Variable('predicate');
-        $object = new Variable('object');
-        $variables = [$subject, $predicate, $object];
-        $statement = $sparQlClient->select($variables);
-        $statement
-            ->where([new Triple($subject, $predicate, $object)]);
-        $resultTripleSet = $sparQlClient->execute($statement, true);
-        $this->assertCount(1, $resultTripleSet);
-        /** @var TripleInterface $triple */
-        $triple = $resultTripleSet[0];
-        $this->assertInstanceOf(Triple::class, $triple);
-        $this->assertEquals('<urn:uuid:fcf19bc4-7e81-11eb-a169-175604c7c7bc>', $triple->getSubject()->serialize());
-        $this->assertEquals('subject', $triple->getSubject()->getVariableName());
-        $this->assertEquals('<http://schema.org/headline>', $triple->getPredicate()->serialize());
-        $this->assertEquals('predicate', $triple->getPredicate()->getVariableName());
-        $this->assertEquals('"""Lorem"""', $triple->getObject()->serialize());
-        $this->assertEquals('object', $triple->getObject()->getVariableName());
     }
 
     /**
@@ -855,7 +840,8 @@ class SparQlClientTest extends KernelTestCase
         $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
         $graph = new Iri('http://example.org/g');
         $result = $sparQlClient->execute($sparQlClient->clearGraph($graph));
-        $this->assertEquals([], $result);
+        $this->assertInstanceOf(UpdateResultInterface::class, $result);
+        $this->assertSame(200, $result->getStatusCode());
         $this->assertEquals('update=CLEAR GRAPH <http://example.org/g>', urldecode($receivedQuery));
     }
 
@@ -879,7 +865,8 @@ class SparQlClientTest extends KernelTestCase
         $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
         $graph = new Iri('http://example.org/g');
         $result = $sparQlClient->execute($sparQlClient->dropGraph($graph));
-        $this->assertEquals([], $result);
+        $this->assertInstanceOf(UpdateResultInterface::class, $result);
+        $this->assertSame(200, $result->getStatusCode());
         $this->assertEquals('update=DROP GRAPH <http://example.org/g>', urldecode($receivedQuery));
     }
 
@@ -903,7 +890,8 @@ class SparQlClientTest extends KernelTestCase
         $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
         $graph = new Iri('http://example.org/g');
         $result = $sparQlClient->execute($sparQlClient->createGraph($graph));
-        $this->assertEquals([], $result);
+        $this->assertInstanceOf(UpdateResultInterface::class, $result);
+        $this->assertSame(200, $result->getStatusCode());
         $this->assertEquals('update=CREATE GRAPH <http://example.org/g>', urldecode($receivedQuery));
     }
 
@@ -982,6 +970,77 @@ class SparQlClientTest extends KernelTestCase
         $sparQlClient->execute($sparQlClient->dropGraph($graph));
     }
 
+    public function testInsertStatementExceptionContainsStatusCodeAndBody()
+    {
+        $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
+        $httpClient = new MockHttpClient([new MockResponse('query parse failure', ['http_code' => 400])]);
+        $kernel = new TestKernel('test', true);
+        $kernel->boot();
+        $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
+        $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
+        /** @var SparQlClientInterface $sparQlClient */
+        $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
+        $subject = new Iri('urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece');
+        $predicate = new PrefixedIri('schema', 'headline');
+        $object = new PlainLiteral('Lorem Ipsum');
+        $statement = $sparQlClient
+            ->insert([new Triple($subject, $predicate, $object)])
+            ->withNamespaces(['schema' => 'http://schema.org/']);
+        try {
+            $sparQlClient->execute($statement);
+            $this->fail('Expected SparQlException was not thrown');
+        } catch (SparQlException $exception) {
+            $this->assertSame(400, $exception->getStatusCode());
+            $this->assertSame('query parse failure', $exception->getResponseBody());
+        }
+    }
+
+    public function testDeleteStatementExceptionContainsStatusCodeAndBody()
+    {
+        $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
+        $httpClient = new MockHttpClient([new MockResponse('unknown predicate', ['http_code' => 400])]);
+        $kernel = new TestKernel('test', true);
+        $kernel->boot();
+        $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
+        $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
+        /** @var SparQlClientInterface $sparQlClient */
+        $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
+        $subject = new Variable('subject');
+        $predicate = new PrefixedIri('schema', 'headline');
+        $object = new Variable('object');
+        $triple = new Triple($subject, $predicate, $object);
+        try {
+            $sparQlClient->execute($sparQlClient->delete([$triple])->withNamespaces(['schema' => 'http://schema.org/'])->where([$triple]));
+            $this->fail('Expected SparQlException was not thrown');
+        } catch (SparQlException $exception) {
+            $this->assertSame(400, $exception->getStatusCode());
+            $this->assertSame('unknown predicate', $exception->getResponseBody());
+        }
+    }
+
+    public function testSelectStatementExceptionContainsStatusCodeAndBody()
+    {
+        $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
+        $httpClient = new MockHttpClient([new MockResponse('syntax error near token', ['http_code' => 400])]);
+        $kernel = new TestKernel('test', true);
+        $kernel->boot();
+        $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
+        $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
+        /** @var SparQlClientInterface $sparQlClient */
+        $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
+        $subject = new Variable('subject');
+        $predicate = new PrefixedIri('schema', 'headline');
+        $object = new Variable('object');
+        $triple = new Triple($subject, $predicate, $object);
+        try {
+            $sparQlClient->execute($sparQlClient->select([$subject])->withNamespaces(['schema' => 'http://schema.org/'])->where([$triple]));
+            $this->fail('Expected SparQlException was not thrown');
+        } catch (SparQlException $exception) {
+            $this->assertSame(400, $exception->getStatusCode());
+            $this->assertSame('syntax error near token', $exception->getResponseBody());
+        }
+    }
+
     public function testAskStatementWithGraphPattern()
     {
         $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
@@ -1004,6 +1063,7 @@ class SparQlClientTest extends KernelTestCase
             ->withNamespaces(['schema' => 'http://schema.org/'])
             ->where([new Graph($graphIri, [$triple])]);
         $result = $sparQlClient->execute($statement);
-        $this->assertTrue($result);
+        $this->assertInstanceOf(AskResultInterface::class, $result);
+        $this->assertTrue($result->getAnswer());
     }
 }

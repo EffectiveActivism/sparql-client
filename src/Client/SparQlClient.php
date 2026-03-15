@@ -2,11 +2,18 @@
 
 namespace EffectiveActivism\SparQlClient\Client;
 
+use EffectiveActivism\SparQlClient\Exception\InvalidResultException;
 use EffectiveActivism\SparQlClient\Exception\SparQlException;
+use EffectiveActivism\SparQlClient\Result\AskResult;
+use EffectiveActivism\SparQlClient\Result\ConstructResult;
+use EffectiveActivism\SparQlClient\Result\DescribeResult;
+use EffectiveActivism\SparQlClient\Result\SelectResult;
+use EffectiveActivism\SparQlClient\Result\StatementResultInterface;
+use EffectiveActivism\SparQlClient\Result\UpdateResult;
+use EffectiveActivism\SparQlClient\Result\UpdateResultInterface;
 use EffectiveActivism\SparQlClient\Serializer\Normalizer\SparQlAskDenormalizer;
 use EffectiveActivism\SparQlClient\Serializer\Normalizer\SparQlConstructDenormalizer;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\Triple;
-use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\TripleInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\AskStatement;
 use EffectiveActivism\SparQlClient\Syntax\Statement\AskStatementInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\ClearStatement;
@@ -30,8 +37,6 @@ use EffectiveActivism\SparQlClient\Syntax\Statement\StatementInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\InsertStatement;
 use EffectiveActivism\SparQlClient\Serializer\Normalizer\SparQlResultDenormalizer;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\AbstractIri;
-use EffectiveActivism\SparQlClient\Syntax\Term\TermInterface;
-use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
 use Psr\Cache\InvalidArgumentException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\File\File;
@@ -42,6 +47,7 @@ use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Contracts\Cache\TagAwareCacheInterface;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface as HttpClientExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Symfony\Contracts\HttpClient\ResponseInterface;
 
 class SparQlClient implements SparQlClientInterface
 {
@@ -75,19 +81,19 @@ class SparQlClient implements SparQlClientInterface
     /**
      * @throws SparQlException
      */
-    public function execute(StatementInterface $statement, bool $toTriples = false): array|bool
+    public function execute(StatementInterface $statement): StatementResultInterface
     {
         return match (true) {
             $statement instanceof AskStatementInterface => $this->handleAskStatement($statement),
             $statement instanceof ClearStatementInterface => $this->handleClearStatement($statement),
-            $statement instanceof ConstructStatementInterface => $this->handleConstructStatement($statement, $toTriples),
+            $statement instanceof ConstructStatementInterface => $this->handleConstructStatement($statement),
             $statement instanceof CreateStatementInterface => $this->handleCreateStatement($statement),
             $statement instanceof DeleteStatementInterface => $this->handleDeleteStatement($statement),
             $statement instanceof DescribeStatementInterface => $this->handleDescribeStatement($statement),
             $statement instanceof DropStatementInterface => $this->handleDropStatement($statement),
             $statement instanceof InsertStatementInterface => $this->handleInsertStatement($statement),
             $statement instanceof ReplaceStatementInterface => $this->handleReplaceStatement($statement),
-            $statement instanceof SelectStatementInterface => $this->handleQueryStatement($statement, $toTriples),
+            $statement instanceof SelectStatementInterface => $this->handleSelectStatement($statement),
             default => throw new SparQlException(sprintf('Unsupported statement type: %s', get_class($statement))),
         };
     }
@@ -95,63 +101,44 @@ class SparQlClient implements SparQlClientInterface
     /**
      * @throws SparQlException
      */
-    protected function handleQueryStatement(ConstructStatementInterface|SelectStatementInterface $statement, bool $toTriples): array
+    protected function handleSelectStatement(SelectStatementInterface $statement): SelectResult
     {
         $query = $statement->toQuery();
         $this->logger->debug($query);
         $parameters = ['body' => ['query' => $query]];
         $queryKey = $this->getKey($query);
-        $sets = null;
+        $rows = null;
         try {
-            $responseContent = $this->cacheAdapter->get($queryKey, function (ItemInterface $item) use ($parameters, $statement, &$sets) {
+            $responseContent = $this->cacheAdapter->get($queryKey, function (ItemInterface $item) use ($parameters, $statement, &$rows) {
                 try {
-                    $responseContent = $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent();
+                    $response = $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters);
+                    $responseContent = $response->getContent();
                 } catch (HttpClientExceptionInterface $exception) {
-                    throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
+                    throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception, $this->resolveStatusCode($response ?? null), $this->resolveBody($response ?? null));
                 }
-                $sets = $this->serializer->deserialize($responseContent, SparQlResultDenormalizer::TYPE, 'xml');
+                $rows = $this->serializer->deserialize($responseContent, SparQlResultDenormalizer::TYPE, 'xml');
                 $tags = $this->extractTags($statement->getConditions());
-                foreach ($sets as $resultSet) {
-                    $tags = $this->extractTags($resultSet, $tags);
+                foreach ($rows as $row) {
+                    $tags = $this->extractTags($row, $tags);
                 }
                 $item->tag($tags);
                 return $responseContent;
             });
-        } catch (InvalidArgumentException|\LogicException $exception) {
+        } catch (InvalidArgumentException|\LogicException|InvalidResultException $exception) {
             throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
         }
-        // Return response as either a set of terms or a set of triples.
-        $result = $sets = $sets ?? $this->serializer->deserialize($responseContent, SparQlResultDenormalizer::TYPE, 'xml');
-        if ($toTriples === true) {
-            $conditions = $statement->getConditions();
-            foreach ($sets as $set) {
-                /** @var TripleInterface $condition */
-                foreach ($conditions as &$condition) {
-                    if ($condition instanceof TripleInterface) {
-                        /** @var TermInterface $term */
-                        foreach ($set as $term) {
-                            if ($condition->getSubject() instanceof Variable && $condition->getSubject()->getVariableName() === $term->getVariableName()) {
-                                $condition->setSubject($term);
-                            }
-                            if ($condition->getPredicate() instanceof Variable && $condition->getPredicate()->getVariableName() === $term->getVariableName()) {
-                                $condition->setPredicate($term);
-                            }
-                            if ($condition->getObject() instanceof Variable && $condition->getObject()->getVariableName() === $term->getVariableName()) {
-                                $condition->setObject($term);
-                            }
-                        }
-                    }
-                }
-            }
-            $result = $conditions;
+        try {
+            $rows = $rows ?? $this->serializer->deserialize($responseContent, SparQlResultDenormalizer::TYPE, 'xml');
+        } catch (InvalidResultException $exception) {
+            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
         }
-        return $result;
+        return new SelectResult($rows);
     }
 
     /**
      * @throws SparQlException
      */
-    protected function handleAskStatement(AskStatementInterface $statement): bool
+    protected function handleAskStatement(AskStatementInterface $statement): AskResult
     {
         $query = $statement->toQuery();
         $this->logger->debug($query);
@@ -160,9 +147,10 @@ class SparQlClient implements SparQlClientInterface
         try {
             $responseContent = $this->cacheAdapter->get($queryKey, function (ItemInterface $item) use ($parameters, $statement) {
                 try {
-                    $responseContent = $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent();
+                    $response = $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters);
+                    $responseContent = $response->getContent();
                 } catch (HttpClientExceptionInterface $exception) {
-                    throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
+                    throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception, $this->resolveStatusCode($response ?? null), $this->resolveBody($response ?? null));
                 }
                 $item->tag($this->extractTags($statement->getConditions()));
                 return $responseContent;
@@ -170,186 +158,222 @@ class SparQlClient implements SparQlClientInterface
         } catch (InvalidArgumentException|\LogicException $exception) {
             throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
         }
-        return $this->serializer->deserialize($responseContent, SparQlAskDenormalizer::TYPE, 'xml');
+        try {
+            return new AskResult($this->serializer->deserialize($responseContent, SparQlAskDenormalizer::TYPE, 'xml'));
+        } catch (InvalidResultException $exception) {
+            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
+        }
     }
 
     /**
      * @throws SparQlException
      */
-    protected function handleClearStatement(ClearStatementInterface $statement): array
+    protected function handleClearStatement(ClearStatementInterface $statement): UpdateResultInterface
     {
         $query = $statement->toQuery();
         $this->logger->debug($query);
         $parameters = ['body' => ['update' => $query]];
         try {
-            $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent();
+            $response = $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters);
+            $body = $response->getContent();
+            $statusCode = $response->getStatusCode();
+        } catch (HttpClientExceptionInterface $exception) {
+            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception, $this->resolveStatusCode($response ?? null), $this->resolveBody($response ?? null));
+        }
+        try {
             $this->cacheAdapter->invalidateTags($this->extractTags([$statement->getGraph()]));
-        } catch (HttpClientExceptionInterface|InvalidArgumentException $exception) {
+        } catch (InvalidArgumentException $exception) {
             throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
         }
-        return [];
+        return new UpdateResult($statusCode, $body);
     }
 
     /**
      * @throws SparQlException
      */
-    protected function handleConstructStatement(ConstructStatementInterface $statement, bool $toTriples): array
+    protected function handleConstructStatement(ConstructStatementInterface $statement): ConstructResult
     {
         $query = $statement->toQuery();
         $this->logger->debug($query);
         $parameters = ['body' => ['query' => $query]];
         $queryKey = $this->getKey($query);
-        $sets = null;
+        $tripleArrays = null;
         try {
-            $responseContent = $this->cacheAdapter->get($queryKey, function (ItemInterface $item) use ($parameters, $statement, &$sets) {
+            $responseContent = $this->cacheAdapter->get($queryKey, function (ItemInterface $item) use ($parameters, $statement, &$tripleArrays) {
                 try {
-                    $responseContent = $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent();
+                    $response = $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters);
+                    $responseContent = $response->getContent();
                 } catch (HttpClientExceptionInterface $exception) {
-                    throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
+                    throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception, $this->resolveStatusCode($response ?? null), $this->resolveBody($response ?? null));
                 }
-                $sets = $this->serializer->deserialize($responseContent, SparQlConstructDenormalizer::TYPE, 'xml');
+                $tripleArrays = $this->serializer->deserialize($responseContent, SparQlConstructDenormalizer::TYPE, 'xml');
                 $tags = $this->extractTags($statement->getConditions());
-                foreach ($sets as $resultSet) {
-                    $tags = $this->extractTags($resultSet, $tags);
+                foreach ($tripleArrays as $tripleArray) {
+                    $tags = $this->extractTags($tripleArray, $tags);
                 }
                 $item->tag($tags);
                 return $responseContent;
             });
-        } catch (InvalidArgumentException|\LogicException $exception) {
+        } catch (InvalidArgumentException|\LogicException|InvalidResultException $exception) {
             throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
         }
-        // Return response as either a set of terms or a set of triples.
-        $result = $sets = $sets ?? $this->serializer->deserialize($responseContent, SparQlConstructDenormalizer::TYPE, 'xml');
-        if ($toTriples === true) {
-            $triples = [];
-            foreach ($sets as $set) {
-                $triples[] = new Triple($set[0], $set[1], $set[2]);
-            }
-            $result = $triples;
+        try {
+            $tripleArrays = $tripleArrays ?? $this->serializer->deserialize($responseContent, SparQlConstructDenormalizer::TYPE, 'xml');
+        } catch (InvalidResultException $exception) {
+            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
         }
-        return $result;
+        return new ConstructResult(array_map(fn(array $set) => new Triple($set[0], $set[1], $set[2]), $tripleArrays));
     }
 
     /**
      * @throws SparQlException
      */
-    protected function handleDeleteStatement(DeleteStatementInterface $statement): array
+    protected function handleDeleteStatement(DeleteStatementInterface $statement): UpdateResultInterface
     {
         $query = $statement->toQuery();
         $this->logger->debug($query);
         $parameters = ['body' => ['update' => $query]];
         try {
-            $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent();
-            // Invalidate cache for delete statements.
+            $response = $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters);
+            $body = $response->getContent();
+            $statusCode = $response->getStatusCode();
+        } catch (HttpClientExceptionInterface $exception) {
+            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception, $this->resolveStatusCode($response ?? null), $this->resolveBody($response ?? null));
+        }
+        try {
             $tags = $this->extractTags(array_merge($statement->getTriplesToDelete(), $statement->getConditions()));
             $this->cacheAdapter->invalidateTags($tags);
-        } catch (HttpClientExceptionInterface|InvalidArgumentException $exception) {
+        } catch (InvalidArgumentException $exception) {
             throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
         }
-        return [];
+        return new UpdateResult($statusCode, $body);
     }
 
     /**
      * @throws SparQlException
      */
-    protected function handleCreateStatement(CreateStatementInterface $statement): array
+    protected function handleCreateStatement(CreateStatementInterface $statement): UpdateResultInterface
     {
         $query = $statement->toQuery();
         $this->logger->debug($query);
         $parameters = ['body' => ['update' => $query]];
         try {
-            $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent();
+            $response = $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters);
+            $body = $response->getContent();
+            $statusCode = $response->getStatusCode();
         } catch (HttpClientExceptionInterface $exception) {
-            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
+            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception, $this->resolveStatusCode($response ?? null), $this->resolveBody($response ?? null));
         }
-        return [];
+        return new UpdateResult($statusCode, $body);
     }
 
     /**
      * @throws SparQlException
      */
-    protected function handleDescribeStatement(DescribeStatementInterface $statement): array
+    protected function handleDescribeStatement(DescribeStatementInterface $statement): DescribeResult
     {
         $query = $statement->toQuery();
         $this->logger->debug($query);
         $parameters = ['body' => ['query' => $query]];
         $queryKey = $this->getKey($query);
-        $result = null;
+        $tripleArrays = null;
         try {
-            $responseContent = $this->cacheAdapter->get($queryKey, function (ItemInterface $item) use ($parameters, $statement, &$result) {
+            $responseContent = $this->cacheAdapter->get($queryKey, function (ItemInterface $item) use ($parameters, $statement, &$tripleArrays) {
                 try {
-                    $responseContent = $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent();
+                    $response = $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters);
+                    $responseContent = $response->getContent();
                 } catch (HttpClientExceptionInterface $exception) {
-                    throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
+                    throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception, $this->resolveStatusCode($response ?? null), $this->resolveBody($response ?? null));
                 }
-                $result = $this->serializer->deserialize($responseContent, SparQlConstructDenormalizer::TYPE, 'xml');
+                $tripleArrays = $this->serializer->deserialize($responseContent, SparQlConstructDenormalizer::TYPE, 'xml');
                 $tags = $this->extractTags(array_merge($statement->getResources(), $statement->getConditions()));
-                foreach ($result as $resultSet) {
-                    $tags = $this->extractTags($resultSet, $tags);
+                foreach ($tripleArrays as $tripleArray) {
+                    $tags = $this->extractTags($tripleArray, $tags);
                 }
                 $item->tag($tags);
                 return $responseContent;
             });
-        } catch (InvalidArgumentException|\LogicException $exception) {
+        } catch (InvalidArgumentException|\LogicException|InvalidResultException $exception) {
             throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
         }
-        return $result ?? $this->serializer->deserialize($responseContent, SparQlConstructDenormalizer::TYPE, 'xml');
+        try {
+            $tripleArrays = $tripleArrays ?? $this->serializer->deserialize($responseContent, SparQlConstructDenormalizer::TYPE, 'xml');
+        } catch (InvalidResultException $exception) {
+            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
+        }
+        return new DescribeResult(array_map(fn(array $set) => new Triple($set[0], $set[1], $set[2]), $tripleArrays));
     }
 
     /**
      * @throws SparQlException
      */
-    protected function handleDropStatement(DropStatementInterface $statement): array
+    protected function handleDropStatement(DropStatementInterface $statement): UpdateResultInterface
     {
         $query = $statement->toQuery();
         $this->logger->debug($query);
         $parameters = ['body' => ['update' => $query]];
         try {
-            $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent();
+            $response = $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters);
+            $body = $response->getContent();
+            $statusCode = $response->getStatusCode();
+        } catch (HttpClientExceptionInterface $exception) {
+            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception, $this->resolveStatusCode($response ?? null), $this->resolveBody($response ?? null));
+        }
+        try {
             $this->cacheAdapter->invalidateTags($this->extractTags([$statement->getGraph()]));
-        } catch (HttpClientExceptionInterface|InvalidArgumentException $exception) {
+        } catch (InvalidArgumentException $exception) {
             throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
         }
-        return [];
+        return new UpdateResult($statusCode, $body);
     }
 
     /**
      * @throws SparQlException
      */
-    protected function handleInsertStatement(InsertStatementInterface $statement): array
+    protected function handleInsertStatement(InsertStatementInterface $statement): UpdateResultInterface
     {
         $query = $statement->toQuery();
         $this->logger->debug($query);
         $parameters = ['body' => ['update' => $query]];
         try {
-            $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent();
-            // Invalidate cache for insert statements.
+            $response = $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters);
+            $body = $response->getContent();
+            $statusCode = $response->getStatusCode();
+        } catch (HttpClientExceptionInterface $exception) {
+            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception, $this->resolveStatusCode($response ?? null), $this->resolveBody($response ?? null));
+        }
+        try {
             $tags = $this->extractTags(array_merge($statement->getTriplesToInsert(), $statement->getConditions()));
             $this->cacheAdapter->invalidateTags($tags);
-        } catch (HttpClientExceptionInterface|InvalidArgumentException $exception) {
+        } catch (InvalidArgumentException $exception) {
             throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
         }
-        return [];
+        return new UpdateResult($statusCode, $body);
     }
 
     /**
      * @throws SparQlException
      */
-    protected function handleReplaceStatement(ReplaceStatementInterface $statement): array
+    protected function handleReplaceStatement(ReplaceStatementInterface $statement): UpdateResultInterface
     {
         $query = $statement->toQuery();
         $this->logger->debug($query);
         $parameters = ['body' => ['update' => $query]];
         try {
-            $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent();
-            // Invalidate cache for delete and update statements.
+            $response = $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters);
+            $body = $response->getContent();
+            $statusCode = $response->getStatusCode();
+        } catch (HttpClientExceptionInterface $exception) {
+            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception, $this->resolveStatusCode($response ?? null), $this->resolveBody($response ?? null));
+        }
+        try {
             $extra = $statement->getScopeGraph() !== null ? [$statement->getScopeGraph()] : [];
             $tags = $this->extractTags(array_merge($statement->getOriginals(), $statement->getReplacements(), $statement->getConditions(), $extra));
             $this->cacheAdapter->invalidateTags($tags);
-        } catch (HttpClientExceptionInterface|InvalidArgumentException $exception) {
+        } catch (InvalidArgumentException $exception) {
             throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
         }
-        return [];
+        return new UpdateResult($statusCode, $body);
     }
 
     /**
@@ -438,6 +462,30 @@ class SparQlClient implements SparQlClientInterface
             return true;
         } catch (HttpClientExceptionInterface $exception) {
             throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
+        }
+    }
+
+    private function resolveStatusCode(?ResponseInterface $response): ?int
+    {
+        if ($response === null) {
+            return null;
+        }
+        try {
+            return $response->getStatusCode();
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    private function resolveBody(?ResponseInterface $response): ?string
+    {
+        if ($response === null) {
+            return null;
+        }
+        try {
+            return $response->getContent(false);
+        } catch (\Throwable) {
+            return null;
         }
     }
 
