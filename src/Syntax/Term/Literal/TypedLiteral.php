@@ -120,6 +120,9 @@ class TypedLiteral extends AbstractLiteral implements TermInterface
             if (is_bool($this->value)) {
                 throw new SparQlException(sprintf('Value "%s" is not valid for type xsd:decimal', $this->getRawValue()));
             }
+            if (is_float($this->value) && (is_infinite($this->value) || is_nan($this->value))) {
+                throw new SparQlException(sprintf('Value "%s" is not valid for type xsd:decimal', var_export($this->value, true)));
+            }
             if (is_string($this->value) && !preg_match(sprintf('/%s/', Constant::XSD_DECIMAL), $this->value)) {
                 throw new SparQlException(sprintf('Value "%s" is not valid for type xsd:decimal', $this->getRawValue()));
             }
@@ -188,12 +191,21 @@ class TypedLiteral extends AbstractLiteral implements TermInterface
      */
     private function validateDateComponents(string $rawType): void
     {
-        preg_match('/^-?(\d{4,})-(\d{2})-(\d{2})/', $this->value, $matches);
-        // checkdate() requires year >= 1; use max(1, ...) to handle year 0 (1 BCE in XSD).
-        $year = max(1, (int) $matches[1]);
-        $month = (int) $matches[2];
-        $day = (int) $matches[3];
-        if (!checkdate($month, $day, $year)) {
+        preg_match('/^(-?)(\d{4,})-(\d{2})-(\d{2})/', $this->value, $matches);
+        // Convert XSD year to astronomical year: XSD 0000 = 1 BCE = astronomical 0,
+        // XSD -0001 = 2 BCE = astronomical -1.
+        $astronomicalYear = $matches[1] === '-' ? -(int) $matches[2] : (int) $matches[2];
+        $month = (int) $matches[3];
+        $day = (int) $matches[4];
+        if ($month < 1 || $month > 12 || $day < 1) {
+            throw new SparQlException(sprintf('Value "%s" is not valid for type %s', $this->getRawValue(), $rawType));
+        }
+        $daysInMonth = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+        $isLeap = ($astronomicalYear % 4 === 0 && ($astronomicalYear % 100 !== 0 || $astronomicalYear % 400 === 0));
+        if ($isLeap) {
+            $daysInMonth[2] = 29;
+        }
+        if ($day > $daysInMonth[$month]) {
             throw new SparQlException(sprintf('Value "%s" is not valid for type %s', $this->getRawValue(), $rawType));
         }
     }
@@ -214,7 +226,9 @@ class TypedLiteral extends AbstractLiteral implements TermInterface
         $hour = (int) $matches[1];
         $minute = (int) $matches[2];
         $second = isset($matches[3]) ? (int) $matches[3] : 0;
-        $endOfDay = ($hour === 24 && $minute === 0 && $second === 0);
+        // 24:00:00 is the only valid end-of-day form; fractional seconds invalidate it.
+        $endOfDay = ($hour === 24 && $minute === 0 && $second === 0
+            && !preg_match('/^24:00:00\./', $timeStr));
         if (!$endOfDay && ($hour > 23 || $minute > 59 || $second > 59)) {
             throw new SparQlException(sprintf('Value "%s" is not valid for type %s', $this->getRawValue(), $rawType));
         }
@@ -287,11 +301,19 @@ class TypedLiteral extends AbstractLiteral implements TermInterface
     {
         $aPositive = !str_starts_with($a, '-');
         $bPositive = !str_starts_with($b, '-');
+        // Normalize: strip leading zeros from the absolute value; collapse to "0" if empty.
+        $aAbs = ltrim(ltrim($a, '-'), '0') ?: '0';
+        $bAbs = ltrim(ltrim($b, '-'), '0') ?: '0';
+        // Canonicalize -0 and +0 to positive zero.
+        if ($aAbs === '0') {
+            $aPositive = true;
+        }
+        if ($bAbs === '0') {
+            $bPositive = true;
+        }
         if ($aPositive !== $bPositive) {
             return $aPositive ? 1 : -1;
         }
-        $aAbs = ltrim($a, '-');
-        $bAbs = ltrim($b, '-');
         $lenA = strlen($aAbs);
         $lenB = strlen($bAbs);
         if ($lenA !== $lenB) {

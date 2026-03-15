@@ -31,13 +31,11 @@ class NegatedPropertySetTest extends KernelTestCase
         $this->assertEquals('predicate', $negatedPropertySet->getVariableName());
         $negatedPropertySet = new NegatedPropertySet([$predicate, $inversePredicate]);
         $this->assertEquals(sprintf('!(<%s> | (^<%s>))', self::IRI, self::IRI), $negatedPropertySet->serialize());
-        $negatedPropertySet->setTerms([]);
-        $this->assertEquals('', $negatedPropertySet->getRawValue());
-        $this->assertEquals('', $negatedPropertySet->getVariableName());
     }
 
     public function testNegatedPropertySetExceptions()
     {
+        $predicate = new Iri(self::IRI);
         $literal = new PlainLiteral('lorem');
         $threwException = false;
         try {
@@ -49,6 +47,22 @@ class NegatedPropertySetTest extends KernelTestCase
         $threwException = false;
         try {
             new NegatedPropertySet([]);
+        } catch (SparQlException) {
+            $threwException = true;
+        }
+        $this->assertTrue($threwException);
+        // setTerms([]) must also be rejected to preserve the invariant.
+        $threwException = false;
+        try {
+            (new NegatedPropertySet([$predicate]))->setTerms([]);
+        } catch (SparQlException) {
+            $threwException = true;
+        }
+        $this->assertTrue($threwException);
+        // setTerms() with an invalid term must also be rejected.
+        $threwException = false;
+        try {
+            (new NegatedPropertySet([$predicate]))->setTerms([$literal]);
         } catch (SparQlException) {
             $threwException = true;
         }

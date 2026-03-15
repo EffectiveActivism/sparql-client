@@ -375,4 +375,84 @@ class TypedLiteralTest extends KernelTestCase
         $this->expectException(SparQlException::class);
         new TypedLiteral('12:00:00-00:60', new PrefixedIri('xsd', 'time'));
     }
+
+    // xsd:decimal non-finite float rejection
+
+    public function testDecimalTypedLiteralInfFloat()
+    {
+        $this->expectException(SparQlException::class);
+        new TypedLiteral(INF, new PrefixedIri('xsd', 'decimal'));
+    }
+
+    public function testDecimalTypedLiteralNegInfFloat()
+    {
+        $this->expectException(SparQlException::class);
+        new TypedLiteral(-INF, new PrefixedIri('xsd', 'decimal'));
+    }
+
+    public function testDecimalTypedLiteralNanFloat()
+    {
+        $this->expectException(SparQlException::class);
+        new TypedLiteral(NAN, new PrefixedIri('xsd', 'decimal'));
+    }
+
+    // Proleptic Gregorian year 0 (1 BCE) leap year
+
+    public function testDateTypedLiteralYear0LeapDay()
+    {
+        // XSD year 0000 = 1 BCE = astronomical year 0, which is a leap year.
+        $typedLiteral = new TypedLiteral('0000-02-29', new PrefixedIri('xsd', 'date'));
+        $this->assertEquals('"""0000-02-29"""^^xsd:date', $typedLiteral->serialize());
+    }
+
+    public function testDateTypedLiteralYear0InvalidLeapDay()
+    {
+        // XSD year -0001 = 2 BCE = astronomical year -1, not a leap year.
+        $this->expectException(SparQlException::class);
+        new TypedLiteral('-0001-02-29', new PrefixedIri('xsd', 'date'));
+    }
+
+    // Time: fractional seconds must invalidate 24:00:00
+
+    public function testTimeEndOfDayMidnightWithFractionalSeconds()
+    {
+        $this->expectException(SparQlException::class);
+        new TypedLiteral('24:00:00.1', new PrefixedIri('xsd', 'time'));
+    }
+
+    public function testDateTimeEndOfDayMidnightWithFractionalSeconds()
+    {
+        $this->expectException(SparQlException::class);
+        new TypedLiteral('2024-01-01T24:00:00.1', new PrefixedIri('xsd', 'dateTime'));
+    }
+
+    // compareIntegers: leading-zero normalization
+
+    public function testByteTypedLiteralLeadingZeros()
+    {
+        // "000127" should be treated as 127, which is within xsd:byte range.
+        $typedLiteral = new TypedLiteral('000127', new PrefixedIri('xsd', 'byte'));
+        $this->assertEquals('"""000127"""^^xsd:byte', $typedLiteral->serialize());
+    }
+
+    public function testByteTypedLiteralLeadingZerosOverflow()
+    {
+        // "000200" = 200, which exceeds xsd:byte max of 127.
+        $this->expectException(SparQlException::class);
+        new TypedLiteral('000200', new PrefixedIri('xsd', 'byte'));
+    }
+
+    public function testNonNegativeIntegerNegativeZero()
+    {
+        // "-0" must be treated as 0, which satisfies xsd:nonNegativeInteger >= 0.
+        $typedLiteral = new TypedLiteral('-0', new PrefixedIri('xsd', 'nonNegativeInteger'));
+        $this->assertEquals('"""-0"""^^xsd:nonNegativeInteger', $typedLiteral->serialize());
+    }
+
+    public function testNegativeIntegerNegativeZero()
+    {
+        // "-0" = 0, which does not satisfy xsd:negativeInteger < 0.
+        $this->expectException(SparQlException::class);
+        new TypedLiteral('-0', new PrefixedIri('xsd', 'negativeInteger'));
+    }
 }
