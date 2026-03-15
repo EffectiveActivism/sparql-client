@@ -23,7 +23,8 @@ class GroupConcat extends AbstractAggregateOperator implements AggregateInterfac
             ? sprintf('DISTINCT %s', $this->expression->serialize())
             : $this->expression->serialize();
         if ($this->separator !== null) {
-            return sprintf('GROUP_CONCAT(%s; SEPARATOR="%s")', $exprString, $this->separator);
+            $escaped = str_replace(['\\', '"'], ['\\\\', '\\"'], $this->separator);
+            return sprintf('GROUP_CONCAT(%s; SEPARATOR="%s")', $exprString, $escaped);
         }
         return sprintf('GROUP_CONCAT(%s)', $exprString);
     }

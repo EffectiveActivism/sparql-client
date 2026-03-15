@@ -3,6 +3,7 @@
 namespace EffectiveActivism\SparQlClient\Tests\Syntax\Pattern\Constraint;
 
 use EffectiveActivism\SparQlClient\Client\SparQlClientInterface;
+use EffectiveActivism\SparQlClient\Exception\SparQlException;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\Filter;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\Operator\Aggregate\Count;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\Operator\Binary\Equal;
@@ -63,12 +64,10 @@ class FilterTest extends KernelTestCase
         $this->assertEquals([$object1, $object2], $filter->getTerms());
     }
 
-    public function testGetTermsAggregate()
+    public function testAggregateInFilterThrows()
     {
-        $variable = new Variable('subject');
-        $filter = new Filter(new Count($variable));
-        // Aggregate: empty array returned.
-        $this->assertEquals([], $filter->getTerms());
+        $this->expectException(SparQlException::class);
+        new Filter(new Count(new Variable('subject')));
     }
 
     public function testGetTermsVariadic()

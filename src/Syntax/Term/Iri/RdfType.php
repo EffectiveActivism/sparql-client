@@ -11,6 +11,6 @@ class RdfType extends AbstractIri
 
     public function serialize(): string
     {
-        return 'a';
+        return sprintf('<%s>', $this->getRawValue());
     }
 }

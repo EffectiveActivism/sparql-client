@@ -2,6 +2,7 @@
 
 namespace EffectiveActivism\SparQlClient\Syntax\Pattern\Triple;
 
+use EffectiveActivism\SparQlClient\Syntax\Term\Iri\RdfType;
 use EffectiveActivism\SparQlClient\Syntax\Term\TermInterface;
 
 class Triple implements TripleInterface
@@ -21,7 +22,8 @@ class Triple implements TripleInterface
 
     public function serialize(): string
     {
-        return sprintf('%s %s %s', $this->subject->serialize(), $this->predicate->serialize(), $this->object->serialize());
+        $predicateStr = $this->predicate instanceof RdfType ? 'a' : $this->predicate->serialize();
+        return sprintf('%s %s %s', $this->subject->serialize(), $predicateStr, $this->object->serialize());
     }
 
     public function toArray(): array

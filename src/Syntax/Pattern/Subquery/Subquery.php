@@ -15,12 +15,18 @@ class Subquery implements SubqueryInterface
 
     public function toArray(): array
     {
-        return [];
+        return $this->getTerms();
     }
 
     public function getTerms(): array
     {
-        return [];
+        $terms = [];
+        foreach ($this->statement->getConditions() as $condition) {
+            foreach ($condition->getTerms() as $term) {
+                $terms[] = $term;
+            }
+        }
+        return $terms;
     }
 
     public function serialize(): string

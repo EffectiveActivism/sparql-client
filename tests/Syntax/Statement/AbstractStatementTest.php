@@ -7,6 +7,7 @@ use EffectiveActivism\SparQlClient\Syntax\Statement\AbstractStatement;
 use EffectiveActivism\SparQlClient\Syntax\Statement\SelectStatement;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\Triple;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\Iri;
+use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
@@ -96,5 +97,38 @@ class AbstractStatementTest extends KernelTestCase
             $threwException = true;
         }
         $this->assertTrue($threwException);
+    }
+
+    public function testWithBaseAcceptsUrn()
+    {
+        $class = new class() extends AbstractStatement {};
+        $class->withBase('urn:example:a123,z456');
+        $this->assertEquals('BASE <urn:example:a123,z456> ', $class->toQuery());
+    }
+
+    public function testFromDatasetWithUndefinedPrefixThrows()
+    {
+        $subject = new Variable('subject');
+        $predicate = new Iri('http://schema.org/headline');
+        $object = new Iri('http://example.org/object');
+        $triple = new Triple($subject, $predicate, $object);
+        $statement = new SelectStatement([$subject]);
+        $statement->where([$triple]);
+        $statement->from(new PrefixedIri('schema', 'mygraph'));
+        $this->expectException(SparQlException::class);
+        $statement->toQuery();
+    }
+
+    public function testFromNamedDatasetWithUndefinedPrefixThrows()
+    {
+        $subject = new Variable('subject');
+        $predicate = new Iri('http://schema.org/headline');
+        $object = new Iri('http://example.org/object');
+        $triple = new Triple($subject, $predicate, $object);
+        $statement = new SelectStatement([$subject]);
+        $statement->where([$triple]);
+        $statement->fromNamed(new PrefixedIri('schema', 'mygraph'));
+        $this->expectException(SparQlException::class);
+        $statement->toQuery();
     }
 }

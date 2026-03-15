@@ -24,7 +24,7 @@ class SubqueryTest extends KernelTestCase
         $statement->where([$triple]);
         $subquery = new Subquery($statement);
         $this->assertEquals(self::SERIALIZED_VALUE, $subquery->serialize());
-        $this->assertEquals([], $subquery->getTerms());
-        $this->assertEquals([], $subquery->toArray());
+        $this->assertEquals([$subject, $predicate, $object], $subquery->getTerms());
+        $this->assertEquals([$subject, $predicate, $object], $subquery->toArray());
     }
 }

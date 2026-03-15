@@ -37,4 +37,11 @@ class GroupConcatTest extends KernelTestCase
         $operator->distinct();
         $this->assertEquals('GROUP_CONCAT(DISTINCT ?label; SEPARATOR="|")', $operator->serialize());
     }
+
+    public function testGroupConcatSeparatorEscaping()
+    {
+        $variable = new Variable('label');
+        $operator = new GroupConcat($variable, '"quoted"\\path');
+        $this->assertEquals('GROUP_CONCAT(?label; SEPARATOR="\\"quoted\\"\\\\path")', $operator->serialize());
+    }
 }

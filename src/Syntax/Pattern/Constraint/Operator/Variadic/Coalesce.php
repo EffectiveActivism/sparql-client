@@ -2,13 +2,20 @@
 
 namespace EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\Operator\Variadic;
 
+use EffectiveActivism\SparQlClient\Exception\SparQlException;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\Operator\OperatorInterface;
 use EffectiveActivism\SparQlClient\Syntax\Term\TermInterface;
 
 class Coalesce extends AbstractVariadicOperator implements VariadicOperatorInterface
 {
+    /**
+     * @throws SparQlException
+     */
     public function __construct(OperatorInterface|TermInterface ...$expressions)
     {
+        if (count($expressions) === 0) {
+            throw new SparQlException('COALESCE requires at least one expression');
+        }
         $this->expressions = $expressions;
     }
 
