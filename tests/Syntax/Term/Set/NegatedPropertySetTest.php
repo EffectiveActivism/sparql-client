@@ -20,12 +20,17 @@ class NegatedPropertySetTest extends KernelTestCase
         $this->assertEquals(sprintf('!<%s>', self::IRI), $negatedPropertySet->serialize());
         $negatedPropertySet->setTerms([$predicate]);
         $this->assertEquals([$predicate], $negatedPropertySet->getTerms());
+        $this->assertEquals(self::IRI, $negatedPropertySet->getRawValue());
+        $negatedPropertySet->setVariableName('predicate');
+        $this->assertEquals('predicate', $negatedPropertySet->getVariableName());
         $inversePredicate = new InversePath($predicate);
         $negatedPropertySet = new NegatedPropertySet([$inversePredicate]);
         $this->assertEquals(sprintf('!(^<%s>)', self::IRI), $negatedPropertySet->serialize());
         $this->assertEquals(self::IRI, $negatedPropertySet->getRawValue());
         $negatedPropertySet->setVariableName('predicate');
         $this->assertEquals('predicate', $negatedPropertySet->getVariableName());
+        $negatedPropertySet = new NegatedPropertySet([$predicate, $inversePredicate]);
+        $this->assertEquals(sprintf('!(<%s> | (^<%s>))', self::IRI, self::IRI), $negatedPropertySet->serialize());
     }
 
     public function testNegatedPropertySetExceptions()
