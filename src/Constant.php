@@ -61,6 +61,17 @@ class Constant
     const URN = '^urn:[a-z0-9][a-z0-9-]{0,31}:[a-z0-9()+,\-.:=@;$_!*\'%\/?#]+$';
 
     /**
+     * XSD datatype format validation patterns.
+     *
+     * @see https://www.w3.org/TR/xmlschema-2/.
+     */
+    const XSD_DATE = '^\-?\d{4,}-\d{2}-\d{2}(Z|[+-]\d{2}:\d{2})?$';
+    const XSD_DATETIME = '^\-?\d{4,}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2})?$';
+    const XSD_TIME = '^\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2})?$';
+    const XSD_DECIMAL = '^[+-]?(\d+\.?\d*|\.\d+)$';
+    const XSD_INTEGER = '^[+-]?\d+$';
+
+    /**
      * UUID namespaces
      *
      * @see https://en.wikipedia.org/wiki/Universally_unique_identifier#Versions_3_and_5_(namespace_name-based).

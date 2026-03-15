@@ -57,9 +57,78 @@ class TypedLiteralTest extends KernelTestCase
         $typedLiteral = new TypedLiteral(0, new PrefixedIri('xsd', 'boolean'));
         $this->assertEquals('"false"^^xsd:boolean', $typedLiteral->serialize());
         $this->assertEquals('xsd:boolean', $typedLiteral->getType());
-        $typedLiteral = new TypedLiteral(22, new PrefixedIri('xsd', 'boolean'));
+    }
+
+    public function testBooleanTypedLiteralInvalidValue()
+    {
         $this->expectException(SparQlException::class);
-        $typedLiteral->serialize();
+        new TypedLiteral(22, new PrefixedIri('xsd', 'boolean'));
+    }
+
+    public function testDateTypedLiteralInvalidString()
+    {
+        $this->expectException(SparQlException::class);
+        new TypedLiteral('not-a-date', new PrefixedIri('xsd', 'date'));
+    }
+
+    public function testDateTypedLiteralNonString()
+    {
+        $this->expectException(SparQlException::class);
+        new TypedLiteral(42, new PrefixedIri('xsd', 'date'));
+    }
+
+    public function testDateTimeTypedLiteralInvalidString()
+    {
+        $this->expectException(SparQlException::class);
+        new TypedLiteral('not-a-datetime', new PrefixedIri('xsd', 'dateTime'));
+    }
+
+    public function testDateTimeTypedLiteralNonString()
+    {
+        $this->expectException(SparQlException::class);
+        new TypedLiteral(42, new PrefixedIri('xsd', 'dateTime'));
+    }
+
+    public function testTimeTypedLiteralInvalidString()
+    {
+        $this->expectException(SparQlException::class);
+        new TypedLiteral('not-a-time', new PrefixedIri('xsd', 'time'));
+    }
+
+    public function testTimeTypedLiteralNonString()
+    {
+        $this->expectException(SparQlException::class);
+        new TypedLiteral(42, new PrefixedIri('xsd', 'time'));
+    }
+
+    public function testDecimalTypedLiteralBoolValue()
+    {
+        $this->expectException(SparQlException::class);
+        new TypedLiteral(true, new PrefixedIri('xsd', 'decimal'));
+    }
+
+    public function testDecimalTypedLiteralInvalidString()
+    {
+        $this->expectException(SparQlException::class);
+        new TypedLiteral('abc', new PrefixedIri('xsd', 'decimal'));
+    }
+
+    public function testIntegerTypedLiteralFloatValue()
+    {
+        $this->expectException(SparQlException::class);
+        new TypedLiteral(3.14, new PrefixedIri('xsd', 'integer'));
+    }
+
+    public function testIntegerTypedLiteralBoolValue()
+    {
+        $this->expectException(SparQlException::class);
+        new TypedLiteral(true, new PrefixedIri('xsd', 'integer'));
+    }
+
+    public function testIntegerTypedLiteralInvalidString()
+    {
+        $this->expectException(SparQlException::class);
+        new TypedLiteral('3.14', new PrefixedIri('xsd', 'integer'));
     }
 
     public function testDateTypedLiteral()
