@@ -6,4 +6,4 @@ symfony.lock
 .phpunit.result.cache
 var/
 vendor/
-
+.claude
