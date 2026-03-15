@@ -15,6 +15,38 @@ class TypedLiteral extends AbstractLiteral implements TermInterface
     protected AbstractIri|null $dataType = null;
 
     /**
+     * Bounded integer subtypes and their [min, max] range.
+     * Null means unbounded in that direction.
+     * xsd:integer is absent because it is unbounded in both directions.
+     */
+    private const INTEGER_RANGES = [
+        'xsd:long'                                             => ['-9223372036854775808', '9223372036854775807'],
+        'http://www.w3.org/2001/XMLSchema#long'               => ['-9223372036854775808', '9223372036854775807'],
+        'xsd:int'                                              => ['-2147483648', '2147483647'],
+        'http://www.w3.org/2001/XMLSchema#int'                => ['-2147483648', '2147483647'],
+        'xsd:short'                                            => ['-32768', '32767'],
+        'http://www.w3.org/2001/XMLSchema#short'              => ['-32768', '32767'],
+        'xsd:byte'                                             => ['-128', '127'],
+        'http://www.w3.org/2001/XMLSchema#byte'               => ['-128', '127'],
+        'xsd:nonNegativeInteger'                               => ['0', null],
+        'http://www.w3.org/2001/XMLSchema#nonNegativeInteger'  => ['0', null],
+        'xsd:unsignedLong'                                     => ['0', '18446744073709551615'],
+        'http://www.w3.org/2001/XMLSchema#unsignedLong'       => ['0', '18446744073709551615'],
+        'xsd:unsignedInt'                                      => ['0', '4294967295'],
+        'http://www.w3.org/2001/XMLSchema#unsignedInt'        => ['0', '4294967295'],
+        'xsd:unsignedShort'                                    => ['0', '65535'],
+        'http://www.w3.org/2001/XMLSchema#unsignedShort'      => ['0', '65535'],
+        'xsd:unsignedByte'                                     => ['0', '255'],
+        'http://www.w3.org/2001/XMLSchema#unsignedByte'       => ['0', '255'],
+        'xsd:nonPositiveInteger'                               => [null, '0'],
+        'http://www.w3.org/2001/XMLSchema#nonPositiveInteger'  => [null, '0'],
+        'xsd:negativeInteger'                                  => [null, '-1'],
+        'http://www.w3.org/2001/XMLSchema#negativeInteger'    => [null, '-1'],
+        'xsd:positiveInteger'                                  => ['1', null],
+        'http://www.w3.org/2001/XMLSchema#positiveInteger'    => ['1', null],
+    ];
+
+    /**
      * @throws SparQlException
      */
     public function __construct(bool|float|int|string $value, ?AbstractIri $dataType = null)
@@ -69,14 +101,21 @@ class TypedLiteral extends AbstractLiteral implements TermInterface
             if (!is_string($this->value) || !preg_match(sprintf('/%s/', Constant::XSD_DATE), $this->value)) {
                 throw new SparQlException(sprintf('Value "%s" is not valid for type xsd:date', $this->getRawValue()));
             }
+            $this->validateDateComponents($rawType);
+            $this->validateTimezoneOffset($rawType);
         } elseif (in_array($rawType, ['xsd:dateTime', 'http://www.w3.org/2001/XMLSchema#dateTime'])) {
             if (!is_string($this->value) || !preg_match(sprintf('/%s/', Constant::XSD_DATETIME), $this->value)) {
                 throw new SparQlException(sprintf('Value "%s" is not valid for type xsd:dateTime', $this->getRawValue()));
             }
+            $this->validateDateComponents($rawType);
+            $this->validateTimeComponents($rawType);
+            $this->validateTimezoneOffset($rawType);
         } elseif (in_array($rawType, ['xsd:time', 'http://www.w3.org/2001/XMLSchema#time'])) {
             if (!is_string($this->value) || !preg_match(sprintf('/%s/', Constant::XSD_TIME), $this->value)) {
                 throw new SparQlException(sprintf('Value "%s" is not valid for type xsd:time', $this->getRawValue()));
             }
+            $this->validateTimeComponents($rawType);
+            $this->validateTimezoneOffset($rawType);
         } elseif (in_array($rawType, ['xsd:decimal', 'http://www.w3.org/2001/XMLSchema#decimal'])) {
             if (is_bool($this->value)) {
                 throw new SparQlException(sprintf('Value "%s" is not valid for type xsd:decimal', $this->getRawValue()));
@@ -84,6 +123,13 @@ class TypedLiteral extends AbstractLiteral implements TermInterface
             if (is_string($this->value) && !preg_match(sprintf('/%s/', Constant::XSD_DECIMAL), $this->value)) {
                 throw new SparQlException(sprintf('Value "%s" is not valid for type xsd:decimal', $this->getRawValue()));
             }
+        } elseif (in_array($rawType, [
+            'xsd:float',
+            'http://www.w3.org/2001/XMLSchema#float',
+            'xsd:double',
+            'http://www.w3.org/2001/XMLSchema#double',
+        ])) {
+            $this->validateFloatDouble($rawType);
         } elseif (in_array($rawType, [
             'http://www.w3.org/2001/XMLSchema#nonPositiveInteger',
             'http://www.w3.org/2001/XMLSchema#negativeInteger',
@@ -112,12 +158,7 @@ class TypedLiteral extends AbstractLiteral implements TermInterface
             'xsd:unsignedByte',
             'xsd:positiveInteger',
         ])) {
-            if (is_bool($this->value) || is_float($this->value)) {
-                throw new SparQlException(sprintf('Value "%s" is not valid for type xsd:integer', $this->getRawValue()));
-            }
-            if (is_string($this->value) && !preg_match(sprintf('/%s/', Constant::XSD_INTEGER), $this->value)) {
-                throw new SparQlException(sprintf('Value "%s" is not valid for type xsd:integer', $this->getRawValue()));
-            }
+            $this->validateIntegerSubtype($rawType);
         }
         // xsd:string accepts any value; unknown types are left for getType() to reject.
     }
@@ -137,6 +178,128 @@ class TypedLiteral extends AbstractLiteral implements TermInterface
             return;
         }
         throw new SparQlException(sprintf('Typed literal "%s" has invalid value for type "%s"', $this->getRawValue(), $this->dataType->serialize()));
+    }
+
+    /**
+     * Validates month/day calendar consistency after the regex format check passes.
+     * Applies to xsd:date and xsd:dateTime.
+     *
+     * @throws SparQlException
+     */
+    private function validateDateComponents(string $rawType): void
+    {
+        preg_match('/^-?(\d{4,})-(\d{2})-(\d{2})/', $this->value, $matches);
+        // checkdate() requires year >= 1; use max(1, ...) to handle year 0 (1 BCE in XSD).
+        $year = max(1, (int) $matches[1]);
+        $month = (int) $matches[2];
+        $day = (int) $matches[3];
+        if (!checkdate($month, $day, $year)) {
+            throw new SparQlException(sprintf('Value "%s" is not valid for type %s', $this->getRawValue(), $rawType));
+        }
+    }
+
+    /**
+     * Validates hour/minute/second ranges after the regex format check passes.
+     * Applies to xsd:time and xsd:dateTime.
+     * XSD allows 24:00:00 to represent end-of-day midnight.
+     *
+     * @throws SparQlException
+     */
+    private function validateTimeComponents(string $rawType): void
+    {
+        $timeStr = str_contains($this->value, 'T')
+            ? substr($this->value, strpos($this->value, 'T') + 1)
+            : $this->value;
+        preg_match('/^(\d{2}):(\d{2})(?::(\d{2}))?/', $timeStr, $matches);
+        $hour = (int) $matches[1];
+        $minute = (int) $matches[2];
+        $second = isset($matches[3]) ? (int) $matches[3] : 0;
+        $endOfDay = ($hour === 24 && $minute === 0 && $second === 0);
+        if (!$endOfDay && ($hour > 23 || $minute > 59 || $second > 59)) {
+            throw new SparQlException(sprintf('Value "%s" is not valid for type %s', $this->getRawValue(), $rawType));
+        }
+    }
+
+    /**
+     * Validates the timezone offset suffix, if present.
+     * XSD restricts offsets to -14:00 through +14:00 with minutes in 0–59.
+     * 'Z' and the absence of a timezone suffix are always valid.
+     *
+     * @throws SparQlException
+     */
+    private function validateTimezoneOffset(string $rawType): void
+    {
+        if (!preg_match('/([+-])(\d{2}):(\d{2})$/', $this->value, $matches)) {
+            return;
+        }
+        $hour = (int) $matches[2];
+        $minute = (int) $matches[3];
+        if ($hour > 14 || $minute > 59 || ($hour === 14 && $minute !== 0)) {
+            throw new SparQlException(sprintf('Value "%s" has an invalid timezone offset for type %s', $this->getRawValue(), $rawType));
+        }
+    }
+
+    /**
+     * @throws SparQlException
+     */
+    private function validateFloatDouble(string $rawType): void
+    {
+        if (is_bool($this->value)) {
+            throw new SparQlException(sprintf('Value "%s" is not valid for type %s', $this->getRawValue(), $rawType));
+        }
+        if (is_string($this->value) && !preg_match(sprintf('/%s/', Constant::XSD_FLOAT), $this->value)) {
+            throw new SparQlException(sprintf('Value "%s" is not valid for type %s', $this->getRawValue(), $rawType));
+        }
+        // PHP float and int values are always valid for xsd:float/xsd:double.
+    }
+
+    /**
+     * Validates format, type compatibility, and range for integer subtypes.
+     *
+     * @throws SparQlException
+     */
+    private function validateIntegerSubtype(string $rawType): void
+    {
+        if (is_bool($this->value) || is_float($this->value)) {
+            throw new SparQlException(sprintf('Value "%s" is not valid for type %s', $this->getRawValue(), $rawType));
+        }
+        if (is_string($this->value) && !preg_match(sprintf('/%s/', Constant::XSD_INTEGER), $this->value)) {
+            throw new SparQlException(sprintf('Value "%s" is not valid for type %s', $this->getRawValue(), $rawType));
+        }
+        if (!isset(self::INTEGER_RANGES[$rawType])) {
+            return; // xsd:integer — no range constraint
+        }
+        $stringValue = ltrim((string) $this->value, '+');
+        [$min, $max] = self::INTEGER_RANGES[$rawType];
+        if ($min !== null && self::compareIntegers($stringValue, $min) < 0) {
+            throw new SparQlException(sprintf('Value "%s" is out of range for type %s', $this->getRawValue(), $rawType));
+        }
+        if ($max !== null && self::compareIntegers($stringValue, $max) > 0) {
+            throw new SparQlException(sprintf('Value "%s" is out of range for type %s', $this->getRawValue(), $rawType));
+        }
+    }
+
+    /**
+     * Compares two arbitrary-precision integer strings.
+     * Returns negative, zero, or positive like strcmp.
+     */
+    private static function compareIntegers(string $a, string $b): int
+    {
+        $aPositive = !str_starts_with($a, '-');
+        $bPositive = !str_starts_with($b, '-');
+        if ($aPositive !== $bPositive) {
+            return $aPositive ? 1 : -1;
+        }
+        $aAbs = ltrim($a, '-');
+        $bAbs = ltrim($b, '-');
+        $lenA = strlen($aAbs);
+        $lenB = strlen($bAbs);
+        if ($lenA !== $lenB) {
+            $result = $lenA <=> $lenB;
+        } else {
+            $result = strcmp($aAbs, $bAbs);
+        }
+        return $aPositive ? $result : -$result;
     }
 
     /**
@@ -180,6 +343,18 @@ class TypedLiteral extends AbstractLiteral implements TermInterface
             'http://www.w3.org/2001/XMLSchema#decimal'
         ])) {
             return 'xsd:decimal';
+        }
+        elseif (in_array($this->dataType->getRawValue(), [
+            'xsd:float',
+            'http://www.w3.org/2001/XMLSchema#float',
+        ])) {
+            return 'xsd:float';
+        }
+        elseif (in_array($this->dataType->getRawValue(), [
+            'xsd:double',
+            'http://www.w3.org/2001/XMLSchema#double',
+        ])) {
+            return 'xsd:double';
         }
         elseif (in_array($this->dataType->getRawValue(), [
             'http://www.w3.org/2001/XMLSchema#nonPositiveInteger',

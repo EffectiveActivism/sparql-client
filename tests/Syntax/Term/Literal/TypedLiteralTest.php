@@ -158,4 +158,221 @@ class TypedLiteralTest extends KernelTestCase
         $this->expectException(SparQlException::class);
         $typedLiteral->getType();
     }
+
+    // xsd:float and xsd:double
+
+    public function testFloatTypedLiteral()
+    {
+        $typedLiteral = new TypedLiteral(2.4, new PrefixedIri('xsd', 'float'));
+        $this->assertEquals('"""2.4"""^^xsd:float', $typedLiteral->serialize());
+        $this->assertEquals('xsd:float', $typedLiteral->getType());
+        $typedLiteral = new TypedLiteral(2, new PrefixedIri('xsd', 'float'));
+        $this->assertEquals('"""2"""^^xsd:float', $typedLiteral->serialize());
+        $typedLiteral = new TypedLiteral('1.5E10', new PrefixedIri('xsd', 'float'));
+        $this->assertEquals('"""1.5E10"""^^xsd:float', $typedLiteral->serialize());
+        $typedLiteral = new TypedLiteral('INF', new PrefixedIri('xsd', 'float'));
+        $this->assertEquals('"""INF"""^^xsd:float', $typedLiteral->serialize());
+        $typedLiteral = new TypedLiteral('-INF', new PrefixedIri('xsd', 'float'));
+        $this->assertEquals('"""-INF"""^^xsd:float', $typedLiteral->serialize());
+        $typedLiteral = new TypedLiteral('NaN', new PrefixedIri('xsd', 'float'));
+        $this->assertEquals('"""NaN"""^^xsd:float', $typedLiteral->serialize());
+    }
+
+    public function testXsdDoubleTypedLiteral()
+    {
+        $typedLiteral = new TypedLiteral(2.4, new PrefixedIri('xsd', 'double'));
+        $this->assertEquals('"""2.4"""^^xsd:double', $typedLiteral->serialize());
+        $this->assertEquals('xsd:double', $typedLiteral->getType());
+        $typedLiteral = new TypedLiteral('1.5E100', new PrefixedIri('xsd', 'double'));
+        $this->assertEquals('"""1.5E100"""^^xsd:double', $typedLiteral->serialize());
+    }
+
+    public function testFloatTypedLiteralBoolValue()
+    {
+        $this->expectException(SparQlException::class);
+        new TypedLiteral(true, new PrefixedIri('xsd', 'float'));
+    }
+
+    public function testFloatTypedLiteralInvalidString()
+    {
+        $this->expectException(SparQlException::class);
+        new TypedLiteral('not-a-float', new PrefixedIri('xsd', 'float'));
+    }
+
+    public function testDoubleTypedLiteralBoolValue()
+    {
+        $this->expectException(SparQlException::class);
+        new TypedLiteral(true, new PrefixedIri('xsd', 'double'));
+    }
+
+    public function testDoubleTypedLiteralInvalidString()
+    {
+        $this->expectException(SparQlException::class);
+        new TypedLiteral('infinity', new PrefixedIri('xsd', 'double'));
+    }
+
+    // Integer subtype range validation
+
+    public function testByteTypedLiteral()
+    {
+        $typedLiteral = new TypedLiteral(127, new PrefixedIri('xsd', 'byte'));
+        $this->assertEquals('"""127"""^^xsd:byte', $typedLiteral->serialize());
+        $typedLiteral = new TypedLiteral(-128, new PrefixedIri('xsd', 'byte'));
+        $this->assertEquals('"""-128"""^^xsd:byte', $typedLiteral->serialize());
+    }
+
+    public function testByteTypedLiteralOverflow()
+    {
+        $this->expectException(SparQlException::class);
+        new TypedLiteral(200, new PrefixedIri('xsd', 'byte'));
+    }
+
+    public function testByteTypedLiteralUnderflow()
+    {
+        $this->expectException(SparQlException::class);
+        new TypedLiteral(-200, new PrefixedIri('xsd', 'byte'));
+    }
+
+    public function testShortTypedLiteralOverflow()
+    {
+        $this->expectException(SparQlException::class);
+        new TypedLiteral(40000, new PrefixedIri('xsd', 'short'));
+    }
+
+    public function testUnsignedByteTypedLiteralUnderflow()
+    {
+        $this->expectException(SparQlException::class);
+        new TypedLiteral(-1, new PrefixedIri('xsd', 'unsignedByte'));
+    }
+
+    public function testUnsignedByteTypedLiteralOverflow()
+    {
+        $this->expectException(SparQlException::class);
+        new TypedLiteral(256, new PrefixedIri('xsd', 'unsignedByte'));
+    }
+
+    public function testPositiveIntegerZero()
+    {
+        $this->expectException(SparQlException::class);
+        new TypedLiteral(0, new PrefixedIri('xsd', 'positiveInteger'));
+    }
+
+    public function testNegativeIntegerZero()
+    {
+        $this->expectException(SparQlException::class);
+        new TypedLiteral(0, new PrefixedIri('xsd', 'negativeInteger'));
+    }
+
+    public function testNonNegativeIntegerUnderflow()
+    {
+        $this->expectException(SparQlException::class);
+        new TypedLiteral(-1, new PrefixedIri('xsd', 'nonNegativeInteger'));
+    }
+
+    public function testNonPositiveIntegerOverflow()
+    {
+        $this->expectException(SparQlException::class);
+        new TypedLiteral(1, new PrefixedIri('xsd', 'nonPositiveInteger'));
+    }
+
+    public function testUnsignedLongTypedLiteralStringOverflow()
+    {
+        $this->expectException(SparQlException::class);
+        new TypedLiteral('18446744073709551616', new PrefixedIri('xsd', 'unsignedLong'));
+    }
+
+    // Semantic date/time validation
+
+    public function testDateTypedLiteralInvalidMonth()
+    {
+        $this->expectException(SparQlException::class);
+        new TypedLiteral('2024-13-01', new PrefixedIri('xsd', 'date'));
+    }
+
+    public function testDateTypedLiteralInvalidDay()
+    {
+        $this->expectException(SparQlException::class);
+        new TypedLiteral('2024-02-30', new PrefixedIri('xsd', 'date'));
+    }
+
+    public function testDateTimeTypedLiteralInvalidDate()
+    {
+        $this->expectException(SparQlException::class);
+        new TypedLiteral('2024-13-01T10:00', new PrefixedIri('xsd', 'dateTime'));
+    }
+
+    public function testDateTimeTypedLiteralInvalidHour()
+    {
+        $this->expectException(SparQlException::class);
+        new TypedLiteral('2024-01-01T25:00', new PrefixedIri('xsd', 'dateTime'));
+    }
+
+    public function testTimeTypedLiteralInvalidHour()
+    {
+        $this->expectException(SparQlException::class);
+        new TypedLiteral('25:00:00', new PrefixedIri('xsd', 'time'));
+    }
+
+    public function testTimeTypedLiteralInvalidMinute()
+    {
+        $this->expectException(SparQlException::class);
+        new TypedLiteral('00:60:00', new PrefixedIri('xsd', 'time'));
+    }
+
+    public function testTimeEndOfDayMidnight()
+    {
+        // 24:00:00 is valid per XSD spec (end-of-day midnight).
+        $typedLiteral = new TypedLiteral('24:00:00', new PrefixedIri('xsd', 'time'));
+        $this->assertEquals('"""24:00:00"""^^xsd:time', $typedLiteral->serialize());
+    }
+
+    // Timezone offset validation
+
+    public function testDateTypedLiteralMaxPositiveTimezone()
+    {
+        $typedLiteral = new TypedLiteral('2020-01-01+14:00', new PrefixedIri('xsd', 'date'));
+        $this->assertEquals('"""2020-01-01+14:00"""^^xsd:date', $typedLiteral->serialize());
+    }
+
+    public function testDateTypedLiteralMaxNegativeTimezone()
+    {
+        $typedLiteral = new TypedLiteral('2020-01-01-14:00', new PrefixedIri('xsd', 'date'));
+        $this->assertEquals('"""2020-01-01-14:00"""^^xsd:date', $typedLiteral->serialize());
+    }
+
+    public function testDateTypedLiteralTimezoneHourOverflow()
+    {
+        $this->expectException(SparQlException::class);
+        new TypedLiteral('2020-01-01+15:00', new PrefixedIri('xsd', 'date'));
+    }
+
+    public function testDateTypedLiteralTimezoneMinuteOverflow()
+    {
+        $this->expectException(SparQlException::class);
+        new TypedLiteral('2020-01-01+00:60', new PrefixedIri('xsd', 'date'));
+    }
+
+    public function testDateTypedLiteralTimezoneHour14NonZeroMinute()
+    {
+        $this->expectException(SparQlException::class);
+        new TypedLiteral('2020-01-01+14:01', new PrefixedIri('xsd', 'date'));
+    }
+
+    public function testDateTimeTypedLiteralTimezoneHourOverflow()
+    {
+        $this->expectException(SparQlException::class);
+        new TypedLiteral('2020-01-01T12:00+15:00', new PrefixedIri('xsd', 'dateTime'));
+    }
+
+    public function testTimeTypedLiteralTimezoneHourOverflow()
+    {
+        $this->expectException(SparQlException::class);
+        new TypedLiteral('12:00:00+15:00', new PrefixedIri('xsd', 'time'));
+    }
+
+    public function testTimeTypedLiteralTimezoneMinuteOverflow()
+    {
+        $this->expectException(SparQlException::class);
+        new TypedLiteral('12:00:00-00:60', new PrefixedIri('xsd', 'time'));
+    }
 }

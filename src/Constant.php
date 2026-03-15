@@ -70,6 +70,7 @@ class Constant
     const XSD_TIME = '^\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2})?$';
     const XSD_DECIMAL = '^[+-]?(\d+\.?\d*|\.\d+)$';
     const XSD_INTEGER = '^[+-]?\d+$';
+    const XSD_FLOAT = '^([+-]?(\d+(\.\d*)?|\.\d+)([Ee][+-]?\d+)?|[+-]?INF|NaN)$';
 
     /**
      * UUID namespaces
