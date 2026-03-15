@@ -15,8 +15,6 @@ use EffectiveActivism\SparQlClient\Syntax\Statement\ReplaceStatementInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\SelectStatementInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\StatementInterface;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\AbstractIri;
-use Symfony\Component\HttpFoundation\File\File;
-
 interface SparQlClientInterface
 {
     public function execute(StatementInterface $statement): StatementResultInterface;
@@ -41,5 +39,4 @@ interface SparQlClientInterface
 
     public function select(array $variables): SelectStatementInterface;
 
-    public function upload(File $file, string $contentType = 'application/x-turtle'): bool;
 }

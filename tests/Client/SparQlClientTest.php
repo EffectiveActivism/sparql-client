@@ -25,7 +25,6 @@ use Symfony\Component\Cache\Adapter\TagAwareAdapter;
 use Symfony\Component\Cache\CacheItem;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
-use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Contracts\Cache\TagAwareCacheInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -895,36 +894,6 @@ class SparQlClientTest extends KernelTestCase
         $this->assertEquals('update=CREATE GRAPH <http://example.org/g>', urldecode($receivedQuery));
     }
 
-    public function testUpload()
-    {
-        $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
-        $selectResponseContent = file_get_contents(__DIR__ . '/../fixtures/client-upload-request.xml');
-        $httpClient = new MockHttpClient([new MockResponse($selectResponseContent), new MockResponse('')]);
-        $kernel = new TestKernel('test', true);
-        $kernel->boot();
-        $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
-        $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
-        /** @var SparQlClientInterface $sparQlClient */
-        $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
-        $file = $this->createMock(File::class);
-        $this->assertTrue($sparQlClient->upload($file));
-    }
-
-    public function testUploadException()
-    {
-        $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
-        $httpClient = new MockHttpClient([new MockResponse('', ['http_code' => 500])]);
-        $kernel = new TestKernel('test', true);
-        $kernel->boot();
-        $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
-        $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
-        /** @var SparQlClientInterface $sparQlClient */
-        $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
-        $file = $this->createMock(File::class);
-        $this->expectException(SparQlException::class);
-        $sparQlClient->upload($file);
-    }
-
     public function testClientClearStatementException()
     {
         $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
@@ -992,6 +961,7 @@ class SparQlClientTest extends KernelTestCase
         } catch (SparQlException $exception) {
             $this->assertSame(400, $exception->getStatusCode());
             $this->assertSame('query parse failure', $exception->getResponseBody());
+            $this->assertStringContainsString('INSERT', $exception->getQuery());
         }
     }
 
@@ -1015,6 +985,7 @@ class SparQlClientTest extends KernelTestCase
         } catch (SparQlException $exception) {
             $this->assertSame(400, $exception->getStatusCode());
             $this->assertSame('unknown predicate', $exception->getResponseBody());
+            $this->assertStringContainsString('DELETE', $exception->getQuery());
         }
     }
 
@@ -1038,6 +1009,7 @@ class SparQlClientTest extends KernelTestCase
         } catch (SparQlException $exception) {
             $this->assertSame(400, $exception->getStatusCode());
             $this->assertSame('syntax error near token', $exception->getResponseBody());
+            $this->assertStringContainsString('SELECT', $exception->getQuery());
         }
     }
 

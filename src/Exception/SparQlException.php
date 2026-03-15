@@ -12,6 +12,7 @@ class SparQlException extends Exception
         ?\Throwable $previous = null,
         private readonly ?int $statusCode = null,
         private readonly ?string $responseBody = null,
+        private readonly ?string $query = null,
     ) {
         parent::__construct($message, $code, $previous);
     }
@@ -24,5 +25,10 @@ class SparQlException extends Exception
     public function getResponseBody(): ?string
     {
         return $this->responseBody;
+    }
+
+    public function getQuery(): ?string
+    {
+        return $this->query;
     }
 }

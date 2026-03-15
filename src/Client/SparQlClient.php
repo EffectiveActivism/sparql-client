@@ -39,7 +39,6 @@ use EffectiveActivism\SparQlClient\Serializer\Normalizer\SparQlResultDenormalize
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\AbstractIri;
 use Psr\Cache\InvalidArgumentException;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\Serializer\Encoder\XmlEncoder;
 use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Serializer\SerializerInterface;
@@ -109,12 +108,12 @@ class SparQlClient implements SparQlClientInterface
         $queryKey = $this->getKey($query);
         $rows = null;
         try {
-            $responseContent = $this->cacheAdapter->get($queryKey, function (ItemInterface $item) use ($parameters, $statement, &$rows) {
+            $responseContent = $this->cacheAdapter->get($queryKey, function (ItemInterface $item) use ($parameters, $query, $statement, &$rows) {
                 try {
                     $response = $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters);
                     $responseContent = $response->getContent();
                 } catch (HttpClientExceptionInterface $exception) {
-                    throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception, $this->resolveStatusCode($response ?? null), $this->resolveBody($response ?? null));
+                    throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception, $this->resolveStatusCode($response ?? null), $this->resolveBody($response ?? null), $query);
                 }
                 $rows = $this->serializer->deserialize($responseContent, SparQlResultDenormalizer::TYPE, 'xml');
                 $tags = $this->extractTags($statement->getConditions());
@@ -125,12 +124,12 @@ class SparQlClient implements SparQlClientInterface
                 return $responseContent;
             });
         } catch (InvalidArgumentException|\LogicException|InvalidResultException $exception) {
-            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
+            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception, null, null, $query);
         }
         try {
             $rows = $rows ?? $this->serializer->deserialize($responseContent, SparQlResultDenormalizer::TYPE, 'xml');
         } catch (InvalidResultException $exception) {
-            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
+            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception, null, null, $query);
         }
         return new SelectResult($rows);
     }
@@ -145,23 +144,23 @@ class SparQlClient implements SparQlClientInterface
         $parameters = ['body' => ['query' => $query]];
         $queryKey = $this->getKey($query);
         try {
-            $responseContent = $this->cacheAdapter->get($queryKey, function (ItemInterface $item) use ($parameters, $statement) {
+            $responseContent = $this->cacheAdapter->get($queryKey, function (ItemInterface $item) use ($parameters, $query, $statement) {
                 try {
                     $response = $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters);
                     $responseContent = $response->getContent();
                 } catch (HttpClientExceptionInterface $exception) {
-                    throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception, $this->resolveStatusCode($response ?? null), $this->resolveBody($response ?? null));
+                    throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception, $this->resolveStatusCode($response ?? null), $this->resolveBody($response ?? null), $query);
                 }
                 $item->tag($this->extractTags($statement->getConditions()));
                 return $responseContent;
             });
         } catch (InvalidArgumentException|\LogicException $exception) {
-            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
+            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception, null, null, $query);
         }
         try {
             return new AskResult($this->serializer->deserialize($responseContent, SparQlAskDenormalizer::TYPE, 'xml'));
         } catch (InvalidResultException $exception) {
-            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
+            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception, null, null, $query);
         }
     }
 
@@ -178,12 +177,12 @@ class SparQlClient implements SparQlClientInterface
             $body = $response->getContent();
             $statusCode = $response->getStatusCode();
         } catch (HttpClientExceptionInterface $exception) {
-            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception, $this->resolveStatusCode($response ?? null), $this->resolveBody($response ?? null));
+            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception, $this->resolveStatusCode($response ?? null), $this->resolveBody($response ?? null), $query);
         }
         try {
             $this->cacheAdapter->invalidateTags($this->extractTags([$statement->getGraph()]));
         } catch (InvalidArgumentException $exception) {
-            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
+            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception, null, null, $query);
         }
         return new UpdateResult($statusCode, $body);
     }
@@ -199,12 +198,12 @@ class SparQlClient implements SparQlClientInterface
         $queryKey = $this->getKey($query);
         $tripleArrays = null;
         try {
-            $responseContent = $this->cacheAdapter->get($queryKey, function (ItemInterface $item) use ($parameters, $statement, &$tripleArrays) {
+            $responseContent = $this->cacheAdapter->get($queryKey, function (ItemInterface $item) use ($parameters, $query, $statement, &$tripleArrays) {
                 try {
                     $response = $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters);
                     $responseContent = $response->getContent();
                 } catch (HttpClientExceptionInterface $exception) {
-                    throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception, $this->resolveStatusCode($response ?? null), $this->resolveBody($response ?? null));
+                    throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception, $this->resolveStatusCode($response ?? null), $this->resolveBody($response ?? null), $query);
                 }
                 $tripleArrays = $this->serializer->deserialize($responseContent, SparQlConstructDenormalizer::TYPE, 'xml');
                 $tags = $this->extractTags($statement->getConditions());
@@ -215,12 +214,12 @@ class SparQlClient implements SparQlClientInterface
                 return $responseContent;
             });
         } catch (InvalidArgumentException|\LogicException|InvalidResultException $exception) {
-            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
+            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception, null, null, $query);
         }
         try {
             $tripleArrays = $tripleArrays ?? $this->serializer->deserialize($responseContent, SparQlConstructDenormalizer::TYPE, 'xml');
         } catch (InvalidResultException $exception) {
-            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
+            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception, null, null, $query);
         }
         return new ConstructResult(array_map(fn(array $set) => new Triple($set[0], $set[1], $set[2]), $tripleArrays));
     }
@@ -238,13 +237,13 @@ class SparQlClient implements SparQlClientInterface
             $body = $response->getContent();
             $statusCode = $response->getStatusCode();
         } catch (HttpClientExceptionInterface $exception) {
-            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception, $this->resolveStatusCode($response ?? null), $this->resolveBody($response ?? null));
+            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception, $this->resolveStatusCode($response ?? null), $this->resolveBody($response ?? null), $query);
         }
         try {
             $tags = $this->extractTags(array_merge($statement->getTriplesToDelete(), $statement->getConditions()));
             $this->cacheAdapter->invalidateTags($tags);
         } catch (InvalidArgumentException $exception) {
-            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
+            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception, null, null, $query);
         }
         return new UpdateResult($statusCode, $body);
     }
@@ -262,7 +261,7 @@ class SparQlClient implements SparQlClientInterface
             $body = $response->getContent();
             $statusCode = $response->getStatusCode();
         } catch (HttpClientExceptionInterface $exception) {
-            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception, $this->resolveStatusCode($response ?? null), $this->resolveBody($response ?? null));
+            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception, $this->resolveStatusCode($response ?? null), $this->resolveBody($response ?? null), $query);
         }
         return new UpdateResult($statusCode, $body);
     }
@@ -278,12 +277,12 @@ class SparQlClient implements SparQlClientInterface
         $queryKey = $this->getKey($query);
         $tripleArrays = null;
         try {
-            $responseContent = $this->cacheAdapter->get($queryKey, function (ItemInterface $item) use ($parameters, $statement, &$tripleArrays) {
+            $responseContent = $this->cacheAdapter->get($queryKey, function (ItemInterface $item) use ($parameters, $query, $statement, &$tripleArrays) {
                 try {
                     $response = $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters);
                     $responseContent = $response->getContent();
                 } catch (HttpClientExceptionInterface $exception) {
-                    throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception, $this->resolveStatusCode($response ?? null), $this->resolveBody($response ?? null));
+                    throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception, $this->resolveStatusCode($response ?? null), $this->resolveBody($response ?? null), $query);
                 }
                 $tripleArrays = $this->serializer->deserialize($responseContent, SparQlConstructDenormalizer::TYPE, 'xml');
                 $tags = $this->extractTags(array_merge($statement->getResources(), $statement->getConditions()));
@@ -294,12 +293,12 @@ class SparQlClient implements SparQlClientInterface
                 return $responseContent;
             });
         } catch (InvalidArgumentException|\LogicException|InvalidResultException $exception) {
-            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
+            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception, null, null, $query);
         }
         try {
             $tripleArrays = $tripleArrays ?? $this->serializer->deserialize($responseContent, SparQlConstructDenormalizer::TYPE, 'xml');
         } catch (InvalidResultException $exception) {
-            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
+            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception, null, null, $query);
         }
         return new DescribeResult(array_map(fn(array $set) => new Triple($set[0], $set[1], $set[2]), $tripleArrays));
     }
@@ -317,12 +316,12 @@ class SparQlClient implements SparQlClientInterface
             $body = $response->getContent();
             $statusCode = $response->getStatusCode();
         } catch (HttpClientExceptionInterface $exception) {
-            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception, $this->resolveStatusCode($response ?? null), $this->resolveBody($response ?? null));
+            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception, $this->resolveStatusCode($response ?? null), $this->resolveBody($response ?? null), $query);
         }
         try {
             $this->cacheAdapter->invalidateTags($this->extractTags([$statement->getGraph()]));
         } catch (InvalidArgumentException $exception) {
-            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
+            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception, null, null, $query);
         }
         return new UpdateResult($statusCode, $body);
     }
@@ -340,13 +339,13 @@ class SparQlClient implements SparQlClientInterface
             $body = $response->getContent();
             $statusCode = $response->getStatusCode();
         } catch (HttpClientExceptionInterface $exception) {
-            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception, $this->resolveStatusCode($response ?? null), $this->resolveBody($response ?? null));
+            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception, $this->resolveStatusCode($response ?? null), $this->resolveBody($response ?? null), $query);
         }
         try {
             $tags = $this->extractTags(array_merge($statement->getTriplesToInsert(), $statement->getConditions()));
             $this->cacheAdapter->invalidateTags($tags);
         } catch (InvalidArgumentException $exception) {
-            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
+            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception, null, null, $query);
         }
         return new UpdateResult($statusCode, $body);
     }
@@ -364,14 +363,14 @@ class SparQlClient implements SparQlClientInterface
             $body = $response->getContent();
             $statusCode = $response->getStatusCode();
         } catch (HttpClientExceptionInterface $exception) {
-            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception, $this->resolveStatusCode($response ?? null), $this->resolveBody($response ?? null));
+            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception, $this->resolveStatusCode($response ?? null), $this->resolveBody($response ?? null), $query);
         }
         try {
             $extra = $statement->getScopeGraph() !== null ? [$statement->getScopeGraph()] : [];
             $tags = $this->extractTags(array_merge($statement->getOriginals(), $statement->getReplacements(), $statement->getConditions(), $extra));
             $this->cacheAdapter->invalidateTags($tags);
         } catch (InvalidArgumentException $exception) {
-            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
+            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception, null, null, $query);
         }
         return new UpdateResult($statusCode, $body);
     }
@@ -445,24 +444,6 @@ class SparQlClient implements SparQlClientInterface
     public function select(array $variables): SelectStatement
     {
         return new SelectStatement($variables);
-    }
-
-    /**
-     * @throws SparQlException
-     */
-    public function upload(File $file, string $contentType = 'application/x-turtle'): bool
-    {
-        try {
-            $this->httpClient->request('POST', $this->sparQlEndpoint, [
-                'headers' => [
-                    'Content-Type' => $contentType,
-                ],
-                'body' => $file->getContent(),
-            ]);
-            return true;
-        } catch (HttpClientExceptionInterface $exception) {
-            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
-        }
     }
 
     private function resolveStatusCode(?ResponseInterface $response): ?int

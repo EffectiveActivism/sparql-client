@@ -37,7 +37,6 @@ validation.
     - [Constraints](#constraints)
         - [Filter examples](#filter-examples)
     - [Aggregates](#aggregates)
-    - [Upload files](#upload-files)
 - [SHACL validator](#shacl-validator)
 - [Example docker-compose setup](#example-docker-compose-setup)
 - [Planned features](#planned-features)
@@ -866,36 +865,6 @@ $selectStatement = $sparQlClient
     ->groupBy([$subject]);
 ```
 
-### Upload files
-
-To upload a file containing a vocabulary, use the `upload` method.
-
-```php
-<?php
-
-namespace App\Controller;
-
-use EffectiveActivism\SparQlClient\Client\SparQlClientInterface;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\File\UploadedFile;
-use Symfony\Component\HttpFoundation\Request;
-
-class MyController extends AbstractController
-{
-    public function view(Request $request, SparQlClientInterface $sparQlClient)
-    {
-        /** @var UploadedFile $file */
-        $file = $request->files->get('file');
-        if ($sparQlClient->upload($file, 'application/rdf+xml')) {
-            dump('File uploaded!');
-        }
-    }
-}
-```
-
-You must specify the content type of the file as the second parameter.
-A default content type of `application/x-turtle` is assumed.
-
 # SHACL validator
 
 To use the validator service, define the SHACL validator endpoint.
@@ -972,4 +941,3 @@ services:
 # Planned features
 
 - Improve error reporting from triplestores.
-- Possibly return more meaningful data from INSERT and DELETE statement executions.
