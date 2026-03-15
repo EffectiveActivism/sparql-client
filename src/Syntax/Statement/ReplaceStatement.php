@@ -3,16 +3,19 @@
 namespace EffectiveActivism\SparQlClient\Syntax\Statement;
 
 use EffectiveActivism\SparQlClient\Exception\SparQlException;
+use EffectiveActivism\SparQlClient\Syntax\Pattern\PatternInterface;
+use EffectiveActivism\SparQlClient\Syntax\Term\Iri\AbstractIri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
-use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\TripleInterface;
 
 class ReplaceStatement extends AbstractConditionalStatement implements ReplaceStatementInterface
 {
-    /** @var TripleInterface[] */
+    /** @var PatternInterface[] */
     protected array $originals;
 
-    /** @var TripleInterface[] */
+    /** @var PatternInterface[] */
     protected array $replacements;
+
+    protected ?AbstractIri $scopeGraph = null;
 
     /**
      * @throws SparQlException
@@ -20,9 +23,9 @@ class ReplaceStatement extends AbstractConditionalStatement implements ReplaceSt
     public function __construct(array $triples)
     {
         foreach ($triples as $triple) {
-            if (!is_object($triple) || !($triple instanceof TripleInterface)) {
+            if (!is_object($triple) || !($triple instanceof PatternInterface)) {
                 $class = is_object($triple) ? get_class($triple) : gettype($triple);
-                throw new SparQlException(sprintf('Invalid triple class: %s', $class));
+                throw new SparQlException(sprintf('Invalid pattern class: %s', $class));
             }
         }
         $this->originals = $triples;
@@ -34,12 +37,18 @@ class ReplaceStatement extends AbstractConditionalStatement implements ReplaceSt
     public function with(array $triples): ReplaceStatementInterface
     {
         foreach ($triples as $triple) {
-            if (!is_object($triple) || !($triple instanceof TripleInterface)) {
+            if (!is_object($triple) || !($triple instanceof PatternInterface)) {
                 $class = is_object($triple) ? get_class($triple) : gettype($triple);
-                throw new SparQlException(sprintf('Invalid triple class: %s', $class));
+                throw new SparQlException(sprintf('Invalid pattern class: %s', $class));
             }
         }
         $this->replacements = $triples;
+        return $this;
+    }
+
+    public function usingGraph(AbstractIri $graph): static
+    {
+        $this->scopeGraph = $graph;
         return $this;
     }
 
@@ -53,6 +62,9 @@ class ReplaceStatement extends AbstractConditionalStatement implements ReplaceSt
         }
         $this->validatePrefixes(array_merge($this->originals, $this->replacements, $this->conditions));
         $preQuery = parent::toQuery();
+        if ($this->scopeGraph !== null) {
+            $preQuery .= sprintf('WITH %s ', $this->scopeGraph->serialize());
+        }
         $conditionsString = '';
         foreach ($this->conditions as $condition) {
             $conditionsString .= sprintf('%s .', $condition->serialize());
@@ -60,8 +72,8 @@ class ReplaceStatement extends AbstractConditionalStatement implements ReplaceSt
         // At least one variable (if any) must be referenced in a 'where' clause.
         $unclausedVariables = true;
         $hasVariables = false;
-        foreach (array_merge($this->originals, $this->replacements) as $triple) {
-            foreach ($triple->getTerms() as $term) {
+        foreach (array_merge($this->originals, $this->replacements) as $pattern) {
+            foreach ($pattern->getTerms() as $term) {
                 if ($term instanceof Variable) {
                     $hasVariables = true;
                     foreach ($this->conditions as $condition) {
@@ -78,12 +90,8 @@ class ReplaceStatement extends AbstractConditionalStatement implements ReplaceSt
         if ($hasVariables && $unclausedVariables) {
             throw new SparQlException('At least one variable must be referenced in a \'where\' clause.');
         }
-        $originalTriplesString = implode(' . ', array_map(function (TripleInterface $triple) {
-            return $triple->serialize();
-        }, $this->originals));
-        $replacementTriplesString = implode(' . ', array_map(function (TripleInterface $triple) {
-            return $triple->serialize();
-        }, $this->replacements));
+        $originalTriplesString = implode(' . ', array_map(fn (PatternInterface $pattern) => $pattern->serialize(), $this->originals));
+        $replacementTriplesString = implode(' . ', array_map(fn (PatternInterface $pattern) => $pattern->serialize(), $this->replacements));
         if (!empty($conditionsString)) {
             return sprintf('%sDELETE { %s } INSERT { %s } WHERE { %s }', $preQuery, $originalTriplesString, $replacementTriplesString, $conditionsString);
         }
@@ -101,5 +109,10 @@ class ReplaceStatement extends AbstractConditionalStatement implements ReplaceSt
     public function getReplacements(): array
     {
         return $this->replacements;
+    }
+
+    public function getScopeGraph(): ?AbstractIri
+    {
+        return $this->scopeGraph;
     }
 }

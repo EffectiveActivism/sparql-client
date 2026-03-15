@@ -3,6 +3,7 @@
 namespace EffectiveActivism\SparQlClient\Tests\Syntax\Statement;
 
 use EffectiveActivism\SparQlClient\Exception\SparQlException;
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Graph\Graph;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\Triple;
 use EffectiveActivism\SparQlClient\Syntax\Statement\ReplaceStatement;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\Iri;
@@ -15,7 +16,11 @@ class ReplaceStatementTest extends KernelTestCase
 {
     const SUBJECT_URI = 'urn:uuid:89e2f582-918d-11eb-b6ff-1f71a7aa4639';
 
+    const GRAPH_URI = 'http://example.org/g';
+
     const REPLACE_STATEMENT = 'DELETE { <urn:uuid:89e2f582-918d-11eb-b6ff-1f71a7aa4639> <http://schema.org/headline> """Lorem Ipsum""" } INSERT { <urn:uuid:89e2f582-918d-11eb-b6ff-1f71a7aa4639> <http://schema.org/headline> """Lorem Ipsum""" } WHERE { <urn:uuid:89e2f582-918d-11eb-b6ff-1f71a7aa4639> <http://schema.org/headline> """Lorem Ipsum""" . }';
+
+    const REPLACE_GRAPH_STATEMENT = 'WITH <http://example.org/g> DELETE { GRAPH <http://example.org/g> { <urn:uuid:89e2f582-918d-11eb-b6ff-1f71a7aa4639> <http://schema.org/headline> """Lorem Ipsum""" . } } INSERT { GRAPH <http://example.org/g> { <urn:uuid:89e2f582-918d-11eb-b6ff-1f71a7aa4639> <http://schema.org/headline> """Lorem Ipsum""" . } } WHERE { <urn:uuid:89e2f582-918d-11eb-b6ff-1f71a7aa4639> <http://schema.org/headline> """Lorem Ipsum""" . }';
 
     public function testReplaceStatement()
     {
@@ -27,6 +32,23 @@ class ReplaceStatementTest extends KernelTestCase
         $statement->with([$triple]);
         $statement->where([$triple]);
         $this->assertEquals(self::REPLACE_STATEMENT, $statement->toQuery());
+    }
+
+    public function testReplaceGraphStatement()
+    {
+        $graphIri = new Iri(self::GRAPH_URI);
+        $subject = new Iri(self::SUBJECT_URI);
+        $predicate = new Iri('http://schema.org/headline');
+        $object = new PlainLiteral('Lorem Ipsum');
+        $triple = new Triple($subject, $predicate, $object);
+        $graph = new Graph($graphIri, [$triple]);
+        $statement = new ReplaceStatement([$graph]);
+        $statement
+            ->with([$graph])
+            ->usingGraph($graphIri)
+            ->where([$triple]);
+        $this->assertEquals(self::REPLACE_GRAPH_STATEMENT, $statement->toQuery());
+        $this->assertEquals($graphIri, $statement->getScopeGraph());
     }
 
     public function testReplaceExceptions()
