@@ -16,4 +16,11 @@ class IsBlankTest extends KernelTestCase
         $operator = new IsBlank($term);
         $this->assertEquals(self::SERIALIZED_OPERATOR, $operator->serialize());
     }
+
+    public function testGetExpression()
+    {
+        $term = new PlainLiteral('lorem');
+        $operator = new IsBlank($term);
+        $this->assertEquals($term, $operator->getExpression());
+    }
 }

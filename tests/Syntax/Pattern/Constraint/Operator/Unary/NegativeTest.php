@@ -24,4 +24,11 @@ class NegativeTest extends KernelTestCase
         $this->expectException(SparQlException::class);
         new Negative($term);
     }
+
+    public function testGetExpression()
+    {
+        $term = new PlainLiteral(12);
+        $operator = new Negative($term);
+        $this->assertEquals($term, $operator->getExpression());
+    }
 }

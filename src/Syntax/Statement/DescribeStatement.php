@@ -83,10 +83,10 @@ class DescribeStatement extends AbstractConditionalStatement implements Describe
             if ($unclausedVariables && $hasVariables) {
                 throw new SparQlException('At least one variable must be referenced in a \'where\' clause.');
             }
-            return trim(sprintf('%sDESCRIBE %sWHERE {%s }%s%s%s', $preQuery, $resources, $conditionsString, $orderByString, $limitString, $offsetString));
+            return trim(sprintf('%sDESCRIBE %s%sWHERE {%s }%s%s%s', $preQuery, $resources, $this->getDatasetClausesString(), $conditionsString, $orderByString, $limitString, $offsetString));
         }
         else {
-            return trim(sprintf('%sDESCRIBE %s%s%s%s', $preQuery, $resources, $orderByString, $limitString, $offsetString));
+            return trim(sprintf('%sDESCRIBE %s%s%s%s%s', $preQuery, $resources, $this->getDatasetClausesString(), $orderByString, $limitString, $offsetString));
         }
     }
 

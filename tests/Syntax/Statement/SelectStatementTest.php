@@ -4,7 +4,10 @@ namespace EffectiveActivism\SparQlClient\Tests\Syntax\Statement;
 
 use EffectiveActivism\SparQlClient\Exception\SparQlException;
 use EffectiveActivism\SparQlClient\Syntax\Order\Asc;
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\Operator\Aggregate\Count;
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\Operator\Binary\GreaterThan;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\Triple;
+use EffectiveActivism\SparQlClient\Syntax\Statement\SelectExpression\SelectExpression;
 use EffectiveActivism\SparQlClient\Syntax\Statement\SelectStatement;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\Iri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
@@ -106,5 +109,121 @@ class SelectStatementTest extends KernelTestCase
             $threwException = true;
         }
         $this->assertTrue($threwException);
+    }
+
+    public function testDistinct()
+    {
+        $subjectVariable = new Variable('subject');
+        $predicate = new Iri('http://schema.org/headline');
+        $object = new PlainLiteral('Lorem Ipsum');
+        $triple = new Triple($subjectVariable, $predicate, $object);
+        $statement = new SelectStatement([$subjectVariable]);
+        $statement->where([$triple]);
+        $statement->distinct();
+        $this->assertStringContainsString('SELECT DISTINCT', $statement->toQuery());
+    }
+
+    public function testReduced()
+    {
+        $subjectVariable = new Variable('subject');
+        $predicate = new Iri('http://schema.org/headline');
+        $object = new PlainLiteral('Lorem Ipsum');
+        $triple = new Triple($subjectVariable, $predicate, $object);
+        $statement = new SelectStatement([$subjectVariable]);
+        $statement->where([$triple]);
+        $statement->reduced();
+        $this->assertStringContainsString('SELECT REDUCED', $statement->toQuery());
+    }
+
+    public function testDistinctAndReducedException()
+    {
+        $statement = new SelectStatement([new Variable('subject')]);
+        $statement->distinct();
+        $threwException = false;
+        try {
+            $statement->reduced();
+        } catch (SparQlException) {
+            $threwException = true;
+        }
+        $this->assertTrue($threwException);
+    }
+
+    public function testReducedAndDistinctException()
+    {
+        $statement = new SelectStatement([new Variable('subject')]);
+        $statement->reduced();
+        $threwException = false;
+        try {
+            $statement->distinct();
+        } catch (SparQlException) {
+            $threwException = true;
+        }
+        $this->assertTrue($threwException);
+    }
+
+    public function testGroupBy()
+    {
+        $subjectVariable = new Variable('subject');
+        $predicate = new Iri('http://schema.org/headline');
+        $object = new PlainLiteral('Lorem Ipsum');
+        $triple = new Triple($subjectVariable, $predicate, $object);
+        $statement = new SelectStatement([$subjectVariable]);
+        $statement->where([$triple]);
+        $statement->groupBy([$subjectVariable]);
+        $this->assertStringContainsString('GROUP BY ?subject', $statement->toQuery());
+    }
+
+    public function testGroupByWithOperator()
+    {
+        $subjectVariable = new Variable('subject');
+        $predicate = new Iri('http://schema.org/headline');
+        $object = new PlainLiteral('Lorem Ipsum');
+        $triple = new Triple($subjectVariable, $predicate, $object);
+        $statement = new SelectStatement([$subjectVariable]);
+        $statement->where([$triple]);
+        $statement->groupBy([new Count($subjectVariable)]);
+        $this->assertStringContainsString('GROUP BY COUNT(?subject)', $statement->toQuery());
+    }
+
+    public function testGroupByInvalidExpression()
+    {
+        $statement = new SelectStatement([new Variable('subject')]);
+        $threwException = false;
+        try {
+            $statement->groupBy(['invalid']);
+        } catch (SparQlException) {
+            $threwException = true;
+        }
+        $this->assertTrue($threwException);
+    }
+
+    public function testHaving()
+    {
+        $subjectVariable = new Variable('subject');
+        $countVariable = new Variable('count');
+        $predicate = new Iri('http://schema.org/headline');
+        $object = new PlainLiteral('Lorem Ipsum');
+        $triple = new Triple($subjectVariable, $predicate, $object);
+        $countExpr = new SelectExpression(new Count($subjectVariable), $countVariable);
+        $statement = new SelectStatement([$countExpr]);
+        $statement->where([$triple]);
+        $countOp = new Count($subjectVariable);
+        $havingOp = new GreaterThan($countOp, $subjectVariable);
+        $statement->having($havingOp);
+        $this->assertStringContainsString('HAVING(', $statement->toQuery());
+    }
+
+    public function testSelectExpression()
+    {
+        $subjectVariable = new Variable('subject');
+        $countVariable = new Variable('count');
+        $predicate = new Iri('http://schema.org/headline');
+        $object = new PlainLiteral('Lorem Ipsum');
+        $triple = new Triple($subjectVariable, $predicate, $object);
+        $countExpr = new SelectExpression(new Count($subjectVariable), $countVariable);
+        $statement = new SelectStatement([$countExpr]);
+        $statement->where([$triple]);
+        $query = $statement->toQuery();
+        $this->assertStringContainsString('( COUNT(?subject) AS ?count )', $query);
     }
 }

@@ -16,4 +16,11 @@ class IsLiteralTest extends KernelTestCase
         $operator = new IsLiteral($term);
         $this->assertEquals(self::SERIALIZED_OPERATOR, $operator->serialize());
     }
+
+    public function testGetExpression()
+    {
+        $term = new PlainLiteral('lorem');
+        $operator = new IsLiteral($term);
+        $this->assertEquals($term, $operator->getExpression());
+    }
 }

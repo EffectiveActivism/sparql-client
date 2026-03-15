@@ -61,7 +61,7 @@ class ConstructStatement extends AbstractConditionalStatement implements Constru
             foreach ($this->triplesToConstruct as $triple) {
                 $tripleString .= sprintf('%s . ', $triple->serialize());
             }
-            return sprintf('%sCONSTRUCT { %s } WHERE { %s }', $preQuery, $tripleString, $conditionsString);
+            return sprintf('%sCONSTRUCT { %s } %sWHERE { %s }', $preQuery, $tripleString, $this->getDatasetClausesString(), $conditionsString);
         }
         else {
             throw new SparQlException('Construct statement is missing a set of triples.');
