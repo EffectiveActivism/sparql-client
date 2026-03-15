@@ -3,6 +3,7 @@
 namespace EffectiveActivism\SparQlClient\Tests\Syntax\Statement;
 
 use EffectiveActivism\SparQlClient\Exception\SparQlException;
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Graph\Graph;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\Triple;
 use EffectiveActivism\SparQlClient\Syntax\Statement\DeleteStatement;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\Iri;
@@ -19,6 +20,10 @@ class DeleteStatementTest extends KernelTestCase
 
     const DELETE_STATEMENT = 'DELETE { <urn:uuid:89e2f582-918d-11eb-b6ff-1f71a7aa4639> <http://schema.org/headline> """Lorem Ipsum""" } WHERE { <urn:uuid:89e2f582-918d-11eb-b6ff-1f71a7aa4639> <http://schema.org/headline> """Lorem Ipsum""" . }';
 
+    const GRAPH_URI = 'http://example.org/g';
+
+    const DELETE_GRAPH_STATEMENT = 'DELETE { GRAPH <http://example.org/g> { <urn:uuid:89e2f582-918d-11eb-b6ff-1f71a7aa4639> <http://schema.org/headline> """Lorem Ipsum""" . } } WHERE { <urn:uuid:89e2f582-918d-11eb-b6ff-1f71a7aa4639> <http://schema.org/headline> """Lorem Ipsum""" . }';
+
     public function testDeleteStatement()
     {
         $subject = new Iri(self::SUBJECT_URI);
@@ -28,6 +33,19 @@ class DeleteStatementTest extends KernelTestCase
         $statement = new DeleteStatement([$triple]);
         $statement->where([$triple]);
         $this->assertEquals(self::DELETE_STATEMENT, $statement->toQuery());
+    }
+
+    public function testDeleteGraphStatement()
+    {
+        $graphIri = new Iri(self::GRAPH_URI);
+        $subject = new Iri(self::SUBJECT_URI);
+        $predicate = new Iri('http://schema.org/headline');
+        $object = new PlainLiteral('Lorem Ipsum');
+        $triple = new Triple($subject, $predicate, $object);
+        $graph = new Graph($graphIri, [$triple]);
+        $statement = new DeleteStatement([$graph]);
+        $statement->where([$triple]);
+        $this->assertEquals(self::DELETE_GRAPH_STATEMENT, $statement->toQuery());
     }
 
     public function testDeleteExceptions()

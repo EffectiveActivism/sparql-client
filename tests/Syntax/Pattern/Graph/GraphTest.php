@@ -27,6 +27,7 @@ class GraphTest extends KernelTestCase
         $this->assertEquals(self::SERIALIZED_VALUE, $graph->serialize());
         $this->assertEquals([$graphIri, $subject, $predicate, $object], $graph->getTerms());
         $this->assertEquals([$triple], $graph->toArray());
+        $this->assertEquals($graphIri, $graph->getGraph());
     }
 
     public function testInvalidPattern()

@@ -3,6 +3,7 @@
 namespace EffectiveActivism\SparQlClient\Tests\Syntax\Statement;
 
 use EffectiveActivism\SparQlClient\Exception\SparQlException;
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Graph\Graph;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\Triple;
 use EffectiveActivism\SparQlClient\Syntax\Statement\InsertStatement;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\Iri;
@@ -21,6 +22,10 @@ class InsertStatementTest extends KernelTestCase
 
     const INSERT_STATEMENT_VARIABLE = 'INSERT { <urn:uuid:89e2f582-918d-11eb-b6ff-1f71a7aa4639> <http://schema.org/headline> ?object } WHERE { <urn:uuid:89e2f582-918d-11eb-b6ff-1f71a7aa4639> <http://schema.org/headline> ?object . }';
 
+    const GRAPH_URI = 'http://example.org/g';
+
+    const INSERT_GRAPH_STATEMENT = 'INSERT { GRAPH <http://example.org/g> { <urn:uuid:89e2f582-918d-11eb-b6ff-1f71a7aa4639> <http://schema.org/headline> """Lorem Ipsum""" . } } WHERE { <urn:uuid:89e2f582-918d-11eb-b6ff-1f71a7aa4639> <http://schema.org/headline> """Lorem Ipsum""" . }';
+
     public function testInsertStatement()
     {
         $subject = new Iri(self::SUBJECT_URI);
@@ -36,6 +41,19 @@ class InsertStatementTest extends KernelTestCase
         $statement = new InsertStatement([$triple]);
         $statement->where([$triple]);
         $this->assertEquals(self::INSERT_STATEMENT_VARIABLE, $statement->toQuery());
+    }
+
+    public function testInsertGraphStatement()
+    {
+        $graphIri = new Iri(self::GRAPH_URI);
+        $subject = new Iri(self::SUBJECT_URI);
+        $predicate = new Iri('http://schema.org/headline');
+        $object = new PlainLiteral('Lorem Ipsum');
+        $triple = new Triple($subject, $predicate, $object);
+        $graph = new Graph($graphIri, [$triple]);
+        $statement = new InsertStatement([$graph]);
+        $statement->where([$triple]);
+        $this->assertEquals(self::INSERT_GRAPH_STATEMENT, $statement->toQuery());
     }
 
     public function testInsertExceptions()

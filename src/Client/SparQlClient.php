@@ -9,12 +9,18 @@ use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\Triple;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\TripleInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\AskStatement;
 use EffectiveActivism\SparQlClient\Syntax\Statement\AskStatementInterface;
+use EffectiveActivism\SparQlClient\Syntax\Statement\ClearStatement;
+use EffectiveActivism\SparQlClient\Syntax\Statement\ClearStatementInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\ConstructStatement;
 use EffectiveActivism\SparQlClient\Syntax\Statement\ConstructStatementInterface;
+use EffectiveActivism\SparQlClient\Syntax\Statement\CreateStatement;
+use EffectiveActivism\SparQlClient\Syntax\Statement\CreateStatementInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\DeleteStatement;
 use EffectiveActivism\SparQlClient\Syntax\Statement\DeleteStatementInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\DescribeStatement;
 use EffectiveActivism\SparQlClient\Syntax\Statement\DescribeStatementInterface;
+use EffectiveActivism\SparQlClient\Syntax\Statement\DropStatement;
+use EffectiveActivism\SparQlClient\Syntax\Statement\DropStatementInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\InsertStatementInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\ReplaceStatement;
 use EffectiveActivism\SparQlClient\Syntax\Statement\ReplaceStatementInterface;
@@ -23,6 +29,7 @@ use EffectiveActivism\SparQlClient\Syntax\Statement\SelectStatementInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\StatementInterface;
 use EffectiveActivism\SparQlClient\Syntax\Statement\InsertStatement;
 use EffectiveActivism\SparQlClient\Serializer\Normalizer\SparQlResultDenormalizer;
+use EffectiveActivism\SparQlClient\Syntax\Term\Iri\AbstractIri;
 use EffectiveActivism\SparQlClient\Syntax\Term\TermInterface;
 use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
 use Psr\Cache\InvalidArgumentException;
@@ -72,9 +79,12 @@ class SparQlClient implements SparQlClientInterface
     {
         return match (true) {
             $statement instanceof AskStatementInterface => $this->handleAskStatement($statement),
+            $statement instanceof ClearStatementInterface => $this->handleClearStatement($statement),
             $statement instanceof ConstructStatementInterface => $this->handleConstructStatement($statement, $toTriples),
+            $statement instanceof CreateStatementInterface => $this->handleCreateStatement($statement),
             $statement instanceof DeleteStatementInterface => $this->handleDeleteStatement($statement),
             $statement instanceof DescribeStatementInterface => $this->handleDescribeStatement($statement),
+            $statement instanceof DropStatementInterface => $this->handleDropStatement($statement),
             $statement instanceof InsertStatementInterface => $this->handleInsertStatement($statement),
             $statement instanceof ReplaceStatementInterface => $this->handleReplaceStatement($statement),
             $statement instanceof SelectStatementInterface => $this->handleQueryStatement($statement, $toTriples),
@@ -166,6 +176,23 @@ class SparQlClient implements SparQlClientInterface
     /**
      * @throws SparQlException
      */
+    protected function handleClearStatement(ClearStatementInterface $statement): array
+    {
+        $query = $statement->toQuery();
+        $this->logger->debug($query);
+        $parameters = ['body' => ['update' => $query]];
+        try {
+            $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent();
+            $this->cacheAdapter->invalidateTags($this->extractTags([$statement->getGraph()]));
+        } catch (HttpClientExceptionInterface|InvalidArgumentException $exception) {
+            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
+        }
+        return [];
+    }
+
+    /**
+     * @throws SparQlException
+     */
     protected function handleConstructStatement(ConstructStatementInterface $statement, bool $toTriples): array
     {
         $query = $statement->toQuery();
@@ -225,6 +252,22 @@ class SparQlClient implements SparQlClientInterface
     /**
      * @throws SparQlException
      */
+    protected function handleCreateStatement(CreateStatementInterface $statement): array
+    {
+        $query = $statement->toQuery();
+        $this->logger->debug($query);
+        $parameters = ['body' => ['update' => $query]];
+        try {
+            $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent();
+        } catch (HttpClientExceptionInterface $exception) {
+            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
+        }
+        return [];
+    }
+
+    /**
+     * @throws SparQlException
+     */
     protected function handleDescribeStatement(DescribeStatementInterface $statement): array
     {
         $query = $statement->toQuery();
@@ -251,6 +294,23 @@ class SparQlClient implements SparQlClientInterface
             throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
         }
         return $result ?? $this->serializer->deserialize($responseContent, SparQlConstructDenormalizer::TYPE, 'xml');
+    }
+
+    /**
+     * @throws SparQlException
+     */
+    protected function handleDropStatement(DropStatementInterface $statement): array
+    {
+        $query = $statement->toQuery();
+        $this->logger->debug($query);
+        $parameters = ['body' => ['update' => $query]];
+        try {
+            $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent();
+            $this->cacheAdapter->invalidateTags($this->extractTags([$statement->getGraph()]));
+        } catch (HttpClientExceptionInterface|InvalidArgumentException $exception) {
+            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
+        }
+        return [];
     }
 
     /**
@@ -283,7 +343,8 @@ class SparQlClient implements SparQlClientInterface
         try {
             $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters)->getContent();
             // Invalidate cache for delete and update statements.
-            $tags = $this->extractTags(array_merge($statement->getOriginals(), $statement->getReplacements(), $statement->getConditions()));
+            $extra = $statement->getScopeGraph() !== null ? [$statement->getScopeGraph()] : [];
+            $tags = $this->extractTags(array_merge($statement->getOriginals(), $statement->getReplacements(), $statement->getConditions(), $extra));
             $this->cacheAdapter->invalidateTags($tags);
         } catch (HttpClientExceptionInterface|InvalidArgumentException $exception) {
             throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception);
@@ -299,6 +360,11 @@ class SparQlClient implements SparQlClientInterface
         return new AskStatement();
     }
 
+    public function clearGraph(AbstractIri $graph): ClearStatementInterface
+    {
+        return new ClearStatement($graph);
+    }
+
     /**
      * @throws SparQlException
      */
@@ -307,12 +373,22 @@ class SparQlClient implements SparQlClientInterface
         return new ConstructStatement($triples);
     }
 
+    public function createGraph(AbstractIri $graph): CreateStatementInterface
+    {
+        return new CreateStatement($graph);
+    }
+
     /**
      * @throws SparQlException
      */
     public function delete(array $triples): DeleteStatement
     {
         return new DeleteStatement($triples);
+    }
+
+    public function dropGraph(AbstractIri $graph): DropStatementInterface
+    {
+        return new DropStatement($graph);
     }
 
     /**
