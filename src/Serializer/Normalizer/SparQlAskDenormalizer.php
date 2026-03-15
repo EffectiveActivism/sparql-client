@@ -9,7 +9,7 @@ class SparQlAskDenormalizer implements DenormalizerInterface
 {
     const TYPE = 'sparql-ask';
 
-    public function supportsDenormalization($data, string $type, string $format = null, array $context = []): bool
+    public function supportsDenormalization($data, string $type, ?string $format = null, array $context = []): bool
     {
         return $type === self::TYPE;
     }
@@ -17,7 +17,7 @@ class SparQlAskDenormalizer implements DenormalizerInterface
     /**
      * @throws InvalidResultException
      */
-    public function denormalize($data, string $type, string $format = null, array $context = []): bool
+    public function denormalize($data, string $type, ?string $format = null, array $context = []): bool
     {
         if (isset($data['boolean'])) {
             return $data['boolean'] === 'true';

@@ -16,7 +16,7 @@ class PlainLiteral extends AbstractLiteral implements TermInterface
     /**
      * @throws SparQlException
      */
-    public function __construct(bool|float|int|string $value, string $optionalLanguageTag = null)
+    public function __construct(bool|float|int|string $value, ?string $optionalLanguageTag = null)
     {
         parent::__construct($value);
         if ($optionalLanguageTag !== null && preg_match(sprintf('/%s/', Constant::LANGUAGE_TAG), $optionalLanguageTag) <= 0) {

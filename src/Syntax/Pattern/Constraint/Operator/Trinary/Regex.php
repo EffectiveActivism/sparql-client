@@ -11,7 +11,7 @@ class Regex extends AbstractTrinaryOperator implements TrinaryOperatorInterface
     /**
      * @see https://www.w3.org/TR/xpath-functions/#func-matches.
      */
-    public function __construct(OperatorInterface|TermInterface $string, OperatorInterface|TermInterface $pattern, OperatorInterface|TermInterface $flags = null)
+    public function __construct(OperatorInterface|TermInterface $string, OperatorInterface|TermInterface $pattern, OperatorInterface|TermInterface|null $flags = null)
     {
         $this->leftExpression = $string;
         $this->middleExpression = $pattern;

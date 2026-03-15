@@ -14,7 +14,7 @@ class SparQlConstructDenormalizer implements DenormalizerInterface
 {
     const TYPE = 'sparql-construct';
 
-    public function supportsDenormalization($data, string $type, string $format = null, array $context = []): bool
+    public function supportsDenormalization($data, string $type, ?string $format = null, array $context = []): bool
     {
         return $type === self::TYPE;
     }
@@ -22,7 +22,7 @@ class SparQlConstructDenormalizer implements DenormalizerInterface
     /**
      * @throws SparQlException
      */
-    public function denormalize($data, string $type, string $format = null, array $context = []): array
+    public function denormalize($data, string $type, ?string $format = null, array $context = []): array
     {
         $sets = [];
         $defaultSchema = $data['@xmlns:schema'] ?? '';
