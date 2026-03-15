@@ -26,6 +26,11 @@ class Graph implements GraphInterface
         $this->patterns = $patterns;
     }
 
+    public function getGraph(): AbstractIri
+    {
+        return $this->graph;
+    }
+
     public function toArray(): array
     {
         return $this->patterns;

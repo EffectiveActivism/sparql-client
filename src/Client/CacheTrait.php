@@ -3,6 +3,7 @@
 namespace EffectiveActivism\SparQlClient\Client;
 
 use EffectiveActivism\SparQlClient\Constant;
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Graph\GraphInterface;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\PatternInterface;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\TripleInterface;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\AbstractIri;
@@ -28,6 +29,9 @@ trait CacheTrait
             }
             elseif ($pattern instanceof TripleInterface) {
                 $tags = $this->extractTags([$pattern->getSubject(), $pattern->getObject()], $tags);
+            }
+            elseif ($pattern instanceof GraphInterface) {
+                $tags = $this->extractTags(array_merge([$pattern->getGraph()], $pattern->toArray()), $tags);
             }
             elseif ($pattern instanceof PatternInterface) {
                 $tags = $this->extractTags($pattern->toArray(), $tags);

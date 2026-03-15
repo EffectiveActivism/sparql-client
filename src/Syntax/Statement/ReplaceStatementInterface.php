@@ -10,7 +10,7 @@ interface ReplaceStatementInterface extends ConditionalStatementInterface
 
     public function with(array $triples): ReplaceStatementInterface;
 
-    public function usingGraph(AbstractIri $graph): static;
+    public function withGraph(AbstractIri $graph): static;
 
     /**
      * Getters.

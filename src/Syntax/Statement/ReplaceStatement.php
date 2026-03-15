@@ -5,6 +5,7 @@ namespace EffectiveActivism\SparQlClient\Syntax\Statement;
 use EffectiveActivism\SparQlClient\Exception\SparQlException;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\PatternInterface;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\AbstractIri;
+use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
 
 class ReplaceStatement extends AbstractConditionalStatement implements ReplaceStatementInterface
@@ -46,7 +47,7 @@ class ReplaceStatement extends AbstractConditionalStatement implements ReplaceSt
         return $this;
     }
 
-    public function usingGraph(AbstractIri $graph): static
+    public function withGraph(AbstractIri $graph): static
     {
         $this->scopeGraph = $graph;
         return $this;
@@ -61,6 +62,9 @@ class ReplaceStatement extends AbstractConditionalStatement implements ReplaceSt
             throw new SparQlException('Replace (DELETE+INSERT) statement is missing a \'with\' clause');
         }
         $this->validatePrefixes(array_merge($this->originals, $this->replacements, $this->conditions));
+        if ($this->scopeGraph instanceof PrefixedIri && !array_key_exists($this->scopeGraph->getPrefix(), $this->namespaces)) {
+            throw new SparQlException(sprintf('Prefix "%s" is not defined', $this->scopeGraph->getPrefix()));
+        }
         $preQuery = parent::toQuery();
         if ($this->scopeGraph !== null) {
             $preQuery .= sprintf('WITH %s ', $this->scopeGraph->serialize());

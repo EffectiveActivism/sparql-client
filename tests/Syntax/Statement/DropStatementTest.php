@@ -2,8 +2,10 @@
 
 namespace EffectiveActivism\SparQlClient\Tests\Syntax\Statement;
 
+use EffectiveActivism\SparQlClient\Exception\SparQlException;
 use EffectiveActivism\SparQlClient\Syntax\Statement\DropStatement;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\Iri;
+use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 class DropStatementTest extends KernelTestCase
@@ -27,5 +29,17 @@ class DropStatementTest extends KernelTestCase
         $graph = new Iri(self::GRAPH_URI);
         $statement = (new DropStatement($graph))->silent();
         $this->assertEquals(self::DROP_SILENT_STATEMENT, $statement->toQuery());
+    }
+
+    public function testDropStatementUndefinedPrefix()
+    {
+        $threwException = false;
+        try {
+            $statement = new DropStatement(new PrefixedIri('ex', 'g'));
+            $statement->toQuery();
+        } catch (SparQlException) {
+            $threwException = true;
+        }
+        $this->assertTrue($threwException);
     }
 }

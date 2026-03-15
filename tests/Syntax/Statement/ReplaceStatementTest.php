@@ -45,7 +45,7 @@ class ReplaceStatementTest extends KernelTestCase
         $statement = new ReplaceStatement([$graph]);
         $statement
             ->with([$graph])
-            ->usingGraph($graphIri)
+            ->withGraph($graphIri)
             ->where([$triple]);
         $this->assertEquals(self::REPLACE_GRAPH_STATEMENT, $statement->toQuery());
         $this->assertEquals($graphIri, $statement->getScopeGraph());
@@ -130,6 +130,20 @@ class ReplaceStatementTest extends KernelTestCase
         $statement = new ReplaceStatement([$triple]);
         try {
             $statement->with([$subject]);
+        } catch (SparQlException) {
+            $threwException = true;
+        }
+        $this->assertTrue($threwException);
+        // Test statement with undefined prefix in scope graph (deferred to toQuery).
+        $triple = new Triple($subject, $predicate, $object);
+        $threwException = false;
+        try {
+            $statement = new ReplaceStatement([$triple]);
+            $statement
+                ->with([$triple])
+                ->withGraph(new PrefixedIri('ex', 'g'))
+                ->where([$triple]);
+            $statement->toQuery();
         } catch (SparQlException) {
             $threwException = true;
         }

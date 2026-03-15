@@ -2,7 +2,9 @@
 
 namespace EffectiveActivism\SparQlClient\Syntax\Statement;
 
+use EffectiveActivism\SparQlClient\Exception\SparQlException;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\AbstractIri;
+use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
 
 class CreateStatement extends AbstractStatement implements CreateStatementInterface
 {
@@ -20,6 +22,9 @@ class CreateStatement extends AbstractStatement implements CreateStatementInterf
 
     public function toQuery(): string
     {
+        if ($this->graph instanceof PrefixedIri && !array_key_exists($this->graph->getPrefix(), $this->namespaces)) {
+            throw new SparQlException(sprintf('Prefix "%s" is not defined', $this->graph->getPrefix()));
+        }
         $preQuery = parent::toQuery();
         $silent = $this->isSilent ? 'SILENT ' : '';
         return sprintf('%sCREATE %sGRAPH %s', $preQuery, $silent, $this->graph->serialize());
