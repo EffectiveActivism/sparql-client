@@ -14,7 +14,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 class MinusTest extends KernelTestCase
 {
-    const NAMESPACES = 'PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX owl: <http://www.w3.org/2002/07/owl#> PREFIX skos: <http://www.w3.org/2004/02/skos/core#> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> PREFIX schema: <http://schema.org/>';
+    const NAMESPACES = 'PREFIX schema: <http://schema.org/>';
 
     const SERIALIZED_FILTER = self::NAMESPACES . ' SELECT ?subject WHERE { ?subject schema:headline """lorem""" . MINUS { ?subject schema:identifier """b5e80b02-9081-11eb-af19-3b334e80a450""" . } . }';
 
@@ -34,6 +34,7 @@ class MinusTest extends KernelTestCase
         $filter = new Minus([new Triple($subjectVariable, $filterPredicate, $filterObject)]);
         $statement = $sparQlClient
             ->select([$subjectVariable])
+            ->withNamespaces(['schema' => 'http://schema.org/'])
             ->where([
                 new Triple($subjectVariable, $predicate, $object),
                 $filter
@@ -59,6 +60,7 @@ class MinusTest extends KernelTestCase
         ]);
         $statement = $sparQlClient
             ->select([$subjectVariable])
+            ->withNamespaces(['schema' => 'http://schema.org/'])
             ->where([
                 new Triple($subjectVariable, $predicate, $object),
                 $filter

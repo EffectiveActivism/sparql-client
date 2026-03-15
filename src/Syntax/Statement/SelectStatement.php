@@ -21,9 +21,8 @@ class SelectStatement extends AbstractConditionalStatement implements SelectStat
     /**
      * @throws SparQlException
      */
-    public function __construct(array $variables, array $extraNamespaces = [])
+    public function __construct(array $variables)
     {
-        parent::__construct($extraNamespaces);
         $this->setVariables($variables);
     }
 
@@ -32,6 +31,7 @@ class SelectStatement extends AbstractConditionalStatement implements SelectStat
      */
     public function toQuery(): string
     {
+        $this->validatePrefixes($this->conditions);
         $preQuery = parent::toQuery();
         $variables = '';
         foreach ($this->variables as $variable) {

@@ -3,7 +3,6 @@
 namespace EffectiveActivism\SparQlClient\Syntax\Statement;
 
 use EffectiveActivism\SparQlClient\Exception\SparQlException;
-use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\TripleInterface;
 
@@ -14,17 +13,11 @@ class ConstructStatement extends AbstractConditionalStatement implements Constru
     /**
      * @throws SparQlException
      */
-    public function __construct(array $triples, array $extraNamespaces = [])
+    public function __construct(array $triples)
     {
-        parent::__construct($extraNamespaces);
         foreach ($triples as $triple) {
             if (!($triple instanceof TripleInterface)) {
                 throw new SparQlException(sprintf('Invalid triple class: %s', gettype($triple)));
-            }
-            foreach ($triple->getTerms() as $term) {
-                if (get_class($term) === PrefixedIri::class && !in_array($term->getPrefix(), array_keys($this->namespaces))) {
-                    throw new SparQlException(sprintf('Prefix "%s" is not defined', $term->getPrefix()));
-                }
             }
         }
         $this->triplesToConstruct = $triples;
@@ -35,6 +28,7 @@ class ConstructStatement extends AbstractConditionalStatement implements Constru
      */
     public function toQuery(): string
     {
+        $this->validatePrefixes(array_merge($this->triplesToConstruct, $this->conditions));
         $preQuery = parent::toQuery();
         $conditionsString = '';
         foreach ($this->conditions as $condition) {

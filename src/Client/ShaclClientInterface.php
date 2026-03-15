@@ -13,16 +13,4 @@ interface ShaclClientInterface
     public function convertToConstructStatement(ConstructStatementInterface|DeleteStatementInterface|InsertStatementInterface|ReplaceStatementInterface $statement): ConstructStatementInterface;
 
     public function validate(ConstructStatementInterface $statement): ValidationResultInterface;
-
-    /**
-     * Getters.
-     */
-
-    public function getNamespaces(): array;
-
-    /**
-     * Setters.
-     */
-
-    public function setExtraNamespaces(array $extraNamespaces): ShaclClientInterface;
 }

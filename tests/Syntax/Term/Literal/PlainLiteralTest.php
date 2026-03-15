@@ -10,13 +10,13 @@ class PlainLiteralTest extends KernelTestCase
 {
     const VALID_LITERALS = [
         '"""lorem"""' => 'lorem',
-        '"4"^^xsd:integer' => 4,
-        '"-4"^^xsd:integer' => -4,
-        '"0"^^xsd:integer' => 0,
-        '"1.4"^^xsd:decimal' => 1.4,
-        '"0"^^xsd:decimal' => 0.0,
-        '"true"^^xsd:boolean' => true,
-        '"false"^^xsd:boolean' => false,
+        '"4"^^<http://www.w3.org/2001/XMLSchema#integer>' => 4,
+        '"-4"^^<http://www.w3.org/2001/XMLSchema#integer>' => -4,
+        '"0"^^<http://www.w3.org/2001/XMLSchema#integer>' => 0,
+        '"1.4"^^<http://www.w3.org/2001/XMLSchema#decimal>' => 1.4,
+        '"0"^^<http://www.w3.org/2001/XMLSchema#decimal>' => 0.0,
+        '"true"^^<http://www.w3.org/2001/XMLSchema#boolean>' => true,
+        '"false"^^<http://www.w3.org/2001/XMLSchema#boolean>' => false,
         "\"\"\"lorem\\nipsum\"\"\"" => "lorem\nipsum",
         "\"\"\"\\\"\\\\\'\\\\!#¤%&&/()=?`@£\$½¥{[]}±|~^¨*,.-_\\n\\r\\t@ł€®þ←↓→œþ¨ªßðđŋħˀĸł´^\\\\><«»©“”nµ¸·.\"\"\"" => "\"\'\!#¤%&&/()=?`@£\$½¥{[]}±|~^¨*,.-_\n\r\t@ł€®þ←↓→œþ¨ªßðđŋħˀĸł´^\\><«»©“”nµ¸·.",
         "\"\"\"                   \\n \\r\\t\"\"\"" => "\u{0020}\u{00A0}\u{1680}\u{2000}\u{2001}\u{2002}\u{2003}\u{2004}\u{2005}\u{2006}\u{2007}\u{2008}\u{2009}\u{200A}\u{202F}\u{205F}\u{3000}\u{2028}\u{2029}\u{000A}\u{000B}\u{000D}\u{0009}"

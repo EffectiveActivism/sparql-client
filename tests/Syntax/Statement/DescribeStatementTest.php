@@ -7,6 +7,7 @@ use EffectiveActivism\SparQlClient\Syntax\Order\Asc;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\Triple;
 use EffectiveActivism\SparQlClient\Syntax\Statement\DescribeStatement;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\Iri;
+use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
 use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -87,6 +88,28 @@ class DescribeStatementTest extends KernelTestCase
             $statement->orderBy([
                 'invalid',
             ]);
+        } catch (SparQlException) {
+            $threwException = true;
+        }
+        $this->assertTrue($threwException);
+        // Test statement with undeclared prefix in conditions.
+        $threwException = false;
+        $undeclaredPredicate = new PrefixedIri('unknown', 'headline');
+        $triple = new Triple($subjectVariable, $undeclaredPredicate, $object);
+        $statement = new DescribeStatement([$subjectVariable]);
+        $statement->where([$triple]);
+        try {
+            $statement->toQuery();
+        } catch (SparQlException) {
+            $threwException = true;
+        }
+        $this->assertTrue($threwException);
+        // Test statement with undeclared prefix in resources.
+        $threwException = false;
+        $undeclaredResource = new PrefixedIri('unknown', 'Thing');
+        $statement = new DescribeStatement([$undeclaredResource]);
+        try {
+            $statement->toQuery();
         } catch (SparQlException) {
             $threwException = true;
         }

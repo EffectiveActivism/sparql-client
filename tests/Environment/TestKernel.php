@@ -17,7 +17,7 @@ class TestKernel extends Kernel
         ];
     }
 
-    public function registerContainerConfiguration(LoaderInterface $loader)
+    public function registerContainerConfiguration(LoaderInterface $loader): void
     {
         $loader->load(function (ContainerBuilder $container) {
             $container->loadFromExtension('framework', [
@@ -33,9 +33,6 @@ class TestKernel extends Kernel
             $container->loadFromExtension('sparql_client', [
                 'sparql_endpoint' => 'http://test-sparql-endpoint:9999/blazegraph/sparql',
                 'shacl_endpoint' => 'http://test-shacl-endpoint',
-                'namespaces' => [
-                    'schema' => 'http://schema.org/',
-                ]
             ]);
         });
     }

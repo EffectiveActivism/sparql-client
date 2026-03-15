@@ -32,7 +32,7 @@ class DeleteStatementTest extends KernelTestCase
 
     public function testDeleteExceptions()
     {
-        // Test statement with unknown IRI prefix.
+        // Test statement with unknown IRI prefix (deferred to toQuery).
         $subject = new Iri(self::SUBJECT_URI);
         $predicate = new Iri('http://schema.org/headline');
         $unknownPredicate = new PrefixedIri('unknown', 'headline');
@@ -40,7 +40,7 @@ class DeleteStatementTest extends KernelTestCase
         $triple = new Triple($subject, $unknownPredicate, $object);
         $threwException = false;
         try {
-            new DeleteStatement([$triple]);
+            (new DeleteStatement([$triple]))->toQuery();
         } catch (SparQlException) {
             $threwException = true;
         }

@@ -9,7 +9,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 class PositiveTest extends KernelTestCase
 {
-    const SERIALIZED_OPERATOR = '+ "12"^^xsd:integer';
+    const SERIALIZED_OPERATOR = '+ "12"^^<http://www.w3.org/2001/XMLSchema#integer>';
 
     public function testOperator()
     {

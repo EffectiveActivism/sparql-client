@@ -9,7 +9,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 class EqualTest extends KernelTestCase
 {
-    const SERIALIZED_OPERATOR = '"1"^^xsd:integer = "2"^^xsd:integer';
+    const SERIALIZED_OPERATOR = '"1"^^<http://www.w3.org/2001/XMLSchema#integer> = "2"^^<http://www.w3.org/2001/XMLSchema#integer>';
 
     public function testOperator()
     {
