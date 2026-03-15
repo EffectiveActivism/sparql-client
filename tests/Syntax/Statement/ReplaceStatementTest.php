@@ -44,23 +44,26 @@ class ReplaceStatementTest extends KernelTestCase
             $threwException = true;
         }
         $this->assertTrue($threwException);
-        // Test statement with unknown IRI prefix.
+        // Test statement with unknown IRI prefix (deferred to toQuery).
         $unknownPredicate = new PrefixedIri('unknown', 'headline');
         $triple = new Triple($subject, $unknownPredicate, $object);
         $threwException = false;
         try {
-            new ReplaceStatement([$triple]);
+            $statement = new ReplaceStatement([$triple]);
+            $statement->with([new Triple($subject, $predicate, $object)]);
+            $statement->toQuery();
         } catch (SparQlException) {
             $threwException = true;
         }
         $this->assertTrue($threwException);
-        // Test statement with unknown IRI prefix in 'with' clause.
+        // Test statement with unknown IRI prefix in 'with' clause (deferred to toQuery).
         $triple1 = new Triple($subject, $predicate, $object);
         $triple2 = new Triple($subject, $unknownPredicate, $object);
         $threwException = false;
         try {
             $statement = new ReplaceStatement([$triple1]);
             $statement->with([$triple2]);
+            $statement->toQuery();
         } catch (SparQlException) {
             $threwException = true;
         }

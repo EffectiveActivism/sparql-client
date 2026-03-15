@@ -10,29 +10,37 @@ class AbstractStatementTest extends KernelTestCase
 {
     const QUERY = 'PREFIX schema: <http://schema.org/> ';
 
+    public function testGetNamespaces()
+    {
+        $class = new class() extends AbstractStatement {};
+        $namespaces = ['schema' => 'http://schema.org/'];
+        $class->withNamespaces($namespaces);
+        $this->assertEquals($namespaces, $class->getNamespaces());
+    }
+
     public function testToQuery()
     {
-        $namespace = ['schema' => 'http://schema.org/'];
-        $class = new class($namespace) extends AbstractStatement {};
+        $class = new class() extends AbstractStatement {};
+        $class->withNamespaces(['schema' => 'http://schema.org/']);
         $this->assertEquals(self::QUERY, $class->toQuery());
     }
 
     public function testExceptions()
     {
         // Test statement with invalid namespace prefix.
-        $namespace = ['!invalid' => 'http://schema.org/'];
         $threwException = false;
         try {
-            new class($namespace) extends AbstractStatement {};
+            $class = new class() extends AbstractStatement {};
+            $class->withNamespaces(['!invalid' => 'http://schema.org/']);
         } catch (SparQlException) {
             $threwException = true;
         }
         $this->assertTrue($threwException);
         // Test statement with invalid namespace url.
-        $namespace = ['schema' => 'invalid_url'];
         $threwException = false;
         try {
-            new class($namespace) extends AbstractStatement {};
+            $class = new class() extends AbstractStatement {};
+            $class->withNamespaces(['schema' => 'invalid_url']);
         } catch (SparQlException) {
             $threwException = true;
         }

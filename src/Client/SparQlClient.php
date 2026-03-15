@@ -2,7 +2,6 @@
 
 namespace EffectiveActivism\SparQlClient\Client;
 
-use EffectiveActivism\SparQlClient\Constant;
 use EffectiveActivism\SparQlClient\Exception\SparQlException;
 use EffectiveActivism\SparQlClient\Serializer\Normalizer\SparQlAskDenormalizer;
 use EffectiveActivism\SparQlClient\Serializer\Normalizer\SparQlConstructDenormalizer;
@@ -43,13 +42,9 @@ class SparQlClient implements SparQlClientInterface
 
     protected TagAwareCacheInterface $cacheAdapter;
 
-    protected array $extraNamespaces = [];
-
     protected HttpClientInterface $httpClient;
 
     protected LoggerInterface $logger;
-
-    protected array $namespaces = [];
 
     protected SerializerInterface $serializer;
 
@@ -61,7 +56,6 @@ class SparQlClient implements SparQlClientInterface
         $this->cacheAdapter = $cacheAdapter;
         $this->httpClient = $httpClient;
         $this->logger = $logger;
-        $this->namespaces = $configuration['namespaces'];
         $normalizers = [
             new SparQlAskDenormalizer(),
             new SparQlConstructDenormalizer(),
@@ -302,7 +296,7 @@ class SparQlClient implements SparQlClientInterface
      */
     public function ask(): AskStatementInterface
     {
-        return new AskStatement($this->getNamespaces());
+        return new AskStatement();
     }
 
     /**
@@ -310,7 +304,7 @@ class SparQlClient implements SparQlClientInterface
      */
     public function construct(array $triples): ConstructStatementInterface
     {
-        return new ConstructStatement($triples, $this->getNamespaces());
+        return new ConstructStatement($triples);
     }
 
     /**
@@ -318,7 +312,7 @@ class SparQlClient implements SparQlClientInterface
      */
     public function delete(array $triples): DeleteStatement
     {
-        return new DeleteStatement($triples, $this->getNamespaces());
+        return new DeleteStatement($triples);
     }
 
     /**
@@ -326,7 +320,7 @@ class SparQlClient implements SparQlClientInterface
      */
     public function describe(array $resources): DescribeStatement
     {
-        return new DescribeStatement($resources, $this->getNamespaces());
+        return new DescribeStatement($resources);
     }
 
     /**
@@ -334,7 +328,7 @@ class SparQlClient implements SparQlClientInterface
      */
     public function insert(array $triples): InsertStatement
     {
-        return new InsertStatement($triples, $this->getNamespaces());
+        return new InsertStatement($triples);
     }
 
     /**
@@ -342,7 +336,7 @@ class SparQlClient implements SparQlClientInterface
      */
     public function replace(array $triples): ReplaceStatementInterface
     {
-        return new ReplaceStatement($triples, $this->getNamespaces());
+        return new ReplaceStatement($triples);
     }
 
     /**
@@ -350,7 +344,7 @@ class SparQlClient implements SparQlClientInterface
      */
     public function select(array $variables): SelectStatement
     {
-        return new SelectStatement($variables, $this->getNamespaces());
+        return new SelectStatement($variables);
     }
 
     /**
@@ -371,22 +365,4 @@ class SparQlClient implements SparQlClientInterface
         }
     }
 
-    /**
-     * Getters.
-     */
-
-    public function getNamespaces(): array
-    {
-        return array_merge(Constant::W3C_NAMESPACES, $this->namespaces, $this->extraNamespaces);
-    }
-
-    /**
-     * Setters.
-     */
-
-    public function setExtraNamespaces(array $extraNamespaces): SparQlClientInterface
-    {
-        $this->extraNamespaces = $extraNamespaces;
-        return $this;
-    }
 }

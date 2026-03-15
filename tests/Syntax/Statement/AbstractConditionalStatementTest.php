@@ -20,9 +20,8 @@ class AbstractConditionalStatementTest extends KernelTestCase
         $predicate = new PrefixedIri('schema', 'headline');
         $object = new PlainLiteral('Lorem');
         $triple = new Triple($subject, $predicate, $object);
-        $class = new class([
-            'schema' => 'http://schema.org/',
-        ]) extends AbstractConditionalStatement {};
+        $class = new class() extends AbstractConditionalStatement {};
+        $class->withNamespaces(['schema' => 'http://schema.org/']);
         $class->where([$triple]);
         $this->assertEquals([$triple], $class->getConditions());
     }
@@ -31,23 +30,10 @@ class AbstractConditionalStatementTest extends KernelTestCase
     {
         // Test statement with invalid condition class.
         $predicate = new PrefixedIri('schema', 'headline');
-        $class = new class([]) extends AbstractConditionalStatement {};
+        $class = new class() extends AbstractConditionalStatement {};
         $threwException = false;
         try {
             $class->where([$predicate]);
-        } catch (SparQlException) {
-            $threwException = true;
-        }
-        $this->assertTrue($threwException);
-        // Test statement with unknown prefix.
-        $subject = new Iri('urn:uuid:ed61d3c8-9203-11eb-9714-83cf7e09838c');
-        $predicate = new PrefixedIri('unknown', 'headline');
-        $object = new PlainLiteral('Lorem');
-        $triple = new Triple($subject, $predicate, $object);
-        $class = new class([]) extends AbstractConditionalStatement {};
-        $threwException = false;
-        try {
-            $class->where([$triple]);
         } catch (SparQlException) {
             $threwException = true;
         }

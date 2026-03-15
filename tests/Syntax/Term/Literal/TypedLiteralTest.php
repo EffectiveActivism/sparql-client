@@ -22,7 +22,7 @@ class TypedLiteralTest extends KernelTestCase
     public function testIntegerTypedLiteral()
     {
         $typedLiteral = new TypedLiteral(2);
-        $this->assertEquals('"2"^^xsd:integer', $typedLiteral->serialize());
+        $this->assertEquals('"2"^^<http://www.w3.org/2001/XMLSchema#integer>', $typedLiteral->serialize());
         $this->assertEquals('xsd:integer', $typedLiteral->getType());
         $typedLiteral = new TypedLiteral(2, new PrefixedIri('xsd', 'integer'));
         $this->assertEquals('"""2"""^^xsd:integer', $typedLiteral->serialize());
@@ -32,7 +32,7 @@ class TypedLiteralTest extends KernelTestCase
     public function testDoubleTypedLiteral()
     {
         $typedLiteral = new TypedLiteral(2.4);
-        $this->assertEquals('"2.4"^^xsd:decimal', $typedLiteral->serialize());
+        $this->assertEquals('"2.4"^^<http://www.w3.org/2001/XMLSchema#decimal>', $typedLiteral->serialize());
         $this->assertEquals('xsd:decimal', $typedLiteral->getType());
         $typedLiteral = new TypedLiteral(2.4, new PrefixedIri('xsd', 'decimal'));
         $this->assertEquals('"""2.4"""^^xsd:decimal', $typedLiteral->serialize());
@@ -42,7 +42,7 @@ class TypedLiteralTest extends KernelTestCase
     public function testBooleanTypedLiteral()
     {
         $typedLiteral = new TypedLiteral(true);
-        $this->assertEquals('"true"^^xsd:boolean', $typedLiteral->serialize());
+        $this->assertEquals('"true"^^<http://www.w3.org/2001/XMLSchema#boolean>', $typedLiteral->serialize());
         $this->assertEquals('xsd:boolean', $typedLiteral->getType());
         $typedLiteral = new TypedLiteral('True', new PrefixedIri('xsd', 'boolean'));
         $this->assertEquals('"true"^^xsd:boolean', $typedLiteral->serialize());

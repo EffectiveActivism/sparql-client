@@ -12,9 +12,8 @@ abstract class AbstractStatement implements StatementInterface
     /**
      * @throws SparQlException
      */
-    public function __construct(array $namespaces)
+    public function withNamespaces(array $namespaces): static
     {
-        // Validate extra namespaces.
         foreach ($namespaces as $prefix => $url) {
             if (!is_string($prefix) || !preg_match(sprintf('/%s/u', Constant::PN_PREFIX), $prefix)) {
                 throw new SparQlException(sprintf('Value "%s" is not a valid prefix', $prefix));
@@ -23,12 +22,33 @@ abstract class AbstractStatement implements StatementInterface
                 throw new SparQlException(sprintf('Value "%s" is not a valid URL', $url));
             }
         }
-        $this->namespaces = $namespaces;
+        $this->namespaces = array_merge($this->namespaces, $namespaces);
+        return $this;
+    }
+
+    /**
+     * @throws SparQlException
+     */
+    protected function validatePrefixes(array $items): void
+    {
+        foreach ($items as $item) {
+            foreach ($item->getTerms() as $term) {
+                if (get_class($term) === \EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri::class && !in_array($term->getPrefix(), array_keys($this->namespaces))) {
+                    throw new SparQlException(sprintf('Prefix "%s" is not defined', $term->getPrefix()));
+                }
+            }
+        }
+    }
+
+    public function getNamespaces(): array
+    {
+        return $this->namespaces;
     }
 
     public function toQuery(): string
     {
         $query = '';
+        ksort($this->namespaces);
         foreach ($this->namespaces as $prefix => $url) {
             $query .= sprintf('PREFIX %s: <%s> ', $prefix, $url);
         }

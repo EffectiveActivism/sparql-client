@@ -7,6 +7,7 @@ use EffectiveActivism\SparQlClient\Syntax\Order\Asc;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\Triple;
 use EffectiveActivism\SparQlClient\Syntax\Statement\SelectStatement;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\Iri;
+use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
 use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -89,6 +90,18 @@ class SelectStatementTest extends KernelTestCase
             $statement->orderBy([
                 'invalid',
             ]);
+        } catch (SparQlException) {
+            $threwException = true;
+        }
+        $this->assertTrue($threwException);
+        // Test statement with undeclared prefix in conditions.
+        $threwException = false;
+        $undeclaredPredicate = new PrefixedIri('unknown', 'headline');
+        $triple = new Triple($subjectVariable, $undeclaredPredicate, $object);
+        $statement = new SelectStatement([$subjectVariable]);
+        $statement->where([$triple]);
+        try {
+            $statement->toQuery();
         } catch (SparQlException) {
             $threwException = true;
         }

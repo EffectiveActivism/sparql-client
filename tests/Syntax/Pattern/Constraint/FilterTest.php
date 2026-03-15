@@ -16,7 +16,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 class FilterTest extends KernelTestCase
 {
-    const NAMESPACES = 'PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX owl: <http://www.w3.org/2002/07/owl#> PREFIX skos: <http://www.w3.org/2004/02/skos/core#> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> PREFIX schema: <http://schema.org/>';
+    const NAMESPACES = 'PREFIX schema: <http://schema.org/>';
 
     const SERIALIZED_FILTER = self::NAMESPACES . ' SELECT ?subject WHERE { ?subject schema:headline """lorem""" . FILTER(BOUND(?subject)) . FILTER("""lorem""" = """ipsum""") . FILTER(REGEX("""lorem""","""ipsum""","""foo""")) . }';
 
@@ -36,6 +36,7 @@ class FilterTest extends KernelTestCase
         $filter3 = new Filter(new Regex($object1, $object2, $object3));
         $statement = $sparQlClient
             ->select([$subjectVariable])
+            ->withNamespaces(['schema' => 'http://schema.org/'])
             ->where([
                 new Triple($subjectVariable, $predicate, $object1),
                 $filter1,

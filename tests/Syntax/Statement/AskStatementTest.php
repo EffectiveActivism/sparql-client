@@ -2,9 +2,11 @@
 
 namespace EffectiveActivism\SparQlClient\Tests\Syntax\Statement;
 
+use EffectiveActivism\SparQlClient\Exception\SparQlException;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\Triple;
 use EffectiveActivism\SparQlClient\Syntax\Statement\AskStatement;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\Iri;
+use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
@@ -23,5 +25,23 @@ class AskStatementTest extends KernelTestCase
         $statement = new AskStatement([]);
         $statement->where([$triple]);
         $this->assertEquals(self::ASK_STATEMENT, $statement->toQuery());
+    }
+
+    public function testAskExceptions()
+    {
+        $subject = new Iri(self::SUBJECT_URI);
+        $object = new PlainLiteral("Lorem Ipsum");
+        // Test statement with undeclared prefix in conditions.
+        $threwException = false;
+        $undeclaredPredicate = new PrefixedIri('unknown', 'headline');
+        $triple = new Triple($subject, $undeclaredPredicate, $object);
+        $statement = new AskStatement([]);
+        $statement->where([$triple]);
+        try {
+            $statement->toQuery();
+        } catch (SparQlException) {
+            $threwException = true;
+        }
+        $this->assertTrue($threwException);
     }
 }

@@ -15,9 +15,6 @@ class BundleTest extends KernelTestCase
     const TEST_CONFIG = [
         'sparql_endpoint' => 'http://test-sparql-endpoint:9999/blazegraph/sparql',
         'shacl_endpoint' => '',
-        'namespaces' => [
-            'schema' => 'http://schema.org/',
-        ]
     ];
 
     public function testBundle()

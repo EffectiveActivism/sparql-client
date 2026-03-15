@@ -26,9 +26,9 @@ class TypedLiteral extends AbstractLiteral implements TermInterface
     {
         if ($this->dataType === null) {
             return match (gettype($this->value)) {
-                'boolean' => sprintf('"%s"^^xsd:boolean', $this->value ? 'true' : 'false'),
-                'double' => sprintf('"%s"^^xsd:decimal', $this->value),
-                'integer' => sprintf('"%s"^^xsd:integer', $this->value),
+                'boolean' => sprintf('"%s"^^<http://www.w3.org/2001/XMLSchema#boolean>', $this->value ? 'true' : 'false'),
+                'double' => sprintf('"%s"^^<http://www.w3.org/2001/XMLSchema#decimal>', $this->value),
+                'integer' => sprintf('"%s"^^<http://www.w3.org/2001/XMLSchema#integer>', $this->value),
                 'string' => $this->sanitizeString(),
                 default => throw new SparQlException(sprintf('Typed literal "%s" has unknown type "%s"', $this->getRawValue(), gettype($this->value))),
             };

@@ -4,7 +4,7 @@ namespace EffectiveActivism\SparQlClient\Syntax\Statement;
 
 interface DescribeStatementInterface extends ConditionalStatementInterface
 {
-    public function __construct(array $resources, array $extraNamespaces = []);
+    public function __construct(array $resources);
 
     public function limit(int $limit): DescribeStatementInterface;
 

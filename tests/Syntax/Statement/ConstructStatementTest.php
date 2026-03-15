@@ -43,10 +43,12 @@ class ConstructStatementTest extends KernelTestCase
             $threwException = true;
         }
         $this->assertTrue($threwException);
-        // Test statement with term without valid namespace.
+        // Test statement with term without valid namespace (deferred to toQuery).
         $threwException = false;
         try {
-            new ConstructStatement([$triple]);
+            $statement = new ConstructStatement([$triple]);
+            $statement->where([$triple]);
+            $statement->toQuery();
         } catch (SparQlException) {
             $threwException = true;
         }

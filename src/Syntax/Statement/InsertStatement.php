@@ -3,7 +3,6 @@
 namespace EffectiveActivism\SparQlClient\Syntax\Statement;
 
 use EffectiveActivism\SparQlClient\Exception\SparQlException;
-use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\TripleInterface;
 
@@ -15,18 +14,10 @@ class InsertStatement extends AbstractConditionalStatement implements InsertStat
     /**
      * @throws SparQlException
      */
-    public function __construct(array $triples, array $extraNamespaces = [])
+    public function __construct(array $triples)
     {
-        parent::__construct($extraNamespaces);
         foreach ($triples as $triple) {
-            if (is_object($triple) && $triple instanceof TripleInterface) {
-                foreach ($triple->getTerms() as $term) {
-                    if (get_class($term) === PrefixedIri::class && !in_array($term->getPrefix(), array_keys($this->namespaces))) {
-                        throw new SparQlException(sprintf('Prefix "%s" is not defined', $term->getPrefix()));
-                    }
-                }
-            }
-            else {
+            if (!is_object($triple) || !($triple instanceof TripleInterface)) {
                 $class = is_object($triple) ? get_class($triple) : gettype($triple);
                 throw new SparQlException(sprintf('Invalid triple class: %s', $class));
             }
@@ -39,6 +30,7 @@ class InsertStatement extends AbstractConditionalStatement implements InsertStat
      */
     public function toQuery(): string
     {
+        $this->validatePrefixes(array_merge($this->triplesToInsert, $this->conditions));
         $preQuery = parent::toQuery();
         $conditionsString = '';
         foreach ($this->conditions as $condition) {
