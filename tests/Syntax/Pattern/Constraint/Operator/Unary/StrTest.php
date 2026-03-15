@@ -16,4 +16,11 @@ class StrTest extends KernelTestCase
         $operator = new Str($term);
         $this->assertEquals(self::SERIALIZED_OPERATOR, $operator->serialize());
     }
+
+    public function testGetExpression()
+    {
+        $term = new PlainLiteral('lorem');
+        $operator = new Str($term);
+        $this->assertEquals($term, $operator->getExpression());
+    }
 }

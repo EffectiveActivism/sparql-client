@@ -16,4 +16,11 @@ class IsIriTest extends KernelTestCase
         $operator = new IsIri($term);
         $this->assertEquals(self::SERIALIZED_OPERATOR, $operator->serialize());
     }
+
+    public function testGetExpression()
+    {
+        $term = new PlainLiteral('lorem');
+        $operator = new IsIri($term);
+        $this->assertEquals($term, $operator->getExpression());
+    }
 }

@@ -24,4 +24,11 @@ class PositiveTest extends KernelTestCase
         $this->expectException(SparQlException::class);
         new Positive($term);
     }
+
+    public function testGetExpression()
+    {
+        $term = new PlainLiteral(12);
+        $operator = new Positive($term);
+        $this->assertEquals($term, $operator->getExpression());
+    }
 }

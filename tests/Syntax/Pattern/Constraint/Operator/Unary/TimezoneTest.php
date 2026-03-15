@@ -16,4 +16,11 @@ class TimezoneTest extends KernelTestCase
         $operator = new Timezone($term);
         $this->assertEquals(self::SERIALIZED_OPERATOR, $operator->serialize());
     }
+
+    public function testGetExpression()
+    {
+        $term = new Variable('subject');
+        $operator = new Timezone($term);
+        $this->assertEquals($term, $operator->getExpression());
+    }
 }

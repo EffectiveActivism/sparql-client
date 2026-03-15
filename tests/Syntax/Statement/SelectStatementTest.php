@@ -148,6 +148,19 @@ class SelectStatementTest extends KernelTestCase
         $this->assertTrue($threwException);
     }
 
+    public function testReducedAndDistinctException()
+    {
+        $statement = new SelectStatement([new Variable('subject')]);
+        $statement->reduced();
+        $threwException = false;
+        try {
+            $statement->distinct();
+        } catch (SparQlException) {
+            $threwException = true;
+        }
+        $this->assertTrue($threwException);
+    }
+
     public function testGroupBy()
     {
         $subjectVariable = new Variable('subject');
@@ -158,6 +171,30 @@ class SelectStatementTest extends KernelTestCase
         $statement->where([$triple]);
         $statement->groupBy([$subjectVariable]);
         $this->assertStringContainsString('GROUP BY ?subject', $statement->toQuery());
+    }
+
+    public function testGroupByWithOperator()
+    {
+        $subjectVariable = new Variable('subject');
+        $predicate = new Iri('http://schema.org/headline');
+        $object = new PlainLiteral('Lorem Ipsum');
+        $triple = new Triple($subjectVariable, $predicate, $object);
+        $statement = new SelectStatement([$subjectVariable]);
+        $statement->where([$triple]);
+        $statement->groupBy([new Count($subjectVariable)]);
+        $this->assertStringContainsString('GROUP BY COUNT(?subject)', $statement->toQuery());
+    }
+
+    public function testGroupByInvalidExpression()
+    {
+        $statement = new SelectStatement([new Variable('subject')]);
+        $threwException = false;
+        try {
+            $statement->groupBy(['invalid']);
+        } catch (SparQlException) {
+            $threwException = true;
+        }
+        $this->assertTrue($threwException);
     }
 
     public function testHaving()

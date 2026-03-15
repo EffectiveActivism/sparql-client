@@ -19,4 +19,13 @@ class InTest extends KernelTestCase
         $operator = new In($subject, $a, $b);
         $this->assertEquals(self::SERIALIZED_OPERATOR, $operator->serialize());
     }
+
+    public function testGetExpressions()
+    {
+        $subject = new Variable('subject');
+        $a = new PlainLiteral('lorem');
+        $b = new PlainLiteral('ipsum');
+        $operator = new In($subject, $a, $b);
+        $this->assertEquals([$subject, $a, $b], $operator->getExpressions());
+    }
 }

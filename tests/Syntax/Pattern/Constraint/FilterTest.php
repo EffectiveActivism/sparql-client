@@ -4,9 +4,11 @@ namespace EffectiveActivism\SparQlClient\Tests\Syntax\Pattern\Constraint;
 
 use EffectiveActivism\SparQlClient\Client\SparQlClientInterface;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\Filter;
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\Operator\Aggregate\Count;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\Operator\Binary\Equal;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\Operator\Trinary\Regex;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\Operator\Unary\Bound;
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\Operator\Variadic\In;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\Triple;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
@@ -46,5 +48,36 @@ class FilterTest extends KernelTestCase
         $this->assertEquals(self::SERIALIZED_FILTER, $statement->toQuery());
         $this->assertEquals([$subjectVariable], $filter1->getTerms());
         $this->assertEquals([$subjectVariable], $filter1->toArray());
+        // Binary: left and right expressions returned.
+        $this->assertEquals([$object1, $object2], $filter2->getTerms());
+        // Trinary with 3 args: left, middle, and right expressions returned.
+        $this->assertEquals([$object1, $object2, $object3], $filter3->getTerms());
+    }
+
+    public function testGetTermsTrinaryTwoArgs()
+    {
+        $object1 = new PlainLiteral('lorem');
+        $object2 = new PlainLiteral('ipsum');
+        $filter = new Filter(new Regex($object1, $object2));
+        // Trinary with 2 args: only left and middle returned (no null right).
+        $this->assertEquals([$object1, $object2], $filter->getTerms());
+    }
+
+    public function testGetTermsAggregate()
+    {
+        $variable = new Variable('subject');
+        $filter = new Filter(new Count($variable));
+        // Aggregate: empty array returned.
+        $this->assertEquals([], $filter->getTerms());
+    }
+
+    public function testGetTermsVariadic()
+    {
+        $subject = new Variable('subject');
+        $a = new PlainLiteral('lorem');
+        $b = new PlainLiteral('ipsum');
+        $filter = new Filter(new In($subject, $a, $b));
+        // Variadic: all expressions returned (subject + each additional).
+        $this->assertEquals([$subject, $a, $b], $filter->getTerms());
     }
 }

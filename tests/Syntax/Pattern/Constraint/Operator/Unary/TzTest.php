@@ -16,4 +16,11 @@ class TzTest extends KernelTestCase
         $operator = new Tz($term);
         $this->assertEquals(self::SERIALIZED_OPERATOR, $operator->serialize());
     }
+
+    public function testGetExpression()
+    {
+        $term = new Variable('subject');
+        $operator = new Tz($term);
+        $this->assertEquals($term, $operator->getExpression());
+    }
 }

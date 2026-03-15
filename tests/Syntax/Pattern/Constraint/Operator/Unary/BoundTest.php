@@ -16,4 +16,11 @@ class BoundTest extends KernelTestCase
         $operator = new Bound($variable);
         $this->assertEquals(self::SERIALIZED_OPERATOR, $operator->serialize());
     }
+
+    public function testGetExpression()
+    {
+        $variable = new Variable('lorem');
+        $operator = new Bound($variable);
+        $this->assertEquals($variable, $operator->getExpression());
+    }
 }

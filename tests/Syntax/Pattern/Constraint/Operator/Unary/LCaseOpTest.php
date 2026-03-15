@@ -16,4 +16,11 @@ class LCaseOpTest extends KernelTestCase
         $operator = new LCaseOp($term);
         $this->assertEquals(self::SERIALIZED_OPERATOR, $operator->serialize());
     }
+
+    public function testGetExpression()
+    {
+        $term = new Variable('subject');
+        $operator = new LCaseOp($term);
+        $this->assertEquals($term, $operator->getExpression());
+    }
 }

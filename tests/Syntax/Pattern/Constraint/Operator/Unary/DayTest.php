@@ -16,4 +16,11 @@ class DayTest extends KernelTestCase
         $operator = new Day($term);
         $this->assertEquals(self::SERIALIZED_OPERATOR, $operator->serialize());
     }
+
+    public function testGetExpression()
+    {
+        $term = new Variable('subject');
+        $operator = new Day($term);
+        $this->assertEquals($term, $operator->getExpression());
+    }
 }

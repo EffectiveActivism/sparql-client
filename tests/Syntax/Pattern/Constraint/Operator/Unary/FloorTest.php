@@ -16,4 +16,11 @@ class FloorTest extends KernelTestCase
         $operator = new Floor($term);
         $this->assertEquals(self::SERIALIZED_OPERATOR, $operator->serialize());
     }
+
+    public function testGetExpression()
+    {
+        $term = new Variable('subject');
+        $operator = new Floor($term);
+        $this->assertEquals($term, $operator->getExpression());
+    }
 }

@@ -16,4 +16,11 @@ class YearTest extends KernelTestCase
         $operator = new Year($term);
         $this->assertEquals(self::SERIALIZED_OPERATOR, $operator->serialize());
     }
+
+    public function testGetExpression()
+    {
+        $term = new Variable('subject');
+        $operator = new Year($term);
+        $this->assertEquals($term, $operator->getExpression());
+    }
 }
