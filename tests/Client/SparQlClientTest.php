@@ -28,6 +28,7 @@ use Symfony\Component\HttpClient\Response\MockResponse;
 use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Contracts\Cache\TagAwareCacheInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Symfony\Contracts\HttpClient\ResponseInterface;
 
 class SparQlClientTest extends KernelTestCase
 {
@@ -1037,5 +1038,147 @@ class SparQlClientTest extends KernelTestCase
         $result = $sparQlClient->execute($statement);
         $this->assertInstanceOf(AskResultInterface::class, $result);
         $this->assertTrue($result->getAnswer());
+    }
+
+    public function testClientAskStatementInvalidXmlResponse()
+    {
+        $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
+        $httpClient = new MockHttpClient(function ($method, $url, $options) {
+            return new MockResponse('<?xml version="1.0"?><sparql/>');
+        });
+        $kernel = new TestKernel('test', true);
+        $kernel->boot();
+        $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
+        $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
+        /** @var SparQlClientInterface $sparQlClient */
+        $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
+        $subject = new Variable('subject');
+        $predicate = new PrefixedIri('schema', 'headline');
+        $object = new Variable('object');
+        $triple = new Triple($subject, $predicate, $object);
+        $this->expectException(SparQlException::class);
+        $sparQlClient->execute($sparQlClient->ask()->withNamespaces(['schema' => 'http://schema.org/'])->where([$triple]));
+    }
+
+    public function testClientSelectStatementCachedDeserializationException()
+    {
+        // XML with a binding type that SparQlResultDenormalizer doesn't recognise, causing InvalidResultException.
+        $invalidSparqlXml = '<?xml version="1.0"?><sparql><results><result><binding name="subject"><unknowntype>value</unknowntype></binding></result></results></sparql>';
+        $cacheAdapterStub = $this->createMock(TagAwareCacheInterface::class);
+        // Returning directly (bypassing the callback) leaves $rows null, forcing the post-cache deserialise path.
+        $cacheAdapterStub->method('get')->willReturn($invalidSparqlXml);
+        $httpClient = new MockHttpClient([new MockResponse('')]);
+        $kernel = new TestKernel('test', true);
+        $kernel->boot();
+        $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapterStub);
+        $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
+        /** @var SparQlClientInterface $sparQlClient */
+        $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
+        $subject = new Variable('subject');
+        $predicate = new PrefixedIri('schema', 'headline');
+        $object = new Variable('object');
+        $triple = new Triple($subject, $predicate, $object);
+        $this->expectException(SparQlException::class);
+        $sparQlClient->execute($sparQlClient->select([$subject])->withNamespaces(['schema' => 'http://schema.org/'])->where([$triple]));
+    }
+
+    public function testClientClearStatementCacheInvalidationException()
+    {
+        $cacheAdapterStub = $this->createMock(TagAwareCacheInterface::class);
+        $exceptionStub = new class extends Exception implements CacheInvalidArgumentException {};
+        $cacheAdapterStub->method('invalidateTags')->willThrowException($exceptionStub);
+        $httpClient = new MockHttpClient([new MockResponse('')]);
+        $kernel = new TestKernel('test', true);
+        $kernel->boot();
+        $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapterStub);
+        $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
+        /** @var SparQlClientInterface $sparQlClient */
+        $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
+        $graph = new Iri('http://example.org/g');
+        $this->expectException(SparQlException::class);
+        $sparQlClient->execute($sparQlClient->clearGraph($graph));
+    }
+
+    public function testClientDropStatementCacheInvalidationException()
+    {
+        $cacheAdapterStub = $this->createMock(TagAwareCacheInterface::class);
+        $exceptionStub = new class extends Exception implements CacheInvalidArgumentException {};
+        $cacheAdapterStub->method('invalidateTags')->willThrowException($exceptionStub);
+        $httpClient = new MockHttpClient([new MockResponse('')]);
+        $kernel = new TestKernel('test', true);
+        $kernel->boot();
+        $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapterStub);
+        $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
+        /** @var SparQlClientInterface $sparQlClient */
+        $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
+        $graph = new Iri('http://example.org/g');
+        $this->expectException(SparQlException::class);
+        $sparQlClient->execute($sparQlClient->dropGraph($graph));
+    }
+
+    public function testClientInsertStatementCacheInvalidationException()
+    {
+        $cacheAdapterStub = $this->createMock(TagAwareCacheInterface::class);
+        $exceptionStub = new class extends Exception implements CacheInvalidArgumentException {};
+        $cacheAdapterStub->method('invalidateTags')->willThrowException($exceptionStub);
+        $httpClient = new MockHttpClient([new MockResponse('')]);
+        $kernel = new TestKernel('test', true);
+        $kernel->boot();
+        $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapterStub);
+        $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
+        /** @var SparQlClientInterface $sparQlClient */
+        $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
+        $subject = new Variable('subject');
+        $predicate = new PrefixedIri('schema', 'headline');
+        $object = new Variable('object');
+        $triple = new Triple($subject, $predicate, $object);
+        $this->expectException(SparQlException::class);
+        $sparQlClient->execute($sparQlClient->insert([$triple])->withNamespaces(['schema' => 'http://schema.org/'])->where([$triple]));
+    }
+
+    public function testClientStatementWithRequestThrowingException()
+    {
+        // When request() throws before $response is assigned, resolveStatusCode/resolveBody receive null.
+        $transportException = new class('connection failed') extends \RuntimeException implements \Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface {};
+        $httpClientMock = $this->createMock(HttpClientInterface::class);
+        $httpClientMock->method('request')->willThrowException($transportException);
+        $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
+        $kernel = new TestKernel('test', true);
+        $kernel->boot();
+        $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
+        $kernel->getContainer()->set(HttpClientInterface::class, $httpClientMock);
+        /** @var SparQlClientInterface $sparQlClient */
+        $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
+        $subject = new Variable('subject');
+        $predicate = new PrefixedIri('schema', 'headline');
+        $object = new Variable('object');
+        $triple = new Triple($subject, $predicate, $object);
+        $this->expectException(SparQlException::class);
+        $sparQlClient->execute($sparQlClient->insert([$triple])->withNamespaces(['schema' => 'http://schema.org/'])->where([$triple]));
+    }
+
+    public function testClientStatementWithFailingResponseMethods()
+    {
+        // When getContent() throws and getStatusCode()/getContent(false) also throw,
+        // resolveStatusCode and resolveBody hit their Throwable catch branches.
+        $transportException = new class('transport error') extends \RuntimeException implements \Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface {};
+        $responseMock = $this->createMock(ResponseInterface::class);
+        $responseMock->method('getContent')->willThrowException($transportException);
+        $responseMock->method('getStatusCode')->willThrowException(new \RuntimeException('status unavailable'));
+        $httpClientMock = $this->createMock(HttpClientInterface::class);
+        $httpClientMock->method('request')->willReturn($responseMock);
+        $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
+        $kernel = new TestKernel('test', true);
+        $kernel->boot();
+        $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
+        $kernel->getContainer()->set(HttpClientInterface::class, $httpClientMock);
+        /** @var SparQlClientInterface $sparQlClient */
+        $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
+        $subject = new Variable('subject');
+        $predicate = new PrefixedIri('schema', 'headline');
+        $object = new Variable('object');
+        $triple = new Triple($subject, $predicate, $object);
+        $this->expectException(SparQlException::class);
+        $sparQlClient->execute($sparQlClient->insert([$triple])->withNamespaces(['schema' => 'http://schema.org/'])->where([$triple]));
     }
 }

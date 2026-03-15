@@ -216,11 +216,7 @@ class SparQlClient implements SparQlClientInterface
         } catch (InvalidArgumentException|\LogicException|InvalidResultException $exception) {
             throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception, null, null, $query);
         }
-        try {
-            $tripleArrays = $tripleArrays ?? $this->serializer->deserialize($responseContent, SparQlConstructDenormalizer::TYPE, 'xml');
-        } catch (InvalidResultException $exception) {
-            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception, null, null, $query);
-        }
+        $tripleArrays = $tripleArrays ?? $this->serializer->deserialize($responseContent, SparQlConstructDenormalizer::TYPE, 'xml');
         return new ConstructResult(array_map(fn(array $set) => new Triple($set[0], $set[1], $set[2]), $tripleArrays));
     }
 
@@ -295,11 +291,7 @@ class SparQlClient implements SparQlClientInterface
         } catch (InvalidArgumentException|\LogicException|InvalidResultException $exception) {
             throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception, null, null, $query);
         }
-        try {
-            $tripleArrays = $tripleArrays ?? $this->serializer->deserialize($responseContent, SparQlConstructDenormalizer::TYPE, 'xml');
-        } catch (InvalidResultException $exception) {
-            throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception, null, null, $query);
-        }
+        $tripleArrays = $tripleArrays ?? $this->serializer->deserialize($responseContent, SparQlConstructDenormalizer::TYPE, 'xml');
         return new DescribeResult(array_map(fn(array $set) => new Triple($set[0], $set[1], $set[2]), $tripleArrays));
     }
 
