@@ -13,7 +13,7 @@ class TypedLiteral extends AbstractLiteral implements TermInterface
      */
     protected AbstractIri|null $dataType = null;
 
-    public function __construct(bool|float|int|string $value, AbstractIri $dataType = null)
+    public function __construct(bool|float|int|string $value, ?AbstractIri $dataType = null)
     {
         parent::__construct($value);
         $this->dataType = $dataType;

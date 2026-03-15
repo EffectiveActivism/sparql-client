@@ -16,7 +16,7 @@ class SparQlResultDenormalizer implements DenormalizerInterface
 {
     const TYPE = 'sparql-result';
 
-    public function supportsDenormalization($data, string $type, string $format = null, array $context = []): bool
+    public function supportsDenormalization($data, string $type, ?string $format = null, array $context = []): bool
     {
         return $type === self::TYPE;
     }
@@ -24,7 +24,7 @@ class SparQlResultDenormalizer implements DenormalizerInterface
     /**
      * @throws InvalidResultException
      */
-    public function denormalize($data, string $type, string $format = null, array $context = []): array
+    public function denormalize($data, string $type, ?string $format = null, array $context = []): array
     {
         $sets = [];
         if (isset($data['results']) && is_array($data['results'])) {
