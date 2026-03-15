@@ -937,7 +937,3 @@ services:
     ports:
       - 8080:8080
 ```
-
-# Planned features
-
-- Improve error reporting from triplestores.
