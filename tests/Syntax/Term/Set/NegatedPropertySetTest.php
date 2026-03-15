@@ -15,9 +15,6 @@ class NegatedPropertySetTest extends KernelTestCase
 
     public function testNegatedPropertySet()
     {
-        $negatedPropertySet = new NegatedPropertySet([]);
-        $this->assertEquals('', $negatedPropertySet->getVariableName());
-        $this->assertEquals('', $negatedPropertySet->getRawValue());
         $predicate = new Iri(self::IRI);
         $negatedPropertySet = new NegatedPropertySet([$predicate]);
         $this->assertEquals(sprintf('!<%s>', self::IRI), $negatedPropertySet->serialize());
@@ -37,6 +34,13 @@ class NegatedPropertySetTest extends KernelTestCase
         $threwException = false;
         try {
             new NegatedPropertySet([$literal]);
+        } catch (SparQlException) {
+            $threwException = true;
+        }
+        $this->assertTrue($threwException);
+        $threwException = false;
+        try {
+            new NegatedPropertySet([]);
         } catch (SparQlException) {
             $threwException = true;
         }
