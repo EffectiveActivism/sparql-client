@@ -32,6 +32,9 @@ class SparQlConstructDenormalizer implements DenormalizerInterface
             }
             elseif (isset($data['rdf:Description'][0])) {
                 foreach ($data['rdf:Description'] as $result) {
+                    if (!is_array($result) || (!isset($result['@rdf:about']) && !isset($result['@rdf:nodeID']))) {
+                        continue;
+                    }
                     $sets = array_merge($sets, $this->getTerms($result, $defaultSchema));
                 }
             }
@@ -49,9 +52,12 @@ class SparQlConstructDenormalizer implements DenormalizerInterface
             $subject = new Iri($set['@rdf:about']);
             unset($set['@rdf:about']);
         }
-        else {
+        elseif (isset($set['@rdf:nodeID'])) {
             $subject = new BlankNode($set['@rdf:nodeID']);
             unset($set['@rdf:nodeID']);
+        }
+        else {
+            throw new SparQlException('rdf:Description is missing both @rdf:about and @rdf:nodeID.');
         }
         foreach ($set as $type => $values) {
             if (str_contains($type, ':')) {

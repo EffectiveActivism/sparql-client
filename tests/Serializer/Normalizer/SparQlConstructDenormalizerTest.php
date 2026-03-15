@@ -2,6 +2,7 @@
 
 namespace EffectiveActivism\SparQlClient\Tests\Serializer\Normalizer;
 
+use EffectiveActivism\SparQlClient\Exception\SparQlException;
 use EffectiveActivism\SparQlClient\Serializer\Normalizer\SparQlConstructDenormalizer;
 use EffectiveActivism\SparQlClient\Syntax\Term\BlankNode\BlankNode;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\Iri;
@@ -152,6 +153,40 @@ class SparQlConstructDenormalizerTest extends KernelTestCase
         $this->assertEquals('schema:knows', $predicate->serialize());
         $this->assertInstanceOf(Iri::class, $object);
         $this->assertEquals('<urn:uuid:9f4b2c11-e8a3-4d70-b1c0-4a6e3f2d9c87>', $object->serialize());
+    }
+
+    /**
+     * @covers \EffectiveActivism\SparQlClient\Serializer\Normalizer\SparQlConstructDenormalizer
+     */
+    public function testMissingSubjectInMultipleDescriptionsIsSkipped()
+    {
+        $normalizer = new SparQlConstructDenormalizer();
+        $data = [
+            '@xmlns:schema' => 'https://schema.org/',
+            'rdf:Description' => [
+                ['@rdf:about' => 'urn:uuid:d8c0c240-17a2-421e-8c24-49e75a1bddf0', 'schema:name' => 'Lorem'],
+                ['schema:name' => 'Invalid'],
+            ],
+        ];
+        $result = $normalizer->denormalize($data, SparQlConstructDenormalizer::TYPE);
+        $this->assertCount(1, $result);
+        $this->assertInstanceOf(Iri::class, $result[0][0]);
+        $this->assertEquals('<urn:uuid:d8c0c240-17a2-421e-8c24-49e75a1bddf0>', $result[0][0]->serialize());
+    }
+
+    /**
+     * @covers \EffectiveActivism\SparQlClient\Serializer\Normalizer\SparQlConstructDenormalizer
+     */
+    public function testGetTermsThrowsOnMissingSubjectIdentifier()
+    {
+        $this->expectException(SparQlException::class);
+        $normalizer = new class extends SparQlConstructDenormalizer {
+            public function getTerms(array $set, string $defaultSchema): array
+            {
+                return parent::getTerms($set, $defaultSchema);
+            }
+        };
+        $normalizer->getTerms(['schema:name' => 'Lorem'], 'https://schema.org/');
     }
 
     /**
