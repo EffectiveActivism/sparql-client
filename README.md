@@ -51,17 +51,13 @@ composer require effectiveactivism/sparql-client
 
 ## Configuration
 
-This bundle requires a SparQl endpoint string. You can optionally define
-namespaces that should be included in every request. You can also optionally
+This bundle requires a SparQl endpoint string. You can also optionally
 define a SHACL endpoint.
 
 ```yaml
 sparql_client:
   sparql_endpoint: http://test-sparql-endpoint:9999/blazegraph/sparql
   shacl_endpoint: http://test-validator-endpoint/shacl/myshapes/api/validate
-  namespaces:
-    - schema: http://schema.org/
-    - dbo: http://dbpedia.org/ 
 ```
 
 ## Usage
@@ -673,8 +669,7 @@ use \EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
 $subject = new PrefixedIri('‿schema', 'headline');
 ```
 
-Namespaces are validated, both when defined in configuration
-(via sparql_client.yml) or added dynamically in code.
+Namespaces are validated when added dynamically in code.
 
 Rudimentary validation of statements is also supported. For example, the
 below statement will throw an InvalidArgumentException because the
