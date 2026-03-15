@@ -972,8 +972,5 @@ services:
 # Planned features
 
 - Support for named graph management operations.
-- Support for empty prefixes.
-- Validation of typed literals using their datatype.
 - Improve error reporting from triplestores.
 - Possibly return more meaningful data from INSERT and DELETE statement executions.
-- Expand statement validation.

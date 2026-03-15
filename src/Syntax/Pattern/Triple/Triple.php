@@ -2,7 +2,10 @@
 
 namespace EffectiveActivism\SparQlClient\Syntax\Pattern\Triple;
 
+use EffectiveActivism\SparQlClient\Exception\SparQlException;
+use EffectiveActivism\SparQlClient\Syntax\Term\BlankNode\BlankNode;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\RdfType;
+use EffectiveActivism\SparQlClient\Syntax\Term\Literal\AbstractLiteral;
 use EffectiveActivism\SparQlClient\Syntax\Term\TermInterface;
 
 class Triple implements TripleInterface
@@ -13,8 +16,17 @@ class Triple implements TripleInterface
 
     protected TermInterface $object;
 
+    /**
+     * @throws SparQlException
+     */
     public function __construct(TermInterface $subject, TermInterface $predicate, TermInterface $object)
     {
+        if ($subject instanceof AbstractLiteral) {
+            throw new SparQlException('Triple subject cannot be a literal');
+        }
+        if ($predicate instanceof AbstractLiteral || $predicate instanceof BlankNode) {
+            throw new SparQlException('Triple predicate must be an IRI, path, or variable');
+        }
         $this->subject = $subject;
         $this->predicate = $predicate;
         $this->object = $object;
@@ -65,14 +77,26 @@ class Triple implements TripleInterface
         return $this;
     }
 
+    /**
+     * @throws SparQlException
+     */
     public function setPredicate(TermInterface $term): TripleInterface
     {
+        if ($term instanceof AbstractLiteral || $term instanceof BlankNode) {
+            throw new SparQlException('Triple predicate must be an IRI, path, or variable');
+        }
         $this->predicate = $term;
         return $this;
     }
 
+    /**
+     * @throws SparQlException
+     */
     public function setSubject(TermInterface $term): TripleInterface
     {
+        if ($term instanceof AbstractLiteral) {
+            throw new SparQlException('Triple subject cannot be a literal');
+        }
         $this->subject = $term;
         return $this;
     }

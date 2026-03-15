@@ -18,6 +18,17 @@ class NegatedPropertySet extends AbstractTerm implements TermInterface
      */
     public function __construct(array $terms)
     {
+        $this->applyTerms($terms);
+    }
+
+    /**
+     * @throws SparQlException
+     */
+    private function applyTerms(array $terms): void
+    {
+        if (empty($terms)) {
+            throw new SparQlException('NegatedPropertySet requires at least one term');
+        }
         /** @var TermInterface $term */
         foreach ($terms as $term) {
             if (!($term instanceof AbstractIri) && !($term instanceof AbstractPath)) {
@@ -64,9 +75,12 @@ class NegatedPropertySet extends AbstractTerm implements TermInterface
      * Setters.
      */
 
+    /**
+     * @throws SparQlException
+     */
     public function setTerms(array $terms): TermInterface
     {
-        $this->terms = $terms;
+        $this->applyTerms($terms);
         return $this;
     }
 
