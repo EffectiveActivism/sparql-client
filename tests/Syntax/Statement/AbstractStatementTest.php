@@ -10,6 +10,14 @@ class AbstractStatementTest extends KernelTestCase
 {
     const QUERY = 'PREFIX schema: <http://schema.org/> ';
 
+    public function testGetNamespaces()
+    {
+        $class = new class() extends AbstractStatement {};
+        $namespaces = ['schema' => 'http://schema.org/'];
+        $class->withNamespaces($namespaces);
+        $this->assertEquals($namespaces, $class->getNamespaces());
+    }
+
     public function testToQuery()
     {
         $class = new class() extends AbstractStatement {};
