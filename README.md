@@ -1,8 +1,9 @@
 # SparQl client
 
-An OOP SparQl 1.1 client for Symfony with support for SELECT, CONSTRUCT, DELETE,
-INSERT and DELETE+INSERT operations. Includes term, namespace and (basic)
-statement validation.
+An OOP SPARQL 1.1 client for Symfony with support for SELECT, CONSTRUCT, ASK,
+DESCRIBE, DELETE, INSERT and DELETE+INSERT operations. Includes graph patterns,
+aggregates, scalar functions, dataset clauses, and term, namespace and statement
+validation.
 
 ## Table of content
 
@@ -11,11 +12,18 @@ statement validation.
 - [Usage](#usage)
     - [Select statement](#select-statement)
         - [Limit, offset and order](#limit-offset-and-order)
+        - [Distinct and reduced](#distinct-and-reduced)
+        - [Group by and having](#group-by-and-having)
+        - [Expressions](#expressions)
+        - [Dataset clauses](#dataset-clauses)
     - [Construct statement](#construct-statement)
     - [Insert statement](#insert-statement)
     - [Delete statement](#delete-statement)
     - [Replace statement](#replace-statement)
     - [Describe statement](#describe-statement)
+    - [Graph patterns](#graph-patterns)
+    - [Union](#union)
+    - [Subquery](#subquery)
     - [Property paths and sets](#property-paths-and-sets)
         - [Inverse path example](#inverse-path-example)
         - [Sequence path example](#sequence-path-example)
@@ -28,6 +36,7 @@ statement validation.
     - [Service](#service)
     - [Constraints](#constraints)
         - [Filter examples](#filter-examples)
+    - [Aggregates](#aggregates)
     - [Upload files](#upload-files)
 - [SHACL validator](#shacl-validator)
 - [Example docker-compose setup](#example-docker-compose-setup)
@@ -120,6 +129,66 @@ $selectStatement->offset(2);
 $orderVariable = new Variable('orderByThis');
 $multiplier = new TypedLiteral(2);
 $selectStatement->orderBy([new Asc(new Multiply($orderVariable, $multiplier))]);
+```
+
+#### Distinct and reduced
+
+```php
+<?php
+
+$selectStatement->distinct();
+// or
+$selectStatement->reduced();
+```
+
+#### Group by and having
+
+```php
+<?php
+
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\Operator\Binary\GreaterThan;
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\Operator\Aggregate\Count;
+use EffectiveActivism\SparQlClient\Syntax\Term\Literal\TypedLiteral;
+use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
+
+$subject = new Variable('subject');
+$countVar = new Variable('count');
+
+$selectStatement
+    ->groupBy([$subject])
+    ->having(new GreaterThan(new Count($subject), new TypedLiteral(5)));
+```
+
+#### Expressions
+
+`SelectExpression` binds an operator expression to a variable in the SELECT clause, equivalent to `( <expr> AS ?var )`.
+
+```php
+<?php
+
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\Operator\Aggregate\Count;
+use EffectiveActivism\SparQlClient\Syntax\Statement\SelectExpression\SelectExpression;
+use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
+
+$subject = new Variable('subject');
+$countVar = new Variable('count');
+$countExpression = new SelectExpression(new Count($subject), $countVar);
+
+$selectStatement = $sparQlClient->select([$subject, $countExpression])->where([$triple]);
+```
+
+#### Dataset clauses
+
+`FROM` and `FROM NAMED` dataset clauses are available on SELECT, ASK, CONSTRUCT and DESCRIBE statements.
+
+```php
+<?php
+
+use EffectiveActivism\SparQlClient\Syntax\Term\Iri\Iri;
+
+$selectStatement
+    ->from(new Iri('urn:example:dataset'))
+    ->fromNamed(new Iri('urn:example:named-dataset'));
 ```
 
 ### Ask statement
@@ -385,6 +454,68 @@ class MyController extends AbstractController
         }
     }
 }
+```
+
+### Graph patterns
+
+Restrict a set of triple patterns to a named graph using the `Graph` class.
+
+```php
+<?php
+
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Graph\Graph;
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\Triple;
+use EffectiveActivism\SparQlClient\Syntax\Term\Iri\Iri;
+use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
+use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
+
+$subject = new Variable('subject');
+$triple = new Triple($subject, new PrefixedIri('schema', 'headline'), new Variable('headline'));
+$graph = new Graph(new Iri('urn:example:graph'), [$triple]);
+
+$selectStatement = $sparQlClient->select([$subject])->where([$graph]);
+```
+
+### Union
+
+Match triples from either of two sets of patterns using `Union`.
+
+```php
+<?php
+
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\Triple;
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Union\Union;
+use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
+use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
+use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
+
+$subject = new Variable('subject');
+$leftTriple = new Triple($subject, new PrefixedIri('schema', 'headline'), new PlainLiteral('Lorem'));
+$rightTriple = new Triple($subject, new PrefixedIri('schema', 'headline'), new PlainLiteral('Ipsum'));
+$union = new Union([$leftTriple], [$rightTriple]);
+
+$selectStatement = $sparQlClient->select([$subject])->where([$union]);
+```
+
+### Subquery
+
+Embed a SELECT statement as a subquery using the `Subquery` class.
+
+```php
+<?php
+
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Subquery\Subquery;
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\Triple;
+use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
+use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
+
+$subject = new Variable('subject');
+$innerTriple = new Triple($subject, new PrefixedIri('schema', 'headline'), new Variable('headline'));
+$innerSelect = $sparQlClient->select([$subject])->where([$innerTriple]);
+$subquery = new Subquery($innerSelect);
+
+$outerTriple = new Triple($subject, new PrefixedIri('schema', 'name'), new Variable('name'));
+$outerSelect = $sparQlClient->select([$subject])->where([$subquery, $outerTriple]);
 ```
 
 ### Property paths and sets
@@ -701,6 +832,45 @@ new Filter(new Equal($object1, $object2));
 new Filter(new NotEqual($object1, $object3));
 ```
 
+### Aggregates
+
+Aggregate functions are available under
+`EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\Operator\Aggregate`.
+They implement `OperatorInterface` and can be used anywhere an operator is
+accepted, including `SelectExpression`, `groupBy()`, and `having()`.
+
+Available aggregates: `Count`, `Sum`, `Avg`, `Min`, `Max`, `Sample`, `GroupConcat`.
+
+All aggregates support a `distinct()` modifier. `Count` also accepts `null` to
+produce `COUNT(*)`.
+
+```php
+<?php
+
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\Operator\Aggregate\Count;
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\Operator\Aggregate\GroupConcat;
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\Operator\Aggregate\Sum;
+use EffectiveActivism\SparQlClient\Syntax\Statement\SelectExpression\SelectExpression;
+use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
+
+$subject = new Variable('subject');
+$value = new Variable('value');
+
+// COUNT(*) AS ?total
+$total = new SelectExpression(new Count(), new Variable('total'));
+
+// COUNT(DISTINCT ?subject) AS ?uniqueSubjects
+$unique = new SelectExpression((new Count($subject))->distinct(), new Variable('uniqueSubjects'));
+
+// SUM(?value) AS ?valueSum
+$sum = new SelectExpression(new Sum($value), new Variable('valueSum'));
+
+$selectStatement = $sparQlClient
+    ->select([$subject, $total, $unique, $sum])
+    ->where([$triple])
+    ->groupBy([$subject]);
+```
+
 ### Upload files
 
 To upload a file containing a vocabulary, use the `upload` method.
@@ -806,8 +976,7 @@ services:
 
 # Planned features
 
-- Support for graphs, including named graphs and management operations.
-- Support for UNION.
+- Support for named graph management operations.
 - Support for empty prefixes.
 - Validation of typed literals using their datatype.
 - Improve error reporting from triplestores.
