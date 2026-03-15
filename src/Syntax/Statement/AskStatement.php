@@ -12,6 +12,6 @@ class AskStatement extends AbstractConditionalStatement implements AskStatementI
         foreach ($this->conditions as $condition) {
             $conditionsString .= sprintf('%s .', $condition->serialize());
         }
-        return sprintf('%sASK { %s }', $preQuery, $conditionsString);
+        return sprintf('%sASK %s{ %s }', $preQuery, $this->getDatasetClausesString(), $conditionsString);
     }
 }
