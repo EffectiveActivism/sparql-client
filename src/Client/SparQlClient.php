@@ -60,11 +60,14 @@ class SparQlClient implements SparQlClientInterface
 
     protected SerializerInterface $serializer;
 
-    protected string $sparQlEndpoint;
+    protected string $queryEndpoint;
+
+    protected string $updateEndpoint;
 
     public function __construct(array $configuration, TagAwareCacheInterface $cacheAdapter, HttpClientInterface $httpClient, LoggerInterface $logger)
     {
-        $this->sparQlEndpoint = $configuration['sparql_endpoint'];
+        $this->queryEndpoint = $configuration['query_endpoint'];
+        $this->updateEndpoint = $configuration['update_endpoint'];
         $this->cacheAdapter = $cacheAdapter;
         $this->httpClient = $httpClient;
         $this->logger = $logger;
@@ -104,13 +107,13 @@ class SparQlClient implements SparQlClientInterface
     {
         $query = $statement->toQuery();
         $this->logger->debug($query);
-        $parameters = ['body' => ['query' => $query]];
+        $parameters = ['body' => ['query' => $query], 'headers' => ['Accept' => 'application/sparql-results+xml']];
         $queryKey = $this->getKey($query);
         $rows = null;
         try {
             $responseContent = $this->cacheAdapter->get($queryKey, function (ItemInterface $item) use ($parameters, $query, $statement, &$rows) {
                 try {
-                    $response = $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters);
+                    $response = $this->httpClient->request('POST', $this->queryEndpoint, $parameters);
                     $responseContent = $response->getContent();
                 } catch (HttpClientExceptionInterface $exception) {
                     throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception, $this->resolveStatusCode($response ?? null), $this->resolveBody($response ?? null), $query);
@@ -141,12 +144,12 @@ class SparQlClient implements SparQlClientInterface
     {
         $query = $statement->toQuery();
         $this->logger->debug($query);
-        $parameters = ['body' => ['query' => $query]];
+        $parameters = ['body' => ['query' => $query], 'headers' => ['Accept' => 'application/sparql-results+xml']];
         $queryKey = $this->getKey($query);
         try {
             $responseContent = $this->cacheAdapter->get($queryKey, function (ItemInterface $item) use ($parameters, $query, $statement) {
                 try {
-                    $response = $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters);
+                    $response = $this->httpClient->request('POST', $this->queryEndpoint, $parameters);
                     $responseContent = $response->getContent();
                 } catch (HttpClientExceptionInterface $exception) {
                     throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception, $this->resolveStatusCode($response ?? null), $this->resolveBody($response ?? null), $query);
@@ -173,7 +176,7 @@ class SparQlClient implements SparQlClientInterface
         $this->logger->debug($query);
         $parameters = ['body' => ['update' => $query]];
         try {
-            $response = $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters);
+            $response = $this->httpClient->request('POST', $this->updateEndpoint, $parameters);
             $body = $response->getContent();
             $statusCode = $response->getStatusCode();
         } catch (HttpClientExceptionInterface $exception) {
@@ -194,13 +197,13 @@ class SparQlClient implements SparQlClientInterface
     {
         $query = $statement->toQuery();
         $this->logger->debug($query);
-        $parameters = ['body' => ['query' => $query]];
+        $parameters = ['body' => ['query' => $query], 'headers' => ['Accept' => 'application/rdf+xml']];
         $queryKey = $this->getKey($query);
         $tripleArrays = null;
         try {
             $responseContent = $this->cacheAdapter->get($queryKey, function (ItemInterface $item) use ($parameters, $query, $statement, &$tripleArrays) {
                 try {
-                    $response = $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters);
+                    $response = $this->httpClient->request('POST', $this->queryEndpoint, $parameters);
                     $responseContent = $response->getContent();
                 } catch (HttpClientExceptionInterface $exception) {
                     throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception, $this->resolveStatusCode($response ?? null), $this->resolveBody($response ?? null), $query);
@@ -229,7 +232,7 @@ class SparQlClient implements SparQlClientInterface
         $this->logger->debug($query);
         $parameters = ['body' => ['update' => $query]];
         try {
-            $response = $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters);
+            $response = $this->httpClient->request('POST', $this->updateEndpoint, $parameters);
             $body = $response->getContent();
             $statusCode = $response->getStatusCode();
         } catch (HttpClientExceptionInterface $exception) {
@@ -253,7 +256,7 @@ class SparQlClient implements SparQlClientInterface
         $this->logger->debug($query);
         $parameters = ['body' => ['update' => $query]];
         try {
-            $response = $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters);
+            $response = $this->httpClient->request('POST', $this->updateEndpoint, $parameters);
             $body = $response->getContent();
             $statusCode = $response->getStatusCode();
         } catch (HttpClientExceptionInterface $exception) {
@@ -269,13 +272,13 @@ class SparQlClient implements SparQlClientInterface
     {
         $query = $statement->toQuery();
         $this->logger->debug($query);
-        $parameters = ['body' => ['query' => $query]];
+        $parameters = ['body' => ['query' => $query], 'headers' => ['Accept' => 'application/rdf+xml']];
         $queryKey = $this->getKey($query);
         $tripleArrays = null;
         try {
             $responseContent = $this->cacheAdapter->get($queryKey, function (ItemInterface $item) use ($parameters, $query, $statement, &$tripleArrays) {
                 try {
-                    $response = $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters);
+                    $response = $this->httpClient->request('POST', $this->queryEndpoint, $parameters);
                     $responseContent = $response->getContent();
                 } catch (HttpClientExceptionInterface $exception) {
                     throw new SparQlException($exception->getMessage(), $exception->getCode(), $exception, $this->resolveStatusCode($response ?? null), $this->resolveBody($response ?? null), $query);
@@ -304,7 +307,7 @@ class SparQlClient implements SparQlClientInterface
         $this->logger->debug($query);
         $parameters = ['body' => ['update' => $query]];
         try {
-            $response = $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters);
+            $response = $this->httpClient->request('POST', $this->updateEndpoint, $parameters);
             $body = $response->getContent();
             $statusCode = $response->getStatusCode();
         } catch (HttpClientExceptionInterface $exception) {
@@ -327,7 +330,7 @@ class SparQlClient implements SparQlClientInterface
         $this->logger->debug($query);
         $parameters = ['body' => ['update' => $query]];
         try {
-            $response = $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters);
+            $response = $this->httpClient->request('POST', $this->updateEndpoint, $parameters);
             $body = $response->getContent();
             $statusCode = $response->getStatusCode();
         } catch (HttpClientExceptionInterface $exception) {
@@ -351,7 +354,7 @@ class SparQlClient implements SparQlClientInterface
         $this->logger->debug($query);
         $parameters = ['body' => ['update' => $query]];
         try {
-            $response = $this->httpClient->request('POST', $this->sparQlEndpoint, $parameters);
+            $response = $this->httpClient->request('POST', $this->updateEndpoint, $parameters);
             $body = $response->getContent();
             $statusCode = $response->getStatusCode();
         } catch (HttpClientExceptionInterface $exception) {

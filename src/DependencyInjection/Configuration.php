@@ -12,10 +12,14 @@ class Configuration implements ConfigurationInterface
         $treeBuilder = new TreeBuilder('sparql_client');
         $treeBuilder->getRootNode()
             ->children()
-                ->scalarNode('sparql_endpoint')
-                    ->info('Provide an endpoint for a SPARQL server.')
+                ->scalarNode('query_endpoint')
+                    ->info('Provide an endpoint for SPARQL query operations (SELECT, ASK, CONSTRUCT, DESCRIBE).')
                     ->isRequired()
-                ->end() // sparql_endpoint
+                ->end() // query_endpoint
+                ->scalarNode('update_endpoint')
+                    ->info('Provide an endpoint for SPARQL update operations (INSERT, DELETE, CLEAR, DROP, CREATE, REPLACE).')
+                    ->isRequired()
+                ->end() // update_endpoint
                 ->scalarNode('shacl_endpoint')
                     ->info('Optionally provide an endpoint for a SHACL validation service.')
                     ->defaultValue('')

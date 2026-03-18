@@ -1181,4 +1181,78 @@ class SparQlClientTest extends KernelTestCase
         $this->expectException(SparQlException::class);
         $sparQlClient->execute($sparQlClient->insert([$triple])->withNamespaces(['schema' => 'http://schema.org/'])->where([$triple]));
     }
+
+    public function testEndpointRoutingAndAcceptHeaders()
+    {
+        $selectXml = file_get_contents(__DIR__ . '/../fixtures/client-select-request.xml');
+        $askXml = file_get_contents(__DIR__ . '/../fixtures/client-ask-request.xml');
+        $constructXml = file_get_contents(__DIR__ . '/../fixtures/client-construct-request.xml');
+        $describeXml = file_get_contents(__DIR__ . '/../fixtures/client-describe-request.xml');
+        $receivedUrl = null;
+        $receivedHeaders = null;
+        // Query operations should hit query_endpoint with correct Accept headers.
+        $operations = [
+            'select' => ['fixture' => $selectXml, 'expectedAccept' => 'application/sparql-results+xml'],
+            'ask' => ['fixture' => $askXml, 'expectedAccept' => 'application/sparql-results+xml'],
+            'construct' => ['fixture' => $constructXml, 'expectedAccept' => 'application/rdf+xml'],
+            'describe' => ['fixture' => $describeXml, 'expectedAccept' => 'application/rdf+xml'],
+        ];
+        foreach ($operations as $type => $config) {
+            $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
+            $httpClient = new MockHttpClient(function ($method, $url, $options) use (&$receivedUrl, &$receivedHeaders, $config) {
+                $receivedUrl = $url;
+                $receivedHeaders = $options['headers'];
+                return new MockResponse($config['fixture']);
+            });
+            $kernel = new TestKernel('test', true);
+            $kernel->boot();
+            $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
+            $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
+            /** @var SparQlClientInterface $sparQlClient */
+            $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
+            $subject = new Variable('subject');
+            $predicate = new PrefixedIri('schema', 'headline');
+            $object = new Variable('object');
+            $triple = new Triple($subject, $predicate, $object);
+            $statement = match ($type) {
+                'select' => $sparQlClient->select([$subject])->withNamespaces(['schema' => 'http://schema.org/'])->where([$triple]),
+                'ask' => $sparQlClient->ask()->withNamespaces(['schema' => 'http://schema.org/'])->where([$triple]),
+                'construct' => $sparQlClient->construct([$triple])->withNamespaces(['schema' => 'http://schema.org/'])->where([$triple]),
+                'describe' => $sparQlClient->describe([$subject])->withNamespaces(['schema' => 'http://schema.org/'])->where([$triple]),
+            };
+            $sparQlClient->execute($statement);
+            $this->assertEquals('http://test-sparql-endpoint:9999/blazegraph/sparql', $receivedUrl, "Query operation '$type' should hit query_endpoint");
+            $this->assertContains('Accept: ' . $config['expectedAccept'], $receivedHeaders, "Query operation '$type' should send correct Accept header");
+        }
+        // Update operations should hit update_endpoint.
+        $updateOperations = ['insert', 'delete', 'clear', 'create', 'drop'];
+        foreach ($updateOperations as $type) {
+            $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
+            $httpClient = new MockHttpClient(function ($method, $url, $options) use (&$receivedUrl, &$receivedHeaders) {
+                $receivedUrl = $url;
+                $receivedHeaders = $options['headers'];
+                return new MockResponse('');
+            });
+            $kernel = new TestKernel('test', true);
+            $kernel->boot();
+            $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
+            $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
+            /** @var SparQlClientInterface $sparQlClient */
+            $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
+            $subject = new Iri('urn:uuid:013acf16-80c6-11eb-95f8-c3d94b96fece');
+            $predicate = new PrefixedIri('schema', 'headline');
+            $object = new PlainLiteral('Lorem');
+            $triple = new Triple($subject, $predicate, $object);
+            $graph = new Iri('http://example.org/g');
+            $statement = match ($type) {
+                'insert' => $sparQlClient->insert([$triple])->withNamespaces(['schema' => 'http://schema.org/']),
+                'delete' => $sparQlClient->delete([$triple])->withNamespaces(['schema' => 'http://schema.org/']),
+                'clear' => $sparQlClient->clearGraph($graph),
+                'create' => $sparQlClient->createGraph($graph),
+                'drop' => $sparQlClient->dropGraph($graph),
+            };
+            $sparQlClient->execute($statement);
+            $this->assertEquals('http://test-sparql-endpoint:9999/blazegraph/sparql', $receivedUrl, "Update operation '$type' should hit update_endpoint");
+        }
+    }
 }
