@@ -51,12 +51,26 @@ composer require effectiveactivism/sparql-client
 
 ## Configuration
 
-This bundle requires a SparQl endpoint string. You can also optionally
+This bundle requires two SPARQL endpoints: one for query operations
+(SELECT, ASK, CONSTRUCT, DESCRIBE) and one for update operations
+(INSERT, DELETE, CLEAR, DROP, CREATE, REPLACE). You can also optionally
 define a SHACL endpoint.
+
+For Blazegraph, both endpoints are the same URL:
 
 ```yaml
 sparql_client:
-  sparql_endpoint: http://test-sparql-endpoint:9999/blazegraph/sparql
+  query_endpoint: http://blazegraph:9999/blazegraph/sparql
+  update_endpoint: http://blazegraph:9999/blazegraph/sparql
+  shacl_endpoint: http://test-validator-endpoint/shacl/myshapes/api/validate
+```
+
+For Oxigraph, use the separate `/query` and `/update` paths:
+
+```yaml
+sparql_client:
+  query_endpoint: http://oxigraph:7878/query
+  update_endpoint: http://oxigraph:7878/update
   shacl_endpoint: http://test-validator-endpoint/shacl/myshapes/api/validate
 ```
 

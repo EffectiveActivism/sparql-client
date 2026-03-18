@@ -13,7 +13,8 @@ use Symfony\Component\DependencyInjection\Definition;
 class BundleTest extends KernelTestCase
 {
     const TEST_CONFIG = [
-        'sparql_endpoint' => 'http://test-sparql-endpoint:9999/blazegraph/sparql',
+        'query_endpoint' => 'http://test-sparql-endpoint:9999/blazegraph/sparql',
+        'update_endpoint' => 'http://test-sparql-endpoint:9999/blazegraph/sparql',
         'shacl_endpoint' => '',
     ];
 
