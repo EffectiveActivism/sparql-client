@@ -30,6 +30,19 @@ class GraphTest extends KernelTestCase
         $this->assertEquals($graphIri, $graph->getGraph());
     }
 
+    public function testGraphWithVariable()
+    {
+        $graphVariable = new Variable('g');
+        $subject = new Variable('subject');
+        $predicate = new Iri('http://schema.org/headline');
+        $object = new PlainLiteral('Lorem');
+        $triple = new Triple($subject, $predicate, $object);
+        $graph = new Graph($graphVariable, [$triple]);
+        $this->assertEquals('GRAPH ?g { ?subject <http://schema.org/headline> """Lorem""" . }', $graph->serialize());
+        $this->assertEquals([$graphVariable, $subject, $predicate, $object], $graph->getTerms());
+        $this->assertEquals($graphVariable, $graph->getGraph());
+    }
+
     public function testInvalidPattern()
     {
         $this->expectException(SparQlException::class);

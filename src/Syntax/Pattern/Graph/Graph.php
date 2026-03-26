@@ -6,15 +6,16 @@ use EffectiveActivism\SparQlClient\Exception\SparQlException;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\PatternInterface;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\AbstractIri;
 use EffectiveActivism\SparQlClient\Syntax\Term\TermInterface;
+use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
 
 class Graph implements GraphInterface
 {
-    protected AbstractIri $graph;
+    protected AbstractIri|Variable $graph;
 
     /** @var PatternInterface[] */
     protected array $patterns;
 
-    public function __construct(AbstractIri $graph, array $patterns)
+    public function __construct(AbstractIri|Variable $graph, array $patterns)
     {
         $this->graph = $graph;
         foreach ($patterns as $pattern) {
@@ -26,7 +27,7 @@ class Graph implements GraphInterface
         $this->patterns = $patterns;
     }
 
-    public function getGraph(): AbstractIri
+    public function getGraph(): AbstractIri|Variable
     {
         return $this->graph;
     }
