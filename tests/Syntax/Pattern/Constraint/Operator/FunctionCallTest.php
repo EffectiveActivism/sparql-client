@@ -55,5 +55,6 @@ class FunctionCallTest extends KernelTestCase
         $functionCall = new FunctionCall($iri, $arg1, $arg2);
         $this->assertSame($iri, $functionCall->getFunctionIri());
         $this->assertSame([$arg1, $arg2], $functionCall->getArguments());
+        $this->assertSame([$iri, $arg1, $arg2], $functionCall->getExpressions());
     }
 }
