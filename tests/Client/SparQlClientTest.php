@@ -1136,6 +1136,70 @@ class SparQlClientTest extends KernelTestCase
         $sparQlClient->execute($sparQlClient->insert([$triple])->withNamespaces(['schema' => 'http://schema.org/'])->where([$triple]));
     }
 
+    public function testClientLoadStatementCacheInvalidationException()
+    {
+        $cacheAdapterStub = $this->createMock(TagAwareCacheInterface::class);
+        $exceptionStub = new class extends Exception implements CacheInvalidArgumentException {};
+        $cacheAdapterStub->method('invalidateTags')->willThrowException($exceptionStub);
+        $httpClient = new MockHttpClient([new MockResponse('')]);
+        $kernel = new TestKernel('test', true);
+        $kernel->boot();
+        $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapterStub);
+        $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
+        /** @var SparQlClientInterface $sparQlClient */
+        $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
+        $this->expectException(SparQlException::class);
+        $sparQlClient->execute($sparQlClient->load(new Iri('http://example.org/data'))->into(new Iri('http://example.org/g')));
+    }
+
+    public function testClientCopyStatementCacheInvalidationException()
+    {
+        $cacheAdapterStub = $this->createMock(TagAwareCacheInterface::class);
+        $exceptionStub = new class extends Exception implements CacheInvalidArgumentException {};
+        $cacheAdapterStub->method('invalidateTags')->willThrowException($exceptionStub);
+        $httpClient = new MockHttpClient([new MockResponse('')]);
+        $kernel = new TestKernel('test', true);
+        $kernel->boot();
+        $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapterStub);
+        $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
+        /** @var SparQlClientInterface $sparQlClient */
+        $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
+        $this->expectException(SparQlException::class);
+        $sparQlClient->execute($sparQlClient->copyGraph(new Iri('http://example.org/src'), new Iri('http://example.org/dst')));
+    }
+
+    public function testClientMoveStatementCacheInvalidationException()
+    {
+        $cacheAdapterStub = $this->createMock(TagAwareCacheInterface::class);
+        $exceptionStub = new class extends Exception implements CacheInvalidArgumentException {};
+        $cacheAdapterStub->method('invalidateTags')->willThrowException($exceptionStub);
+        $httpClient = new MockHttpClient([new MockResponse('')]);
+        $kernel = new TestKernel('test', true);
+        $kernel->boot();
+        $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapterStub);
+        $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
+        /** @var SparQlClientInterface $sparQlClient */
+        $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
+        $this->expectException(SparQlException::class);
+        $sparQlClient->execute($sparQlClient->moveGraph(new Iri('http://example.org/src'), new Iri('http://example.org/dst')));
+    }
+
+    public function testClientAddStatementCacheInvalidationException()
+    {
+        $cacheAdapterStub = $this->createMock(TagAwareCacheInterface::class);
+        $exceptionStub = new class extends Exception implements CacheInvalidArgumentException {};
+        $cacheAdapterStub->method('invalidateTags')->willThrowException($exceptionStub);
+        $httpClient = new MockHttpClient([new MockResponse('')]);
+        $kernel = new TestKernel('test', true);
+        $kernel->boot();
+        $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapterStub);
+        $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
+        /** @var SparQlClientInterface $sparQlClient */
+        $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
+        $this->expectException(SparQlException::class);
+        $sparQlClient->execute($sparQlClient->addGraph(new Iri('http://example.org/src'), new Iri('http://example.org/dst')));
+    }
+
     public function testClientStatementWithRequestThrowingException()
     {
         // When request() throws before $response is assigned, resolveStatusCode/resolveBody receive null.
@@ -1182,6 +1246,170 @@ class SparQlClientTest extends KernelTestCase
         $sparQlClient->execute($sparQlClient->insert([$triple])->withNamespaces(['schema' => 'http://schema.org/'])->where([$triple]));
     }
 
+    public function testLoadStatementRequest()
+    {
+        $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
+        $receivedQuery = null;
+        $httpClient = new MockHttpClient(function ($method, $url, $options) use (&$receivedQuery) {
+            $receivedQuery = $options['body'];
+            return new MockResponse('');
+        });
+        $kernel = new TestKernel('test', true);
+        $kernel->boot();
+        $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
+        $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
+        /** @var SparQlClientInterface $sparQlClient */
+        $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
+        $source = new Iri('http://example.org/data');
+        $result = $sparQlClient->execute($sparQlClient->load($source));
+        $this->assertInstanceOf(UpdateResultInterface::class, $result);
+        $this->assertSame(200, $result->getStatusCode());
+        $this->assertEquals('update=LOAD <http://example.org/data>', urldecode($receivedQuery));
+    }
+
+    public function testLoadIntoGraphStatementRequest()
+    {
+        $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
+        $receivedQuery = null;
+        $httpClient = new MockHttpClient(function ($method, $url, $options) use (&$receivedQuery) {
+            $receivedQuery = $options['body'];
+            return new MockResponse('');
+        });
+        $kernel = new TestKernel('test', true);
+        $kernel->boot();
+        $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
+        $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
+        /** @var SparQlClientInterface $sparQlClient */
+        $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
+        $source = new Iri('http://example.org/data');
+        $graph = new Iri('http://example.org/g');
+        $result = $sparQlClient->execute($sparQlClient->load($source)->into($graph));
+        $this->assertInstanceOf(UpdateResultInterface::class, $result);
+        $this->assertEquals('update=LOAD <http://example.org/data> INTO GRAPH <http://example.org/g>', urldecode($receivedQuery));
+    }
+
+    public function testCopyGraphStatementRequest()
+    {
+        $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
+        $receivedQuery = null;
+        $httpClient = new MockHttpClient(function ($method, $url, $options) use (&$receivedQuery) {
+            $receivedQuery = $options['body'];
+            return new MockResponse('');
+        });
+        $kernel = new TestKernel('test', true);
+        $kernel->boot();
+        $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
+        $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
+        /** @var SparQlClientInterface $sparQlClient */
+        $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
+        $src = new Iri('http://example.org/src');
+        $dst = new Iri('http://example.org/dst');
+        $result = $sparQlClient->execute($sparQlClient->copyGraph($src, $dst));
+        $this->assertInstanceOf(UpdateResultInterface::class, $result);
+        $this->assertSame(200, $result->getStatusCode());
+        $this->assertEquals('update=COPY GRAPH <http://example.org/src> TO GRAPH <http://example.org/dst>', urldecode($receivedQuery));
+    }
+
+    public function testMoveGraphStatementRequest()
+    {
+        $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
+        $receivedQuery = null;
+        $httpClient = new MockHttpClient(function ($method, $url, $options) use (&$receivedQuery) {
+            $receivedQuery = $options['body'];
+            return new MockResponse('');
+        });
+        $kernel = new TestKernel('test', true);
+        $kernel->boot();
+        $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
+        $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
+        /** @var SparQlClientInterface $sparQlClient */
+        $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
+        $src = new Iri('http://example.org/src');
+        $dst = new Iri('http://example.org/dst');
+        $result = $sparQlClient->execute($sparQlClient->moveGraph($src, $dst));
+        $this->assertInstanceOf(UpdateResultInterface::class, $result);
+        $this->assertSame(200, $result->getStatusCode());
+        $this->assertEquals('update=MOVE GRAPH <http://example.org/src> TO GRAPH <http://example.org/dst>', urldecode($receivedQuery));
+    }
+
+    public function testAddGraphStatementRequest()
+    {
+        $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
+        $receivedQuery = null;
+        $httpClient = new MockHttpClient(function ($method, $url, $options) use (&$receivedQuery) {
+            $receivedQuery = $options['body'];
+            return new MockResponse('');
+        });
+        $kernel = new TestKernel('test', true);
+        $kernel->boot();
+        $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
+        $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
+        /** @var SparQlClientInterface $sparQlClient */
+        $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
+        $src = new Iri('http://example.org/src');
+        $dst = new Iri('http://example.org/dst');
+        $result = $sparQlClient->execute($sparQlClient->addGraph($src, $dst));
+        $this->assertInstanceOf(UpdateResultInterface::class, $result);
+        $this->assertSame(200, $result->getStatusCode());
+        $this->assertEquals('update=ADD GRAPH <http://example.org/src> TO GRAPH <http://example.org/dst>', urldecode($receivedQuery));
+    }
+
+    public function testClientLoadStatementException()
+    {
+        $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
+        $httpClient = new MockHttpClient([new MockResponse('', ['http_code' => 500])]);
+        $kernel = new TestKernel('test', true);
+        $kernel->boot();
+        $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
+        $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
+        /** @var SparQlClientInterface $sparQlClient */
+        $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
+        $this->expectException(SparQlException::class);
+        $sparQlClient->execute($sparQlClient->load(new Iri('http://example.org/data')));
+    }
+
+    public function testClientCopyStatementException()
+    {
+        $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
+        $httpClient = new MockHttpClient([new MockResponse('', ['http_code' => 500])]);
+        $kernel = new TestKernel('test', true);
+        $kernel->boot();
+        $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
+        $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
+        /** @var SparQlClientInterface $sparQlClient */
+        $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
+        $this->expectException(SparQlException::class);
+        $sparQlClient->execute($sparQlClient->copyGraph(new Iri('http://example.org/src'), new Iri('http://example.org/dst')));
+    }
+
+    public function testClientMoveStatementException()
+    {
+        $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
+        $httpClient = new MockHttpClient([new MockResponse('', ['http_code' => 500])]);
+        $kernel = new TestKernel('test', true);
+        $kernel->boot();
+        $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
+        $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
+        /** @var SparQlClientInterface $sparQlClient */
+        $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
+        $this->expectException(SparQlException::class);
+        $sparQlClient->execute($sparQlClient->moveGraph(new Iri('http://example.org/src'), new Iri('http://example.org/dst')));
+    }
+
+    public function testClientAddStatementException()
+    {
+        $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
+        $httpClient = new MockHttpClient([new MockResponse('', ['http_code' => 500])]);
+        $kernel = new TestKernel('test', true);
+        $kernel->boot();
+        $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
+        $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
+        /** @var SparQlClientInterface $sparQlClient */
+        $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
+        $this->expectException(SparQlException::class);
+        $sparQlClient->execute($sparQlClient->addGraph(new Iri('http://example.org/src'), new Iri('http://example.org/dst')));
+    }
+
     public function testEndpointRoutingAndAcceptHeaders()
     {
         $selectXml = file_get_contents(__DIR__ . '/../fixtures/client-select-request.xml');
@@ -1225,7 +1453,7 @@ class SparQlClientTest extends KernelTestCase
             $this->assertContains('Accept: ' . $config['expectedAccept'], $receivedHeaders, "Query operation '$type' should send correct Accept header");
         }
         // Update operations should hit update_endpoint.
-        $updateOperations = ['insert', 'delete', 'clear', 'create', 'drop'];
+        $updateOperations = ['insert', 'delete', 'clear', 'create', 'drop', 'load', 'copy', 'move', 'add'];
         foreach ($updateOperations as $type) {
             $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
             $httpClient = new MockHttpClient(function ($method, $url, $options) use (&$receivedUrl, &$receivedHeaders) {
@@ -1244,12 +1472,17 @@ class SparQlClientTest extends KernelTestCase
             $object = new PlainLiteral('Lorem');
             $triple = new Triple($subject, $predicate, $object);
             $graph = new Iri('http://example.org/g');
+            $graph2 = new Iri('http://example.org/g2');
             $statement = match ($type) {
                 'insert' => $sparQlClient->insert([$triple])->withNamespaces(['schema' => 'http://schema.org/']),
                 'delete' => $sparQlClient->delete([$triple])->withNamespaces(['schema' => 'http://schema.org/']),
                 'clear' => $sparQlClient->clearGraph($graph),
                 'create' => $sparQlClient->createGraph($graph),
                 'drop' => $sparQlClient->dropGraph($graph),
+                'load' => $sparQlClient->load($graph),
+                'copy' => $sparQlClient->copyGraph($graph, $graph2),
+                'move' => $sparQlClient->moveGraph($graph, $graph2),
+                'add' => $sparQlClient->addGraph($graph, $graph2),
             };
             $sparQlClient->execute($statement);
             $this->assertEquals('http://test-sparql-endpoint:9999/blazegraph/sparql', $receivedUrl, "Update operation '$type' should hit update_endpoint");
