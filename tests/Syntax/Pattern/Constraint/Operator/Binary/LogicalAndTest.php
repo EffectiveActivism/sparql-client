@@ -10,9 +10,9 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 class LogicalAndTest extends KernelTestCase
 {
-    const SERIALIZED_OPERATOR = '"true"^^<http://www.w3.org/2001/XMLSchema#boolean> AND "false"^^<http://www.w3.org/2001/XMLSchema#boolean>';
+    const SERIALIZED_OPERATOR = '"true"^^<http://www.w3.org/2001/XMLSchema#boolean> && "false"^^<http://www.w3.org/2001/XMLSchema#boolean>';
 
-    const SERIALIZED_NESTED_OPERATOR = 'CONTAINS(?a,"""x""") AND CONTAINS(?a,"""y""")';
+    const SERIALIZED_NESTED_OPERATOR = 'CONTAINS(?a,"""x""") && CONTAINS(?a,"""y""")';
 
     public function testOperator()
     {
