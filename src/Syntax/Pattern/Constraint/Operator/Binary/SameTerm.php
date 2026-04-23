@@ -8,7 +8,7 @@ use EffectiveActivism\SparQlClient\Syntax\Term\TermInterface;
 class SameTerm extends AbstractBinaryOperator implements BinaryOperatorInterface
 {
     /**
-     * @see http://www.w3.org/TR/xpath-functions/#func-numeric-add.
+     * @see https://www.w3.org/TR/rdf-sparql-query/#func-sameTerm.
      */
     public function __construct(OperatorInterface|TermInterface $leftExpression, OperatorInterface|TermInterface $rightExpression)
     {
