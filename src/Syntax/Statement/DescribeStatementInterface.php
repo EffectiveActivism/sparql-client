@@ -2,7 +2,7 @@
 
 namespace EffectiveActivism\SparQlClient\Syntax\Statement;
 
-interface DescribeStatementInterface extends ConditionalStatementInterface
+interface DescribeStatementInterface extends ConditionalStatementInterface, ResultTaggableInterface
 {
     public function __construct(array $resources);
 

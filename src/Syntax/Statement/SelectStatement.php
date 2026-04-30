@@ -10,6 +10,8 @@ use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
 
 class SelectStatement extends AbstractConditionalStatement implements SelectStatementInterface
 {
+    use ResultTaggingTrait;
+
     protected int $limit = 0;
 
     protected int $offset = 0;
