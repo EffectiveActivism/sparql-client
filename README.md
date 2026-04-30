@@ -39,6 +39,7 @@ validation.
         - [Filter examples](#filter-examples)
     - [Aggregates](#aggregates)
     - [Error handling](#error-handling)
+    - [Cache tagging](#cache-tagging)
 - [SHACL validator](#shacl-validator)
 - [Example docker-compose setup](#example-docker-compose-setup)
 
@@ -901,6 +902,40 @@ try {
     $exception->getQuery();
 }
 ```
+
+### Cache tagging
+
+SELECT, CONSTRUCT and DESCRIBE responses are stored in the configured
+tag-aware cache pool and tagged so subsequent INSERT, DELETE and REPLACE
+operations can invalidate the affected entries. Two kinds of tag are
+produced for each cached response:
+
+- **Structural tags** — derived from the query pattern (the conditions
+  passed to `where()` plus, for DESCRIBE, the resources). These cover
+  every IRI and literal mentioned in the query itself.
+- **Per-row tags** — derived from each IRI and literal that appears in
+  the response rows / triples.
+
+For aggregate queries or large result sets, the per-row tag walk can
+dominate wall time after the triplestore has already responded — every
+unique IRI/literal contributes an extra `Uuid::uuid5()` call. When the
+extra invalidation precision isn't worth that cost (typically: any
+single write to the matched pattern would evict the entry anyway, so
+the structural tags are sufficient), call `withoutResultTags()` on the
+statement to skip the per-row walk entirely:
+
+```php
+<?php
+
+$selectStatement = $sparQlClient
+    ->select([$subject])
+    ->where([$triple])
+    ->withoutResultTags();
+$result = $sparQlClient->execute($selectStatement);
+```
+
+`withoutResultTags()` is available on SELECT, CONSTRUCT and DESCRIBE
+statements. The default behaviour is to produce both kinds of tag.
 
 # SHACL validator
 
