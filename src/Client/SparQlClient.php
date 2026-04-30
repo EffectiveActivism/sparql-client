@@ -132,8 +132,10 @@ class SparQlClient implements SparQlClientInterface
                 }
                 $rows = $this->serializer->deserialize($responseContent, SparQlResultDenormalizer::TYPE, 'xml');
                 $tags = $this->extractTags($statement->getConditions());
-                foreach ($rows as $row) {
-                    $tags = $this->extractTags($row, $tags);
+                if ($statement->tagsResults()) {
+                    foreach ($rows as $row) {
+                        $tags = $this->extractTags($row, $tags);
+                    }
                 }
                 $item->tag($tags);
                 return $responseContent;
@@ -222,8 +224,10 @@ class SparQlClient implements SparQlClientInterface
                 }
                 $tripleArrays = $this->serializer->deserialize($responseContent, SparQlConstructDenormalizer::TYPE, 'xml');
                 $tags = $this->extractTags($statement->getConditions());
-                foreach ($tripleArrays as $tripleArray) {
-                    $tags = $this->extractTags($tripleArray, $tags);
+                if ($statement->tagsResults()) {
+                    foreach ($tripleArrays as $tripleArray) {
+                        $tags = $this->extractTags($tripleArray, $tags);
+                    }
                 }
                 $item->tag($tags);
                 return $responseContent;
@@ -297,8 +301,10 @@ class SparQlClient implements SparQlClientInterface
                 }
                 $tripleArrays = $this->serializer->deserialize($responseContent, SparQlConstructDenormalizer::TYPE, 'xml');
                 $tags = $this->extractTags(array_merge($statement->getResources(), $statement->getConditions()));
-                foreach ($tripleArrays as $tripleArray) {
-                    $tags = $this->extractTags($tripleArray, $tags);
+                if ($statement->tagsResults()) {
+                    foreach ($tripleArrays as $tripleArray) {
+                        $tags = $this->extractTags($tripleArray, $tags);
+                    }
                 }
                 $item->tag($tags);
                 return $responseContent;

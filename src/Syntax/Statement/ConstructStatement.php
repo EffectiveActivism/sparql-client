@@ -8,6 +8,8 @@ use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\TripleInterface;
 
 class ConstructStatement extends AbstractConditionalStatement implements ConstructStatementInterface
 {
+    use ResultTaggingTrait;
+
     protected array $triplesToConstruct;
 
     /**

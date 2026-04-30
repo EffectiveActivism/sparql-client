@@ -4,7 +4,7 @@ namespace EffectiveActivism\SparQlClient\Syntax\Statement;
 
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\Operator\OperatorInterface;
 
-interface SelectStatementInterface extends ConditionalStatementInterface
+interface SelectStatementInterface extends ConditionalStatementInterface, ResultTaggableInterface
 {
     public function __construct(array $variables);
 

@@ -1488,4 +1488,92 @@ class SparQlClientTest extends KernelTestCase
             $this->assertEquals('http://test-sparql-endpoint:9999/blazegraph/sparql', $receivedUrl, "Update operation '$type' should hit update_endpoint");
         }
     }
+
+    /**
+     * Baseline: per-row tagging is enabled by default, so a write that
+     * touches an IRI which only appears in result rows (not in the SELECT
+     * conditions) still invalidates the cached SELECT entry.
+     */
+    public function testCachingInvalidationByRowLevelIri()
+    {
+        $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
+        $selectResponseContent = file_get_contents(__DIR__ . '/../fixtures/client-select-request.xml');
+        $httpClient = new MockHttpClient([new MockResponse($selectResponseContent), new MockResponse('')]);
+        $kernel = new TestKernel('test', true);
+        $kernel->boot();
+        $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
+        $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
+        /** @var SparQlClientInterface $sparQlClient */
+        $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
+        $subject = new Variable('subject');
+        $predicate = new PrefixedIri('schema', 'headline');
+        $object = new PrefixedIri('schema', 'Article');
+        $sparQlClient->execute($sparQlClient->select([$subject])->withNamespaces(['schema' => 'http://schema.org/'])->where([new Triple($subject, $predicate, $object)]));
+        // Row-level subject from client-select-request.xml; not present in the SELECT conditions.
+        $rowSubject = new Iri('urn:uuid:fcf19bc4-7e81-11eb-a169-175604c7c7bc');
+        $unrelatedPredicate = new PrefixedIri('schema', 'about');
+        $unrelatedObject = new Variable('thing');
+        $writeTriple = new Triple($rowSubject, $unrelatedPredicate, $unrelatedObject);
+        $sparQlClient->execute($sparQlClient->delete([$writeTriple])->withNamespaces(['schema' => 'http://schema.org/'])->where([$writeTriple]));
+        $this->assertEquals('UNCACHED', $cacheAdapter->get(self::HASHED_QUERY_UUID, function (ItemInterface $item) {
+            return 'UNCACHED';
+        }));
+    }
+
+    /**
+     * withoutResultTags() suppresses the per-row tag walk, so a write
+     * targeting an IRI that only appeared in result rows no longer
+     * invalidates the cached SELECT entry. Structural condition tags
+     * still apply and would still invalidate via overlapping conditions.
+     */
+    public function testWithoutResultTagsSkipsPerRowTagging()
+    {
+        $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
+        $selectResponseContent = file_get_contents(__DIR__ . '/../fixtures/client-select-request.xml');
+        $httpClient = new MockHttpClient([new MockResponse($selectResponseContent), new MockResponse('')]);
+        $kernel = new TestKernel('test', true);
+        $kernel->boot();
+        $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
+        $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
+        /** @var SparQlClientInterface $sparQlClient */
+        $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
+        $subject = new Variable('subject');
+        $predicate = new PrefixedIri('schema', 'headline');
+        $object = new PrefixedIri('schema', 'Article');
+        $sparQlClient->execute($sparQlClient->select([$subject])->withoutResultTags()->withNamespaces(['schema' => 'http://schema.org/'])->where([new Triple($subject, $predicate, $object)]));
+        $rowSubject = new Iri('urn:uuid:fcf19bc4-7e81-11eb-a169-175604c7c7bc');
+        $unrelatedPredicate = new PrefixedIri('schema', 'about');
+        $unrelatedObject = new Variable('thing');
+        $writeTriple = new Triple($rowSubject, $unrelatedPredicate, $unrelatedObject);
+        $sparQlClient->execute($sparQlClient->delete([$writeTriple])->withNamespaces(['schema' => 'http://schema.org/'])->where([$writeTriple]));
+        $this->assertEquals($selectResponseContent, $cacheAdapter->get(self::HASHED_QUERY_UUID, function (ItemInterface $item) {
+            return 'UNCACHED';
+        }));
+    }
+
+    /**
+     * tagsResults() reports the configured value; default is true.
+     */
+    public function testTagsResultsFlag()
+    {
+        $kernel = new TestKernel('test', true);
+        $kernel->boot();
+        $kernel->getContainer()->set(TagAwareCacheInterface::class, new TagAwareAdapter(new ArrayAdapter()));
+        $kernel->getContainer()->set(HttpClientInterface::class, new MockHttpClient());
+        /** @var SparQlClientInterface $sparQlClient */
+        $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
+        $variable = new Variable('subject');
+        $select = $sparQlClient->select([$variable]);
+        $this->assertTrue($select->tagsResults());
+        $select->withoutResultTags();
+        $this->assertFalse($select->tagsResults());
+        $construct = $sparQlClient->construct([new Triple($variable, new PrefixedIri('schema', 'headline'), new Variable('object'))]);
+        $this->assertTrue($construct->tagsResults());
+        $construct->withoutResultTags();
+        $this->assertFalse($construct->tagsResults());
+        $describe = $sparQlClient->describe([$variable]);
+        $this->assertTrue($describe->tagsResults());
+        $describe->withoutResultTags();
+        $this->assertFalse($describe->tagsResults());
+    }
 }
