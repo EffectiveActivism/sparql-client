@@ -10,6 +10,7 @@ validation.
 - [Installation](#installation)
 - [Configuration](#configuration)
 - [Usage](#usage)
+    - [Namespaces and base URI](#namespaces-and-base-uri)
     - [Select statement](#select-statement)
         - [Limit, offset and order](#limit-offset-and-order)
         - [Distinct and reduced](#distinct-and-reduced)
@@ -22,12 +23,15 @@ validation.
     - [Delete statement](#delete-statement)
     - [Replace statement](#replace-statement)
     - [Describe statement](#describe-statement)
+    - [Graph management](#graph-management)
     - [Graph patterns](#graph-patterns)
     - [Union](#union)
     - [Subquery](#subquery)
     - [Property paths and sets](#property-paths-and-sets)
         - [Inverse path example](#inverse-path-example)
         - [Sequence path example](#sequence-path-example)
+        - [Alternative path example](#alternative-path-example)
+        - [Zero-or-more, one-or-more and zero-or-one path examples](#zero-or-more-one-or-more-and-zero-or-one-path-examples)
         - [Negated set example](#negated-set-example)
     - [Assignment](#assignment)
         - [Bind example](#bind-example)
@@ -37,6 +41,9 @@ validation.
     - [Service](#service)
     - [Constraints](#constraints)
         - [Filter examples](#filter-examples)
+        - [Filter exists](#filter-exists)
+        - [Minus](#minus)
+        - [Operator catalogue](#operator-catalogue)
     - [Aggregates](#aggregates)
     - [Error handling](#error-handling)
     - [Cache tagging](#cache-tagging)
@@ -77,6 +84,31 @@ sparql_client:
 
 ## Usage
 
+### Namespaces and base URI
+
+Namespace prefixes and the optional `BASE` URI are declared on the
+statement, not on the client — every example below chains
+`->withNamespaces([...])` onto its builder. Both methods return the
+statement and accept further chaining.
+
+```php
+<?php
+
+$selectStatement = $sparQlClient
+    ->select([$subject])
+    ->withNamespaces([
+        'rdf' => 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
+        'schema' => 'http://schema.org/',
+    ])
+    ->withBase('http://example.org/')
+    ->where([$triple]);
+```
+
+Calling `withNamespaces()` more than once merges the new prefixes into
+the existing set. Prefix names are validated against the SPARQL
+`PN_PREFIX` grammar; invalid input throws a `SparQlException`. The
+`withBase()` URI is also validated.
+
 ### Select statement
 
 Retrieve any subjects that have a `schema:headline` of `"Lorem"@la`.
@@ -98,8 +130,6 @@ class MyController extends AbstractController
 {
     public function view(SparQlClientInterface $sparQlClient)
     {
-        // Add the 'schema' namespace.
-        $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
         // Add a subject as a variable '_subject'.
         $subject = new Variable('subject');
         // Add a prefixed IRI of the form 'schema:headline'.
@@ -108,8 +138,11 @@ class MyController extends AbstractController
         $object = new PlainLiteral('Lorem', 'la');
         // Add a triple that contains all the above terms.
         $triple = new Triple($subject, $predicate, $object);
-        // Create a select statement.
-        $selectStatement = $sparQlClient->select([$subject])->where([$triple]);
+        // Create a select statement and declare the 'schema' namespace.
+        $selectStatement = $sparQlClient
+            ->select([$subject])
+            ->withNamespaces(['schema' => 'http://schema.org/'])
+            ->where([$triple]);
         // Perform the query.
         $result = $sparQlClient->execute($selectStatement);
         // The result will contain each 'subject' found.
@@ -129,6 +162,7 @@ Select statements can use result modifiers:
 <?php
 
 use EffectiveActivism\SparQlClient\Syntax\Order\Asc;
+use EffectiveActivism\SparQlClient\Syntax\Order\Desc;
 use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\Operator\Binary\Multiply;
 use EffectiveActivism\SparQlClient\Syntax\Term\Literal\TypedLiteral;
@@ -139,7 +173,11 @@ $selectStatement->offset(2);
 
 $orderVariable = new Variable('orderByThis');
 $multiplier = new TypedLiteral(2);
-$selectStatement->orderBy([new Asc(new Multiply($orderVariable, $multiplier))]);
+// ASC and DESC accept any Variable or operator expression; mix freely.
+$selectStatement->orderBy([
+    new Asc(new Multiply($orderVariable, $multiplier)),
+    new Desc($orderVariable),
+]);
 ```
 
 #### Distinct and reduced
@@ -222,8 +260,6 @@ class MyController extends AbstractController
 {
     public function view(SparQlClientInterface $sparQlClient)
     {
-        // Add the 'schema' namespace.
-        $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
         // Add a subject as a variable '_subject'.
         $subject = new Iri('urn:uuid:5b08b896-a8ee-11eb-acf0-a3d5edd5c2a6');
         // Add a prefixed IRI of the form 'schema:headline'.
@@ -232,8 +268,11 @@ class MyController extends AbstractController
         $object = new PlainLiteral('Lorem', 'la');
         // Add a triple that contains all the above terms.
         $triple = new Triple($subject, $predicate, $object);
-        // Create an ask statement.
-        $askStatement = $sparQlClient->ask()->where([$triple]);
+        // Create an ask statement and declare the 'schema' namespace.
+        $askStatement = $sparQlClient
+            ->ask()
+            ->withNamespaces(['schema' => 'http://schema.org/'])
+            ->where([$triple]);
         // Perform the query.
         $result = $sparQlClient->execute($askStatement);
         // The result will be a boolean value.
@@ -264,8 +303,6 @@ class MyController extends AbstractController
 {
     public function view(SparQlClientInterface $sparQlClient)
     {
-        // Add the 'schema' namespace.
-        $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
         // Add a subject as a variable '_subject'.
         $subject = new Variable('subject');
         // Add a prefixed IRI of the form 'schema:headline'.
@@ -274,8 +311,11 @@ class MyController extends AbstractController
         $object = new PlainLiteral('Lorem', 'la');
         // Add a triple that contains all the above terms.
         $triple = new Triple($subject, $predicate, $object);
-        // Create a construct statement.
-        $constructStatement = $sparQlClient->construct([$triple])->where([$triple]);
+        // Create a construct statement and declare the 'schema' namespace.
+        $constructStatement = $sparQlClient
+            ->construct([$triple])
+            ->withNamespaces(['schema' => 'http://schema.org/'])
+            ->where([$triple]);
         // Perform the query.
         $result = $sparQlClient->execute($constructStatement);
         // The result will contain each constructed triple.
@@ -310,8 +350,6 @@ class MyController extends AbstractController
 {
     public function view(SparQlClientInterface $sparQlClient)
     {
-        // Add the 'schema' namespace.
-        $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
         // Add a subject as a variable '_subject'.
         $subject = new Iri('urn:uuid:a61d21a4-824d-11eb-95c3-ebff6d3fb918');
         // Add a prefixed IRI of the form 'schema:headline'.
@@ -320,8 +358,10 @@ class MyController extends AbstractController
         $object = new PlainLiteral('Lorem', 'la');
         // Add a triple that contains all the above terms.
         $triple = new Triple($subject, $predicate, $object);
-        // Create an insert statement.
-        $insertStatement = $sparQlClient->insert([$triple]);
+        // Create an insert statement and declare the 'schema' namespace.
+        $insertStatement = $sparQlClient
+            ->insert([$triple])
+            ->withNamespaces(['schema' => 'http://schema.org/']);
         // Perform the update. Returns an UpdateResultInterface with getStatusCode() and getBody().
         $sparQlClient->execute($insertStatement);
     }
@@ -349,8 +389,6 @@ class MyController extends AbstractController
 {
     public function view(SparQlClientInterface $sparQlClient)
     {
-        // Add the 'schema' namespace.
-        $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
         // Add a subject as a variable '_subject'.
         $subject = new Variable('subject');
         // Add a prefixed IRI of the form 'schema:headline'.
@@ -364,8 +402,11 @@ class MyController extends AbstractController
         // Add a prefixed IRI of the form 'schema:Article'.
         $object2 = new PrefixedIri('schema', 'Article');
         $tripleToFilter = new Triple($subject, $predicate2, $object2);
-        // Create a delete statement.
-        $deleteStatement = $sparQlClient->delete([$tripleToDelete])->where([$tripleToFilter]);
+        // Create a delete statement and declare the 'schema' namespace.
+        $deleteStatement = $sparQlClient
+            ->delete([$tripleToDelete])
+            ->withNamespaces(['schema' => 'http://schema.org/'])
+            ->where([$tripleToFilter]);
         // Perform the update.
         $sparQlClient->execute($deleteStatement);
     }
@@ -395,8 +436,6 @@ class MyController extends AbstractController
 {
     public function view(SparQlClientInterface $sparQlClient)
     {
-        // Add the 'schema' namespace.
-        $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
         // Add a subject as a variable '_subject'.
         $subject = new Variable('subject');
         // Add a prefixed IRI of the form 'schema:headline'.
@@ -411,10 +450,11 @@ class MyController extends AbstractController
         $object2 = new PlainLiteral('ipsum', 'la');
         // Add a replacement triple.
         $replacementTriple = new Triple($subject, $predicate2, $object2);
-        // Create a replace statement.
+        // Create a replace statement and declare the 'schema' namespace.
         $replaceStatement = $sparQlClient
             ->replace([$tripleToReplace])
             ->with([$replacementTriple])
+            ->withNamespaces(['schema' => 'http://schema.org/'])
             ->where([$tripleToReplace]);
         // Perform the update.
         $sparQlClient->execute($replaceStatement);
@@ -442,8 +482,6 @@ class MyController extends AbstractController
 {
     public function view(SparQlClientInterface $sparQlClient)
     {
-        // Add the 'schema' namespace.
-        $sparQlClient->setExtraNamespaces(['schema' => 'http://schema.org/']);
         // Add a subject as a variable '_subject'.
         $subject = new Variable('subject');
         // Add a prefixed IRI of the form 'schema:headline'.
@@ -452,8 +490,11 @@ class MyController extends AbstractController
         $object = new PlainLiteral('Lorem', 'la');
         // Add a triple that contains all the above terms.
         $triple = new Triple($subject, $predicate, $object);
-        // Create a describe statement.
-        $describeStatement = $sparQlClient->describe([$subject])->where([$triple]);
+        // Create a describe statement and declare the 'schema' namespace.
+        $describeStatement = $sparQlClient
+            ->describe([$subject])
+            ->withNamespaces(['schema' => 'http://schema.org/'])
+            ->where([$triple]);
         // Perform the query.
         $result = $sparQlClient->execute($describeStatement);
         // The result will contain the resource description as triples.
@@ -463,6 +504,44 @@ class MyController extends AbstractController
     }
 }
 ```
+
+### Graph management
+
+Graph lifecycle operations are exposed as builder methods on the client.
+Each returns a statement that can be passed to `execute()`. All graph
+statements support a `silent()` modifier that emits the SPARQL `SILENT`
+keyword so the triplestore returns success even when the operation
+would otherwise fail (e.g. dropping a non-existent graph).
+
+```php
+<?php
+
+use EffectiveActivism\SparQlClient\Syntax\Term\Iri\Iri;
+
+$source = new Iri('http://example.org/source');
+$destination = new Iri('http://example.org/destination');
+
+// CREATE / DROP / CLEAR a single graph.
+$sparQlClient->execute($sparQlClient->createGraph($source));
+$sparQlClient->execute($sparQlClient->clearGraph($source));
+$sparQlClient->execute($sparQlClient->dropGraph($source)->silent());
+
+// COPY / MOVE / ADD between graphs.
+$sparQlClient->execute($sparQlClient->copyGraph($source, $destination));
+$sparQlClient->execute($sparQlClient->moveGraph($source, $destination));
+$sparQlClient->execute($sparQlClient->addGraph($source, $destination));
+
+// LOAD a remote document. Use into() to target a specific graph.
+$sparQlClient->execute($sparQlClient->load(new Iri('http://example.org/data.ttl')));
+$sparQlClient->execute(
+    $sparQlClient
+        ->load(new Iri('http://example.org/data.ttl'))
+        ->into($destination)
+);
+```
+
+Each call returns an `UpdateResultInterface`; cache entries tagged with
+the affected graph IRIs are invalidated automatically.
 
 ### Graph patterns
 
@@ -562,6 +641,43 @@ $inversePredicate = new InversePath($predicate);
 $sequencePath = new SequencePath($predicate, $inversePredicate);
 // The below will output "schema:headline / ^schema:headline"
 dump($sequencePath->serialize());
+```
+
+#### Alternative path example
+
+```php
+<?php
+
+use \EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
+use \EffectiveActivism\SparQlClient\Syntax\Term\Path\AlternativePath;
+
+$left = new PrefixedIri('schema', 'headline');
+$right = new PrefixedIri('schema', 'name');
+$alternative = new AlternativePath($left, $right);
+// Outputs "schema:headline | schema:name"
+dump($alternative->serialize());
+```
+
+#### Zero-or-more, one-or-more and zero-or-one path examples
+
+These unary path operators correspond to SPARQL's `*`, `+` and `?` path
+quantifiers. They wrap any IRI or path term.
+
+```php
+<?php
+
+use \EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
+use \EffectiveActivism\SparQlClient\Syntax\Term\Path\OneOrMorePath;
+use \EffectiveActivism\SparQlClient\Syntax\Term\Path\ZeroOrMorePath;
+use \EffectiveActivism\SparQlClient\Syntax\Term\Path\ZeroOrOnePath;
+
+$predicate = new PrefixedIri('schema', 'knows');
+// Outputs "schema:knows*"
+dump((new ZeroOrMorePath($predicate))->serialize());
+// Outputs "schema:knows+"
+dump((new OneOrMorePath($predicate))->serialize());
+// Outputs "schema:knows?"
+dump((new ZeroOrOnePath($predicate))->serialize());
 ```
 
 #### Negated set example
@@ -670,7 +786,7 @@ SELECT ?headline ?commentCount WHERE { VALUES ( ?headline ?commentCount ) { ( "L
 ### Validation
 
 This bundle supports validation of terms. For example, the below assignment
-will throw an InvalidArgumentException because the prefix contains illegal
+will throw a `SparQlException` because the prefix contains illegal
 characters.
 
 ```php
@@ -684,8 +800,8 @@ $subject = new PrefixedIri('‿schema', 'headline');
 Namespaces are validated when added dynamically in code.
 
 Rudimentary validation of statements is also supported. For example, the
-below statement will throw an InvalidArgumentException because the
-'where' clause does not contain any of the requested variables.
+below statement will throw a `SparQlException` because the 'where' clause
+does not contain any of the requested variables.
 
 ```php
 <?php
@@ -711,7 +827,7 @@ class MyController extends AbstractController
         $statement = $sparQlClient
             ->select([$variable])
             ->where([new Triple($subject, $predicate, $object)]);
-        // Throws an InvalidArgumentException.
+        // Throws a SparQlException.
         $sparQlClient->execute($statement);
     }
 }
@@ -835,9 +951,76 @@ $object3 = new PlainLiteral(12);
 // Returns a filter of the form FILTER('Lorem' = 'Ipsum')
 new Filter(new Equal($object1, $object2));
 
-// Throws an InvalidArgumentException because the argument data types do not match.
+// Throws a SparQlException because the argument data types do not match.
 new Filter(new NotEqual($object1, $object3));
 ```
+
+#### Filter exists
+
+`FilterExists` is the positive counterpart to `FilterNotExists`. It accepts
+the same shape — an array of patterns — and emits `FILTER EXISTS { ... }`.
+
+```php
+<?php
+
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\FilterExists;
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\Triple;
+
+$statement->where([
+    new Triple($subject, $predicate, $object),
+    new FilterExists([
+        new Triple($subject, new PrefixedIri('schema', 'identifier'), $identifier),
+    ]),
+]);
+```
+
+#### Minus
+
+`Minus` removes solutions that match a second pattern group, emitting
+`MINUS { ... }`. Unlike `FilterNotExists`, it operates on the solution
+set rather than the candidate bindings, which matters when the inner
+pattern shares no variables with the outer one.
+
+```php
+<?php
+
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\Minus;
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\Triple;
+
+$statement->where([
+    new Triple($subject, $predicate, $object),
+    new Minus([
+        new Triple($subject, new PrefixedIri('schema', 'identifier'), $identifier),
+    ]),
+]);
+```
+
+#### Operator catalogue
+
+The library ships a large operator library beyond the few used in the
+examples above. They live under
+`EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\Operator`, split
+by arity:
+
+- `Operator\Binary` — comparisons (`Equal`, `NotEqual`, `GreaterThan`,
+  `GreaterThanOrEqual`, `LessThan`, `LessThanOrEqual`, `SameTerm`),
+  arithmetic (`Add`, `Substract`, `Multiply`, `Divide`), boolean
+  (`LogicalAnd`, `LogicalOr`), strings (`Contains`, `LangMatches`,
+  `StrAfter`, `StrBefore`, `StrEnds`, `StrStarts`, `StrDt`, `StrLang`).
+- `Operator\Unary` — type tests (`IsBlank`, `IsIri`, `IsLiteral`,
+  `IsNumeric`, `IsUri`, `Bound`), term constructors (`IriOp`, `BNodeOp`,
+  `Lang`, `Datatype`, `Str`, `Uuid`, `StrUuid`, `EncodeForUri`),
+  numeric (`Abs`, `Ceil`, `Floor`, `Round`, `Negative`, `Positive`,
+  `Rand`, `StrLen`), string casing (`LCaseOp`, `UCaseOp`), date/time
+  (`Now`, `Year`, `Month`, `Day`, `Hours`, `Minutes`, `Seconds`,
+  `Timezone`, `Tz`), hashing (`Md5`, `Sha1`, `Sha256`, `Sha384`,
+  `Sha512`), boolean (`Not`).
+- `Operator\Trinary` — `IfOp`, `Regex`, `ReplaceOp`, `SubStr`.
+- `Operator\Variadic` — `Coalesce`, `Concat`, `In`, `NotIn`.
+
+All operators implement `OperatorInterface` and can be used wherever an
+operator is accepted: inside `Filter`, `having()`, `orderBy()`,
+`Bind`, `SelectExpression`, etc.
 
 ### Aggregates
 
@@ -939,9 +1122,17 @@ statements. The default behaviour is to produce both kinds of tag.
 
 # SHACL validator
 
-To use the validator service, define the SHACL validator endpoint.
-You can retrieve the SHACL client as a service.
-Insert, delete, replace and construct statements can be validated.
+To use the validator service, define the SHACL validator endpoint and
+inject `ShaclClientInterface`. The validator only accepts CONSTRUCT
+statements directly; `convertToConstructStatement()` rewrites an
+INSERT, DELETE, REPLACE or CONSTRUCT statement into a validation-shaped
+CONSTRUCT first.
+
+`validate()` returns a `ValidationResultInterface` with two accessors:
+
+- `getStatus(): bool` — `true` when the statement passes validation.
+- `getMessages(): array` — human-readable validation messages from the
+  validator (empty when the status is `true`).
 
 ```php
 <?php
@@ -960,11 +1151,18 @@ class MyController extends AbstractController
     {
         /** @var TripleInterface $triple */
         $triple = new Triple(...);
-        $statement = $sparQlClient
+        $insertStatement = $sparQlClient
             ->insert([$triple])
             ->where([$triple]);
-        if ($shaclClient->validate($statement)) {
+        // Convert the mutation to a CONSTRUCT for validation.
+        $constructStatement = $shaclClient->convertToConstructStatement($insertStatement);
+        $result = $shaclClient->validate($constructStatement);
+        if ($result->getStatus()) {
             dump('statement is valid!');
+        } else {
+            foreach ($result->getMessages() as $message) {
+                dump($message);
+            }
         }
     }
 }
