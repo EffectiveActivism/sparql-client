@@ -1493,6 +1493,10 @@ class SparQlClientTest extends KernelTestCase
      * Baseline: per-row tagging is enabled by default, so a write that
      * touches an IRI which only appears in result rows (not in the SELECT
      * conditions) still invalidates the cached SELECT entry.
+     *
+     * @covers \EffectiveActivism\SparQlClient\Client\SparQlClient
+     * @covers \EffectiveActivism\SparQlClient\Client\CacheTrait
+     * @covers \EffectiveActivism\SparQlClient\Syntax\Statement\ResultTaggingTrait
      */
     public function testCachingInvalidationByRowLevelIri()
     {
@@ -1525,6 +1529,10 @@ class SparQlClientTest extends KernelTestCase
      * targeting an IRI that only appeared in result rows no longer
      * invalidates the cached SELECT entry. Structural condition tags
      * still apply and would still invalidate via overlapping conditions.
+     *
+     * @covers \EffectiveActivism\SparQlClient\Client\SparQlClient
+     * @covers \EffectiveActivism\SparQlClient\Client\CacheTrait
+     * @covers \EffectiveActivism\SparQlClient\Syntax\Statement\ResultTaggingTrait
      */
     public function testWithoutResultTagsSkipsPerRowTagging()
     {
@@ -1553,6 +1561,11 @@ class SparQlClientTest extends KernelTestCase
 
     /**
      * tagsResults() reports the configured value; default is true.
+     *
+     * @covers \EffectiveActivism\SparQlClient\Syntax\Statement\ResultTaggingTrait
+     * @covers \EffectiveActivism\SparQlClient\Syntax\Statement\SelectStatement
+     * @covers \EffectiveActivism\SparQlClient\Syntax\Statement\ConstructStatement
+     * @covers \EffectiveActivism\SparQlClient\Syntax\Statement\DescribeStatement
      */
     public function testTagsResultsFlag()
     {
