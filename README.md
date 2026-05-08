@@ -23,6 +23,10 @@ validation.
     - [Delete statement](#delete-statement)
     - [Replace statement](#replace-statement)
     - [Describe statement](#describe-statement)
+    - [Graph management](#graph-management)
+        - [Create, clear and drop](#create-clear-and-drop)
+        - [Load](#load)
+        - [Copy, move and add](#copy-move-and-add)
     - [Graph patterns](#graph-patterns)
     - [Union](#union)
     - [Subquery](#subquery)
@@ -465,6 +469,68 @@ class MyController extends AbstractController
 }
 ```
 
+### Graph management
+
+#### Create, clear and drop
+
+Create, clear or drop a named graph. All three support a `silent()` modifier.
+
+```php
+<?php
+
+use EffectiveActivism\SparQlClient\Syntax\Term\Iri\Iri;
+
+$graph = new Iri('http://example.org/g');
+
+$sparQlClient->execute($sparQlClient->createGraph($graph));
+$sparQlClient->execute($sparQlClient->clearGraph($graph));
+$sparQlClient->execute($sparQlClient->dropGraph($graph)->silent());
+```
+
+#### Load
+
+Load RDF data from a URI into the default graph or into a named graph.
+
+```php
+<?php
+
+use EffectiveActivism\SparQlClient\Syntax\Term\Iri\Iri;
+
+$source = new Iri('http://example.org/data.ttl');
+$graph = new Iri('http://example.org/g');
+
+// Load into the default graph.
+$sparQlClient->execute($sparQlClient->load($source));
+
+// Load into a named graph.
+$sparQlClient->execute($sparQlClient->load($source)->into($graph));
+
+// Load silently (suppress errors if the source is unavailable).
+$sparQlClient->execute($sparQlClient->load($source)->silent());
+```
+
+#### Copy, move and add
+
+Copy, move or add the contents of one named graph to another. All three support a `silent()` modifier.
+
+```php
+<?php
+
+use EffectiveActivism\SparQlClient\Syntax\Term\Iri\Iri;
+
+$src = new Iri('http://example.org/src');
+$dst = new Iri('http://example.org/dst');
+
+// COPY replaces the destination graph with the source graph contents.
+$sparQlClient->execute($sparQlClient->copyGraph($src, $dst));
+
+// MOVE is like COPY but also removes the source graph.
+$sparQlClient->execute($sparQlClient->moveGraph($src, $dst));
+
+// ADD merges the source graph into the destination graph.
+$sparQlClient->execute($sparQlClient->addGraph($src, $dst));
+```
+
 ### Graph patterns
 
 Restrict a set of triple patterns to a named graph using the `Graph` class.
@@ -858,11 +924,14 @@ produce `COUNT(*)`.
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\Operator\Aggregate\Count;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\Operator\Aggregate\GroupConcat;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\Operator\Aggregate\Sum;
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\Triple;
 use EffectiveActivism\SparQlClient\Syntax\Statement\SelectExpression\SelectExpression;
+use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
 
 $subject = new Variable('subject');
 $value = new Variable('value');
+$triple = new Triple($subject, new PrefixedIri('schema', 'value'), $value);
 
 // COUNT(*) AS ?total
 $total = new SelectExpression(new Count(), new Variable('total'));
