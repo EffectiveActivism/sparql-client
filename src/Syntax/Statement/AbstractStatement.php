@@ -78,23 +78,26 @@ abstract class AbstractStatement implements StatementInterface
      * Folds namespaces declared on any subquery (recursively) into this
      * statement's own namespace map, so the outer prologue resolves prefixed
      * IRIs that the subquery uses. Throws if the same prefix is bound to
-     * different URLs across the tree.
+     * different URLs across the tree. The merge is atomic: $this->namespaces
+     * is left untouched if any conflict is detected.
      *
      * @throws SparQlException
      */
     protected function mergeSubqueryNamespaces(array $items): void
     {
+        $merged = $this->namespaces;
         foreach ($this->collectSubqueryNamespaces($items) as $prefix => $url) {
-            if (array_key_exists($prefix, $this->namespaces) && $this->namespaces[$prefix] !== $url) {
+            if (array_key_exists($prefix, $merged) && $merged[$prefix] !== $url) {
                 throw new SparQlException(sprintf(
                     'Conflicting namespace declarations for prefix "%s": "%s" and "%s"',
                     $prefix,
-                    $this->namespaces[$prefix],
+                    $merged[$prefix],
                     $url
                 ));
             }
-            $this->namespaces[$prefix] = $url;
+            $merged[$prefix] = $url;
         }
+        $this->namespaces = $merged;
     }
 
     /**

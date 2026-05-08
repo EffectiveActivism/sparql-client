@@ -175,6 +175,41 @@ class SubqueryTest extends KernelTestCase
     }
 
     /**
+     * A failed merge must not leave the outer's namespace map partially
+     * mutated: if the conflict trips on the second of two collected
+     * prefixes, the first must not have been written either.
+     *
+     * @covers \EffectiveActivism\SparQlClient\Syntax\Pattern\Subquery\Subquery
+     * @covers \EffectiveActivism\SparQlClient\Syntax\Statement\AbstractStatement
+     * @covers \EffectiveActivism\SparQlClient\Syntax\Statement\SelectStatement
+     */
+    public function testFailedMergeLeavesOuterNamespacesUntouched()
+    {
+        $subject = new Variable('subject');
+        $object = new Variable('object');
+        $inner = (new SelectStatement([$subject]))
+            ->withNamespaces([
+                'foaf' => 'http://xmlns.com/foaf/0.1/',
+                'schema' => 'http://schema.org/',
+            ])
+            ->where([new Triple($subject, new PrefixedIri('schema', 'headline'), $object)]);
+        $outer = (new SelectStatement([$subject]))
+            ->withNamespaces(['schema' => 'http://example.org/wrong/'])
+            ->where([new Subquery($inner)]);
+        try {
+            $outer->toQuery();
+            $this->fail('Expected SparQlException');
+        } catch (SparQlException $exception) {
+            // foaf would have merged before the schema conflict trips,
+            // so a non-atomic merge would surface it on the outer.
+            $this->assertSame(
+                ['schema' => 'http://example.org/wrong/'],
+                $outer->getNamespaces()
+            );
+        }
+    }
+
+    /**
      * A prefix used inside the subquery but declared only on the inner
      * statement no longer raises 'Prefix … is not defined' on the outer.
      *
