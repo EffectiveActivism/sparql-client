@@ -13,6 +13,11 @@ class Subquery implements SubqueryInterface
         $this->statement = $statement;
     }
 
+    public function getInnerStatement(): SelectStatementInterface
+    {
+        return $this->statement;
+    }
+
     public function toArray(): array
     {
         return $this->getTerms();
