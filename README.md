@@ -1,9 +1,10 @@
 # SparQl client
 
-An OOP SPARQL 1.1 client for Symfony with support for SELECT, CONSTRUCT, ASK,
-DESCRIBE, DELETE, INSERT, DELETE+INSERT, LOAD, COPY, MOVE and ADD operations.
-Includes graph patterns, aggregates, scalar functions, extension function calls,
-dataset clauses, and term, namespace and statement validation.
+An OOP SPARQL 1.1 client for Symfony with support for SELECT, ASK, CONSTRUCT,
+DESCRIBE, INSERT, DELETE, DELETE+INSERT, CLEAR, DROP, CREATE, LOAD, COPY, MOVE
+and ADD operations. Includes graph patterns, aggregates, scalar functions,
+extension function calls, dataset clauses, and term, namespace and statement
+validation.
 
 ## Table of content
 
@@ -58,8 +59,8 @@ composer require effectiveactivism/sparql-client
 
 This bundle requires two SPARQL endpoints: one for query operations
 (SELECT, ASK, CONSTRUCT, DESCRIBE) and one for update operations
-(INSERT, DELETE, CLEAR, DROP, CREATE, REPLACE, LOAD, COPY, MOVE, ADD).
-You can also optionally define a SHACL endpoint.
+(INSERT, DELETE, DELETE+INSERT via `replace()`, CLEAR, DROP, CREATE,
+LOAD, COPY, MOVE, ADD). You can also optionally define a SHACL endpoint.
 
 For Blazegraph, both endpoints are the same URL:
 
@@ -923,11 +924,14 @@ produce `COUNT(*)`.
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\Operator\Aggregate\Count;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\Operator\Aggregate\GroupConcat;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\Operator\Aggregate\Sum;
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\Triple;
 use EffectiveActivism\SparQlClient\Syntax\Statement\SelectExpression\SelectExpression;
+use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
 
 $subject = new Variable('subject');
 $value = new Variable('value');
+$triple = new Triple($subject, new PrefixedIri('schema', 'value'), $value);
 
 // COUNT(*) AS ?total
 $total = new SelectExpression(new Count(), new Variable('total'));
@@ -946,9 +950,11 @@ $selectStatement = $sparQlClient
 
 ### Extension functions
 
-The `FunctionCall` class allows calling arbitrary SPARQL extension functions
-by IRI. This enables support for GeoSPARQL, full-text search, and any other
-triplestore-specific functions without needing dedicated operator classes.
+`FunctionCall` invokes an arbitrary SPARQL extension function by IRI,
+covering GeoSPARQL, full-text search, and any triplestore-specific
+functions that don't have dedicated operator classes. It accepts any
+number of argument terms or operators (including zero) and can be
+nested inside other operators.
 
 ```php
 <?php
@@ -971,7 +977,7 @@ $distance = new FunctionCall(
     new PrefixedIri('uom', 'metre'),
 );
 
-// Use in a FILTER to restrict results by distance.
+// Restrict results to pairs within 1000 metres of each other.
 $filter = new Filter(new LessThan($distance, new TypedLiteral(1000)));
 
 $selectStatement = $sparQlClient
@@ -980,12 +986,11 @@ $selectStatement = $sparQlClient
         'geof' => 'http://www.opengis.net/def/function/geosparql/',
         'uom' => 'http://www.opengis.net/def/uom/OGC/1.0/',
     ])
-    ->where([$triple, $filter]);
+    ->where([$filter]);
 ```
 
-`FunctionCall` works with both prefixed IRIs (`geof:distance`) and full IRIs
-(`<http://example.org/func>`), accepts any number of arguments (including zero),
-and can be nested inside other operators.
+`FunctionCall` accepts both prefixed IRIs (`geof:distance`) and full
+IRIs (`<http://example.org/func>`).
 
 ### Error handling
 
