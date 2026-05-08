@@ -586,12 +586,25 @@ use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
 
 $subject = new Variable('subject');
 $innerTriple = new Triple($subject, new PrefixedIri('schema', 'headline'), new Variable('headline'));
-$innerSelect = $sparQlClient->select([$subject])->where([$innerTriple]);
+$innerSelect = $sparQlClient->select([$subject])
+    ->withNamespaces(['schema' => 'http://schema.org/'])
+    ->where([$innerTriple]);
 $subquery = new Subquery($innerSelect);
 
 $outerTriple = new Triple($subject, new PrefixedIri('schema', 'name'), new Variable('name'));
 $outerSelect = $sparQlClient->select([$subject])->where([$subquery, $outerTriple]);
 ```
+
+Namespaces declared via `withNamespaces()` on an inner statement bubble up
+into the outer query's prologue, so the same prefix does not have to be
+repeated on the outer. Nested subqueries propagate the same way. If the
+inner and outer (or two sibling subqueries) bind the same prefix to
+different URLs, serialization throws `SparQlException`.
+
+Per the SPARQL 1.1 grammar, `BASE` / `PREFIX` / `FROM` / `FROM NAMED`
+declared on the inner statement do not appear in the embedded SubSelect —
+the outer prologue is authoritative; only the inner's `withNamespaces()`
+contribution is folded into it.
 
 ### Property paths and sets
 

@@ -4,6 +4,7 @@ namespace EffectiveActivism\SparQlClient\Syntax\Statement;
 
 use EffectiveActivism\SparQlClient\Constant;
 use EffectiveActivism\SparQlClient\Exception\SparQlException;
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Subquery\SubqueryInterface;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\AbstractIri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
 
@@ -63,6 +64,7 @@ abstract class AbstractStatement implements StatementInterface
      */
     protected function validatePrefixes(array $items): void
     {
+        $this->mergeSubqueryNamespaces($items);
         foreach ($items as $item) {
             foreach ($item->getTerms() as $term) {
                 if (get_class($term) === \EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri::class && !in_array($term->getPrefix(), array_keys($this->namespaces))) {
@@ -70,6 +72,58 @@ abstract class AbstractStatement implements StatementInterface
                 }
             }
         }
+    }
+
+    /**
+     * Folds namespaces declared on any subquery (recursively) into this
+     * statement's own namespace map, so the outer prologue resolves prefixed
+     * IRIs that the subquery uses. Throws if the same prefix is bound to
+     * different URLs across the tree.
+     *
+     * @throws SparQlException
+     */
+    protected function mergeSubqueryNamespaces(array $items): void
+    {
+        foreach ($this->collectSubqueryNamespaces($items) as $prefix => $url) {
+            if (array_key_exists($prefix, $this->namespaces) && $this->namespaces[$prefix] !== $url) {
+                throw new SparQlException(sprintf(
+                    'Conflicting namespace declarations for prefix "%s": "%s" and "%s"',
+                    $prefix,
+                    $this->namespaces[$prefix],
+                    $url
+                ));
+            }
+            $this->namespaces[$prefix] = $url;
+        }
+    }
+
+    /**
+     * @throws SparQlException
+     */
+    private function collectSubqueryNamespaces(array $items): array
+    {
+        $collected = [];
+        foreach ($items as $item) {
+            if (!$item instanceof SubqueryInterface) {
+                continue;
+            }
+            $inner = $item->getInnerStatement();
+            $sources = [$inner->getNamespaces(), $this->collectSubqueryNamespaces($inner->getConditions())];
+            foreach ($sources as $source) {
+                foreach ($source as $prefix => $url) {
+                    if (array_key_exists($prefix, $collected) && $collected[$prefix] !== $url) {
+                        throw new SparQlException(sprintf(
+                            'Conflicting namespace declarations for prefix "%s": "%s" and "%s"',
+                            $prefix,
+                            $collected[$prefix],
+                            $url
+                        ));
+                    }
+                    $collected[$prefix] = $url;
+                }
+            }
+        }
+        return $collected;
     }
 
     public function getNamespaces(): array
