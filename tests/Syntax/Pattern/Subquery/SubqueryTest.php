@@ -32,6 +32,9 @@ class SubqueryTest extends KernelTestCase
      * Regression: prologue (BASE/PREFIX) and dataset clauses (FROM/FROM NAMED)
      * are illegal inside a group graph pattern, so a Subquery must not leak
      * them from the inner statement's full toQuery() output.
+     *
+     * @covers \EffectiveActivism\SparQlClient\Syntax\Pattern\Subquery\Subquery
+     * @covers \EffectiveActivism\SparQlClient\Syntax\Statement\SelectStatement
      */
     public function testSubqueryOmitsPrologueAndDatasetClause()
     {
