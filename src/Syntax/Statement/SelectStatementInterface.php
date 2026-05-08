@@ -25,4 +25,6 @@ interface SelectStatementInterface extends ConditionalStatementInterface, Result
     public function getVariables(): array;
 
     public function setVariables(array $variables): SelectStatementInterface;
+
+    public function toSubQuery(): string;
 }

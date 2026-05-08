@@ -27,4 +27,32 @@ class SubqueryTest extends KernelTestCase
         $this->assertEquals([$subject, $predicate, $object], $subquery->getTerms());
         $this->assertEquals([$subject, $predicate, $object], $subquery->toArray());
     }
+
+    /**
+     * Regression: prologue (BASE/PREFIX) and dataset clauses (FROM/FROM NAMED)
+     * are illegal inside a group graph pattern, so a Subquery must not leak
+     * them from the inner statement's full toQuery() output.
+     *
+     * @covers \EffectiveActivism\SparQlClient\Syntax\Pattern\Subquery\Subquery
+     * @covers \EffectiveActivism\SparQlClient\Syntax\Statement\SelectStatement
+     */
+    public function testSubqueryOmitsPrologueAndDatasetClause()
+    {
+        $subject = new Variable('subject');
+        $predicate = new Iri('http://schema.org/headline');
+        $object = new PlainLiteral('Lorem');
+        $triple = new Triple($subject, $predicate, $object);
+        $statement = new SelectStatement([$subject]);
+        $statement
+            ->withNamespaces(['schema' => 'http://schema.org/'])
+            ->withBase('http://example.org/')
+            ->from(new Iri('http://example.org/graph'))
+            ->fromNamed(new Iri('http://example.org/named'))
+            ->where([$triple]);
+        $serialized = (new Subquery($statement))->serialize();
+        $this->assertStringNotContainsString('PREFIX', $serialized);
+        $this->assertStringNotContainsString('BASE', $serialized);
+        $this->assertStringNotContainsString('FROM', $serialized);
+        $this->assertEquals(self::SERIALIZED_VALUE, $serialized);
+    }
 }

@@ -46,6 +46,28 @@ class SelectStatement extends AbstractConditionalStatement implements SelectStat
     {
         $this->validatePrefixes($this->conditions);
         $preQuery = parent::toQuery();
+        return trim($preQuery . $this->buildSelectBody($this->getDatasetClausesString()));
+    }
+
+    /**
+     * Serializes this statement as a SubSelect (SPARQL 1.1 grammar production
+     * `SubSelect`), suitable for inlining inside `{ … }` in another query.
+     * Omits the Prologue (BASE/PREFIX) and DatasetClause (FROM/FROM NAMED),
+     * neither of which are permitted inside a group graph pattern.
+     *
+     * @throws SparQlException
+     */
+    public function toSubQuery(): string
+    {
+        $this->validatePrefixes($this->conditions);
+        return $this->buildSelectBody('');
+    }
+
+    /**
+     * @throws SparQlException
+     */
+    private function buildSelectBody(string $datasetClauses): string
+    {
         $variables = '';
         foreach ($this->variables as $variable) {
             $variables .= sprintf('%s ', $variable->serialize());
@@ -53,6 +75,9 @@ class SelectStatement extends AbstractConditionalStatement implements SelectStat
         $conditionsString = '';
         foreach ($this->conditions as $condition) {
             $conditionsString .= sprintf(' %s .', $condition->serialize());
+        }
+        if (empty($conditionsString)) {
+            throw new SparQlException('Select statement is missing a \'where\' clause');
         }
         $limitString = '';
         if ($this->limit > 0) {
@@ -84,31 +109,24 @@ class SelectStatement extends AbstractConditionalStatement implements SelectStat
         } else {
             $modifier = '';
         }
-        if (!empty($conditionsString)) {
-            // Only check unclaused variables for plain Variable instances (SelectExpressionInterface items bind their own variables).
-            $plainVariables = array_filter($this->variables, fn($v) => $v instanceof Variable);
-            if (!empty($plainVariables)) {
-                $unclausedVariables = true;
-                foreach ($plainVariables as $term) {
-                    foreach ($this->conditions as $condition) {
-                        foreach ($condition->getTerms() as $clausedTerm) {
-                            if ($clausedTerm instanceof Variable && $clausedTerm->getVariableName() === $term->getVariableName()) {
-                                $unclausedVariables = false;
-                                break 3;
-                            }
+        $plainVariables = array_filter($this->variables, fn($v) => $v instanceof Variable);
+        if (!empty($plainVariables)) {
+            $unclausedVariables = true;
+            foreach ($plainVariables as $term) {
+                foreach ($this->conditions as $condition) {
+                    foreach ($condition->getTerms() as $clausedTerm) {
+                        if ($clausedTerm instanceof Variable && $clausedTerm->getVariableName() === $term->getVariableName()) {
+                            $unclausedVariables = false;
+                            break 3;
                         }
                     }
                 }
-                if ($unclausedVariables) {
-                    throw new SparQlException('At least one variable must be referenced in a \'where\' clause.');
-                }
             }
-            return trim(sprintf('%sSELECT %s%s%sWHERE {%s }%s%s%s%s%s', $preQuery, $modifier, $variables, $this->getDatasetClausesString(), $conditionsString, $groupByString, $havingString, $orderByString, $limitString, $offsetString));
+            if ($unclausedVariables) {
+                throw new SparQlException('At least one variable must be referenced in a \'where\' clause.');
+            }
         }
-        else {
-            // Select statements must have a 'where' clause.
-            throw new SparQlException('Select statement is missing a \'where\' clause');
-        }
+        return sprintf('SELECT %s%s%sWHERE {%s }%s%s%s%s%s', $modifier, $variables, $datasetClauses, $conditionsString, $groupByString, $havingString, $orderByString, $limitString, $offsetString);
     }
 
     /**

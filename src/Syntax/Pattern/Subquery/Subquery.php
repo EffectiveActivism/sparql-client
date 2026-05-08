@@ -31,6 +31,6 @@ class Subquery implements SubqueryInterface
 
     public function serialize(): string
     {
-        return sprintf('{ %s }', $this->statement->toQuery());
+        return sprintf('{ %s }', $this->statement->toSubQuery());
     }
 }
