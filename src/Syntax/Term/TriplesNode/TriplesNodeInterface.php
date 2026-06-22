@@ -12,4 +12,11 @@ use EffectiveActivism\SparQlClient\Syntax\Term\TermInterface;
  */
 interface TriplesNodeInterface extends TermInterface
 {
+    /**
+     * Returns the nested terms of this node, so callers (e.g. cache tag
+     * extraction) can traverse into it.
+     *
+     * @return TermInterface[]
+     */
+    public function getTerms(): array;
 }

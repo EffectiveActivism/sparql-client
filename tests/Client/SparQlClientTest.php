@@ -15,6 +15,8 @@ use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\Triple;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\Iri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
+use EffectiveActivism\SparQlClient\Syntax\Term\TriplesNode\BlankNodePropertyList;
+use EffectiveActivism\SparQlClient\Syntax\Term\TriplesNode\Collection;
 use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
 use EffectiveActivism\SparQlClient\Tests\Environment\TestKernel;
 use Exception;
@@ -1522,6 +1524,44 @@ class SparQlClientTest extends KernelTestCase
         $this->assertEquals('UNCACHED', $cacheAdapter->get(self::HASHED_QUERY_UUID, function (ItemInterface $item) {
             return 'UNCACHED';
         }));
+    }
+
+    /**
+     * Cache tag extraction descends into triples nodes, so an IRI that only
+     * appears nested inside a collection or blank node property list of a
+     * write still invalidates a cached SELECT tagged with that IRI.
+     *
+     * @covers \EffectiveActivism\SparQlClient\Client\SparQlClient
+     * @covers \EffectiveActivism\SparQlClient\Client\CacheTrait
+     */
+    public function testCachingInvalidationByTriplesNodeIri()
+    {
+        foreach ([
+            fn (Iri $rowIri) => new Collection([$rowIri]),
+            fn (Iri $rowIri) => new BlankNodePropertyList([[new PrefixedIri('schema', 'about'), $rowIri]]),
+        ] as $buildTriplesNode) {
+            $cacheAdapter = new TagAwareAdapter(new ArrayAdapter());
+            $selectResponseContent = file_get_contents(__DIR__ . '/../fixtures/client-select-request.xml');
+            $httpClient = new MockHttpClient([new MockResponse($selectResponseContent), new MockResponse('')]);
+            $kernel = new TestKernel('test', true);
+            $kernel->boot();
+            $kernel->getContainer()->set(TagAwareCacheInterface::class, $cacheAdapter);
+            $kernel->getContainer()->set(HttpClientInterface::class, $httpClient);
+            /** @var SparQlClientInterface $sparQlClient */
+            $sparQlClient = $kernel->getContainer()->get(SparQlClientInterface::class);
+            $subject = new Variable('subject');
+            $predicate = new PrefixedIri('schema', 'headline');
+            $object = new PrefixedIri('schema', 'Article');
+            $sparQlClient->execute($sparQlClient->select([$subject])->withNamespaces(['schema' => 'http://schema.org/'])->where([new Triple($subject, $predicate, $object)]));
+            // Row-level subject from client-select-request.xml, reached only by
+            // recursing into the triples node in the write's object position.
+            $rowSubject = new Iri('urn:uuid:fcf19bc4-7e81-11eb-a169-175604c7c7bc');
+            $writeTriple = new Triple(new Iri('urn:uuid:00000000-0000-0000-0000-000000000000'), new PrefixedIri('schema', 'about'), $buildTriplesNode($rowSubject));
+            $sparQlClient->execute($sparQlClient->delete([$writeTriple])->withNamespaces(['schema' => 'http://schema.org/']));
+            $this->assertEquals('UNCACHED', $cacheAdapter->get(self::HASHED_QUERY_UUID, function (ItemInterface $item) {
+                return 'UNCACHED';
+            }));
+        }
     }
 
     /**
