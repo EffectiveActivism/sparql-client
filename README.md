@@ -34,6 +34,9 @@ validation.
         - [Inverse path example](#inverse-path-example)
         - [Sequence path example](#sequence-path-example)
         - [Negated set example](#negated-set-example)
+    - [Triples nodes](#triples-nodes)
+        - [Collection example](#collection-example)
+        - [Blank node property list example](#blank-node-property-list-example)
     - [Assignment](#assignment)
         - [Bind example](#bind-example)
         - [Values example](#values-example)
@@ -661,6 +664,55 @@ $negatedSet = new NegatedPropertySet([$predicate, $inversePredicate]);
 // The below will output "!(schema:headline | (^schema:headline))"
 dump($negatedSet->serialize());
 ```
+
+### Triples nodes
+
+The SPARQL grammar allows two abbreviated node forms — RDF collections
+(`( … )`) and blank node property lists (`[ … ]`) — wherever a subject or
+object is expected. Both are represented by terms in the
+`EffectiveActivism\SparQlClient\Syntax\Term\TriplesNode` namespace and may be
+passed to a `Triple` in subject or object position (but never as a
+predicate).
+
+#### Collection example
+
+```php
+<?php
+
+use \EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\Triple;
+use \EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
+use \EffectiveActivism\SparQlClient\Syntax\Term\TriplesNode\Collection;
+use \EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
+
+$collection = new Collection([new Variable('a'), new Variable('b')]);
+$triple = new Triple(new Variable('x'), new PrefixedIri('ex', 'hasList'), $collection);
+// The below will output "?x ex:hasList ( ?a ?b )"
+dump($triple->serialize());
+```
+
+#### Blank node property list example
+
+A blank node property list is built from `[$predicate, $object]` pairs.
+
+```php
+<?php
+
+use \EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\Triple;
+use \EffectiveActivism\SparQlClient\Syntax\Term\Iri\PrefixedIri;
+use \EffectiveActivism\SparQlClient\Syntax\Term\TriplesNode\BlankNodePropertyList;
+use \EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
+
+$list = new BlankNodePropertyList([
+    [new PrefixedIri('ex', 'q'), new Variable('y')],
+    [new PrefixedIri('ex', 'r'), new Variable('z')],
+]);
+$triple = new Triple(new Variable('x'), new PrefixedIri('ex', 'p'), $list);
+// The below will output "?x ex:p [ ex:q ?y ; ex:r ?z ]"
+dump($triple->serialize());
+```
+
+Both forms may be nested inside one another, since a collection member and a
+property-list object are themselves graph nodes.
 
 ### Assignment
 
