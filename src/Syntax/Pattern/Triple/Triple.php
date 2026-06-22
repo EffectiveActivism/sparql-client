@@ -7,6 +7,7 @@ use EffectiveActivism\SparQlClient\Syntax\Term\BlankNode\BlankNode;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\RdfType;
 use EffectiveActivism\SparQlClient\Syntax\Term\Literal\AbstractLiteral;
 use EffectiveActivism\SparQlClient\Syntax\Term\TermInterface;
+use EffectiveActivism\SparQlClient\Syntax\Term\TriplesNode\TriplesNodeInterface;
 
 class Triple implements TripleInterface
 {
@@ -24,7 +25,7 @@ class Triple implements TripleInterface
         if ($subject instanceof AbstractLiteral) {
             throw new SparQlException('Triple subject cannot be a literal');
         }
-        if ($predicate instanceof AbstractLiteral || $predicate instanceof BlankNode) {
+        if ($predicate instanceof AbstractLiteral || $predicate instanceof BlankNode || $predicate instanceof TriplesNodeInterface) {
             throw new SparQlException('Triple predicate must be an IRI, path, or variable');
         }
         $this->subject = $subject;
@@ -82,7 +83,7 @@ class Triple implements TripleInterface
      */
     public function setPredicate(TermInterface $term): TripleInterface
     {
-        if ($term instanceof AbstractLiteral || $term instanceof BlankNode) {
+        if ($term instanceof AbstractLiteral || $term instanceof BlankNode || $term instanceof TriplesNodeInterface) {
             throw new SparQlException('Triple predicate must be an IRI, path, or variable');
         }
         $this->predicate = $term;

@@ -8,6 +8,7 @@ use EffectiveActivism\SparQlClient\Syntax\Pattern\PatternInterface;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Triple\TripleInterface;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\AbstractIri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Literal\AbstractLiteral;
+use EffectiveActivism\SparQlClient\Syntax\Term\TriplesNode\TriplesNodeInterface;
 use Ramsey\Uuid\Uuid;
 
 trait CacheTrait
@@ -36,6 +37,9 @@ trait CacheTrait
                 if (!isset($tags[$serialized])) {
                     $tags[$serialized] = $this->getKey($serialized);
                 }
+            }
+            elseif ($pattern instanceof TriplesNodeInterface) {
+                $tags = $this->extractTags($pattern->getTerms(), $tags);
             }
             elseif ($pattern instanceof TripleInterface) {
                 $tags = $this->extractTags([$pattern->getSubject(), $pattern->getObject()], $tags);
