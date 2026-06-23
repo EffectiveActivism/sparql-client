@@ -2,6 +2,7 @@
 
 namespace EffectiveActivism\SparQlClient\Tests\Syntax\Pattern\Constraint\Operator\Unary;
 
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\Operator\Unary\Bound;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\Operator\Unary\Not;
 use EffectiveActivism\SparQlClient\Syntax\Term\Iri\Iri;
 use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
@@ -15,6 +16,8 @@ class NotTest extends KernelTestCase
     const SERIALIZED_OPERATOR_VARIABLE = '! ?subject';
 
     const SERIALIZED_OPERATOR_IRI = '! <urn:uuid:a8ea08b2-95f7-11eb-aa9c-23071bcbf225>';
+
+    const SERIALIZED_OPERATOR_OPERATOR = '! (BOUND(?wkt))';
 
     public function testOperator()
     {
@@ -35,6 +38,16 @@ class NotTest extends KernelTestCase
         $iri = new Iri('urn:uuid:a8ea08b2-95f7-11eb-aa9c-23071bcbf225');
         $operator = new Not($iri);
         $this->assertEquals(self::SERIALIZED_OPERATOR_IRI, $operator->serialize());
+    }
+
+    public function testOperatorWithOperator()
+    {
+        // Negating a built-in call, e.g. "!BOUND(?wkt)". The operand is an
+        // operator, so it is parenthesised to preserve precedence.
+        $bound = new Bound(new Variable('wkt'));
+        $operator = new Not($bound);
+        $this->assertEquals(self::SERIALIZED_OPERATOR_OPERATOR, $operator->serialize());
+        $this->assertEquals($bound, $operator->getExpression());
     }
 
     public function testGetExpression()

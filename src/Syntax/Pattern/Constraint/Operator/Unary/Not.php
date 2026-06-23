@@ -2,19 +2,23 @@
 
 namespace EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\Operator\Unary;
 
-use EffectiveActivism\SparQlClient\Syntax\Term\Iri\AbstractIri;
-use EffectiveActivism\SparQlClient\Syntax\Term\Literal\AbstractLiteral;
-use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\Operator\OperatorInterface;
+use EffectiveActivism\SparQlClient\Syntax\Term\TermInterface;
 
 class Not extends AbstractUnaryOperator implements UnaryOperatorInterface
 {
-    public function __construct(AbstractIri|AbstractLiteral|Variable $expression)
+    public function __construct(OperatorInterface|TermInterface $expression)
     {
         $this->expression = $expression;
     }
 
     public function serialize(): string
     {
-        return sprintf('! %s', $this->expression->serialize());
+        // Wrap operator operands in parentheses so precedence is preserved,
+        // e.g. "! (?a = ?b)" rather than the mis-parsed "! ?a = ?b".
+        $serializedExpression = $this->expression instanceof OperatorInterface
+            ? sprintf('(%s)', $this->expression->serialize())
+            : $this->expression->serialize();
+        return sprintf('! %s', $serializedExpression);
     }
 }
