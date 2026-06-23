@@ -4,7 +4,9 @@ namespace EffectiveActivism\SparQlClient\Tests\Syntax\Pattern\Constraint\Operato
 
 use EffectiveActivism\SparQlClient\Exception\SparQlException;
 use EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\Operator\Binary\Add;
+use EffectiveActivism\SparQlClient\Syntax\Pattern\Constraint\Operator\Unary\Bound;
 use EffectiveActivism\SparQlClient\Syntax\Term\Literal\PlainLiteral;
+use EffectiveActivism\SparQlClient\Syntax\Term\Variable\Variable;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 class AddTest extends KernelTestCase
@@ -33,5 +35,15 @@ class AddTest extends KernelTestCase
         $term2 = new PlainLiteral('ipsum');
         $this->expectException(SparQlException::class);
         new Add($term1, $term2);
+    }
+
+    public function testInvalidOperatorWithOperatorOperand()
+    {
+        // The other operand is an operator (no getRawValue()); building the
+        // error message must not fatal — a SparQlException is thrown.
+        $operatorOperand = new Bound(new Variable('x'));
+        $nonNumericLiteral = new PlainLiteral('lorem');
+        $this->expectException(SparQlException::class);
+        new Add($operatorOperand, $nonNumericLiteral);
     }
 }

@@ -32,7 +32,9 @@ abstract class AbstractBinaryOperator implements BinaryOperatorInterface
     {
         foreach ([$leftExpression, $rightExpression] as $expression) {
             if ($expression instanceof AbstractLiteral && !in_array($expression->getType(), self::NUMERIC_TYPES, true)) {
-                throw new SparQlException(sprintf('Type error: "%s" and "%s" must be numeric or a variable', $leftExpression->getRawValue(), $rightExpression->getRawValue()));
+                // serialize() rather than getRawValue(): an operand may be an
+                // OperatorInterface, which has no getRawValue().
+                throw new SparQlException(sprintf('Type error: "%s" and "%s" must be numeric or a variable', $leftExpression->serialize(), $rightExpression->serialize()));
             }
         }
     }
